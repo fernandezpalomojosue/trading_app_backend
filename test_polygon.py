@@ -7,9 +7,9 @@ async def test_massive_connection():
         try:
             # Obtener tickers de acciones activas
             print("Obteniendo lista de tickers...")
-            tickers = await client.get_tickers(limit=5)  # Solo 5 para el ejemplo
+            tickers = await client.get_tickers(limit=100)  # Solo 5 para el ejemplo
             print("Tickers obtenidos:")
-            for ticker in tickers.get('results', [])[:5]:  # Mostrar solo los primeros 5
+            for ticker in tickers.get('results', [])[:100]:  # Mostrar solo los primeros 5
                 print(f"- {ticker.get('ticker')}: {ticker.get('name')}")
                 
         except Exception as e:
