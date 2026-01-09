@@ -87,13 +87,12 @@ class MassiveClient:
                 detail=error_msg
             )
     
-    async def get_market_data(self, market_type: str) -> Dict[str, Any]:
-        """Obtiene datos generales de un mercado"""
+    async def get_tickers(self, limit: int = 100) -> Dict[str, Any]:
+        """Obtiene una lista de tickers disponibles"""
         return await self._make_request(
             "GET",
-            f"/v3/reference/tickers",
+            "/v3/reference/tickers",
             params={
-                "market": market_type,
                 "active": "true",
                 "limit": 1
             }
@@ -172,19 +171,6 @@ class MassiveClient:
                 status_code=500,
                 detail=f"Error al obtener detalles del ticker {symbol}: {str(e)}"
             )
-    
-    async def get_most_active_tickers(self, limit: int = 50) -> List[str]:
-        """Devuelve una lista de tickers populares"""
-        # Lista de tickers populares (puedes ajustar esta lista según necesites)
-        popular_tickers = [
-            'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NVDA', 'JPM', 'V', 'JNJ',
-            'WMT', 'PG', 'MA', 'UNH', 'HD', 'BAC', 'DIS', 'PYPL', 'ADBE', 'CMCSA',
-            'XOM', 'VZ', 'NFLX', 'INTC', 'PFE', 'CSCO', 'KO', 'PEP', 'MRK', 'ABT',
-            'T', 'ABBV', 'CVX', 'CRM', 'ACN', 'NKE', 'MCD', 'TMO', 'DHR', 'NEE',
-            'TXN', 'HON', 'QCOM', 'UNP', 'LOW', 'ORCL', 'LLY', 'PM', 'AMD', 'COST'
-        ]
-        return popular_tickers[:min(limit, len(popular_tickers))]
-    # app/services/polygon/client.py (add this method to the MassiveClient class)
     async def get_daily_market_summary(self, date: str = None) -> Dict[str, Any]:
         """
         Obtiene el resumen diario del mercado para todas las acciones.
@@ -202,98 +188,4 @@ class MassiveClient:
             "GET",
             f"/v2/aggs/grouped/locale/us/market/stocks/{date}",
             params={"adjusted": "true"}
-            )
-
-    async def _process_ticker(self, ticker: str) -> Optional[Tuple[Dict, float]]:
-        """Procesa un solo ticker y devuelve sus datos"""
-        try:
-            yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
-            data = await self._make_request(
-                "GET",
-                f"/v1/open-close/{ticker.upper()}/{yesterday}",
-                params={"adjusted": "true"}
-            )
-            
-            if not data or data.get('status') != 'OK':
-                return None
-
-            open_price = data.get('open', 0)
-            close_price = data.get('close', 0)
-            change = close_price - open_price
-            change_percent = (change / open_price * 100) if open_price != 0 else 0
-            
-            ticker_data = {
-                'symbol': ticker.upper(),
-                'price': close_price,
-                'change': round(change, 2),
-                'change_percent': round(change_percent, 2),
-                'volume': data.get('volume', 0),
-                'high': data.get('high'),
-                'low': data.get('low'),
-                'after_hours': data.get('afterHours'),
-                'pre_market': data.get('preMarket')
-            }
-            
-            return ticker_data, change_percent
-            
-        except Exception as e:
-            print(f"Error procesando {ticker}: {str(e)}")
-            return None
-    
-    async def get_top_movers(self, tickers: List[str], batch_size: int = 5) -> Dict[str, List[Dict]]:
-        """Obtiene los top ganadores, perdedores y más activos en lotes"""
-        results = {
-            'gainers': [],  # Mayores subidas porcentuales
-            'losers': [],   # Mayores bajadas porcentuales
-            'actives': []   # Mayores volúmenes
-        }
-        
-        # Procesar los tickers en lotes para respetar el rate limit
-        for i in range(0, len(tickers), batch_size):
-            batch = tickers[i:i + batch_size]
-            # Usar asyncio.gather para procesar el lote actual en paralelo
-            batch_results = await asyncio.gather(
-                *[self._process_ticker(ticker) for ticker in batch],
-                return_exceptions=True
-            )
-            
-            # Procesar resultados del lote actual
-            for ticker_result in batch_results:
-                if isinstance(ticker_result, Exception) or not ticker_result:
-                    continue
-                    
-                ticker_data, change_percent = ticker_result
-                
-                # Añadir a activos
-                results['actives'].append(ticker_data)
-                
-                # Clasificar como ganador o perdedor
-                if change_percent > 0:
-                    results['gainers'].append((ticker_data, change_percent))
-                else:
-                    results['losers'].append((ticker_data, abs(change_percent)))
-            
-            # Pequeña pausa entre lotes para respetar el rate limit
-            if i + batch_size < len(tickers):
-                await asyncio.sleep(1)
-        
-        # Ordenar y limitar resultados a los 10 primeros
-        results['gainers'] = [x[0] for x in sorted(
-            results['gainers'],
-            key=lambda x: x[1],  # Ordenar por cambio porcentual
-            reverse=True
-        )[:10]]
-        
-        results['losers'] = [x[0] for x in sorted(
-            results['losers'],
-            key=lambda x: x[1],  # Ordenar por cambio porcentual absoluto
-            reverse=True
-        )[:10]]
-        
-        results['actives'] = sorted(
-            results['actives'],
-            key=lambda x: x['volume'],  # Ordenar por volumen
-            reverse=True
-        )[:10]
-        
-        return results
+        )

@@ -80,7 +80,8 @@ async def get_market_overview(market_type: MarketType):
                         })
                 except (TypeError, KeyError):
                     continue
-            
+            processed_results.sort(key=lambda x: x["volume"], reverse=True)
+            processed_results = processed_results[:500]
             # 4. Ordenar y obtener top ganadores, perdedores y más activos
             top_gainers = sorted(
                 processed_results,
@@ -93,11 +94,7 @@ async def get_market_overview(market_type: MarketType):
                 key=lambda x: x["change_percent"]
             )[:10]
             
-            most_active = sorted(
-                processed_results,
-                key=lambda x: x["volume"],
-                reverse=True
-            )[:10]
+            most_active = processed_results[:10]
             
             # 5. Construir la respuesta
             return MarketOverview(
@@ -122,43 +119,84 @@ async def get_market_overview(market_type: MarketType):
 @router.get("/{market_type}/assets", response_model=List[Asset])
 async def list_assets(
     market_type: MarketType, 
-    limit: int = 50, 
+    limit: int = 500, 
     offset: int = 0
 ):
     """
-    Lista los activos de un mercado específico.
+    Lista los activos de un mercado específico ordenados por volumen.
     
     Args:
-        market_type: Tipo de mercado
-        limit: Número máximo de resultados a devolver (máx 1000)
+        market_type: Tipo de mercado (solo 'stocks' soportado actualmente)
+        limit: Número máximo de resultados a devolver (máx 500)
         offset: Número de resultados a omitir
         
     Returns:
-        List[Asset]: Lista de activos del mercado especificado
+        List[Asset]: Lista básica de activos del mercado especificado, ordenados por volumen
     """
-    limit = max(1, min(1000, limit))  # Limitar entre 1 y 1000
+    if market_type != MarketType.STOCKS:
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se soporta el mercado de acciones (stocks) actualmente"
+        )
+    
+    limit = max(1, min(500, limit))  # Limitar entre 1 y 500
     
     async with MassiveClient() as client:
         try:
-            response = await client.get_tickers(
-                market=market_type.value,
-                limit=limit,
-                offset=offset
-            )
+            # Obtener el resumen del mercado para ordenar por volumen
+            market_summary = await client.get_daily_market_summary()
             
-            return [
-                Asset(
-                    id=ticker.get("ticker"),
-                    symbol=ticker.get("ticker"),
-                    name=ticker.get("name", ""),
-                    market=market_type,
-                    currency=ticker.get("currency_name"),
-                    active=ticker.get("active", True),
-                    details=ticker
+            if not market_summary or "results" not in market_summary:
+                raise HTTPException(
+                    status_code=404,
+                    detail="No se encontraron datos de mercado"
                 )
-                for ticker in response.get("results", [])
+            
+            # Procesar y ordenar por volumen
+            assets = []
+            for r in market_summary.get("results", []):
+                try:
+                    if all(k in r for k in ["T", "c", "o", "v"]):
+                        change = r["c"] - r["o"]
+                        change_percent = (change / r["o"]) * 100 if r["o"] > 0 else 0
+                        
+                        assets.append({
+                            "ticker": r["T"],
+                            "close": r["c"],
+                            "change": round(change, 4),
+                            "change_percent": round(change_percent, 2),
+                            "volume": r["v"]
+                        })
+                except (TypeError, KeyError):
+                    continue
+            
+            # Ordenar por volumen (de mayor a menor) y limitar a 500
+            assets_sorted = sorted(assets, key=lambda x: x["volume"], reverse=True)[:500]
+            
+            # Aplicar paginación
+            paginated_assets = assets_sorted[offset:offset + limit]
+            
+            # Crear objetos Asset básicos sin detalles adicionales
+            results = [
+                Asset(
+                    id=asset["ticker"].lower(),
+                    symbol=asset["ticker"],
+                    name=asset["ticker"],  # El nombre real se puede obtener en el endpoint específico
+                    market=market_type,
+                    currency="USD",  # Moneda por defecto, se puede obtener del endpoint específico
+                    active=True,  # Asumimos que está activo si está en la lista
+                    price=asset["close"],
+                    change=asset["change"],
+                    change_percent=asset["change_percent"],
+                    volume=asset["volume"],
+                )
+                for asset in paginated_assets
             ]
             
+            return results
+            
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=500, 
