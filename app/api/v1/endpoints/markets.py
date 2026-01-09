@@ -1,10 +1,11 @@
 # app/api/v1/endpoints/markets.py
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from app.schemas.market import MarketType, MarketOverview, Asset
 from app.services.polygon.client import MassiveClient
+from app.utils.market_utils import process_market_results, get_paginated_results, get_top_assets
 
 router = APIRouter(prefix="/markets", tags=["markets"])
 
@@ -56,45 +57,17 @@ async def get_market_overview(market_type: MarketType):
                     detail="No se encontraron datos de mercado"
                 )
             
-            # 2. Procesar los resultados
-            results = market_summary.get("results", [])
+            # 2. Procesar y formatear los resultados
+            processed_results = process_market_results(
+                market_summary.get("results", []),
+                max_results=500
+            )
             
-            # 3. Filtrar y formatear los datos
-            processed_results = []
-            for r in results:
-                try:
-                    if all(k in r for k in ["T", "c", "o", "h", "l", "v", "vw"]):
-                        change = r["c"] - r["o"]
-                        change_percent = (change / r["o"]) * 100 if r["o"] > 0 else 0
-                        
-                        processed_results.append({
-                            "symbol": r["T"],
-                            "open": r["o"],
-                            "high": r["h"],
-                            "low": r["l"],
-                            "close": r["c"],
-                            "volume": r["v"],
-                            "vwap": r["vw"],
-                            "change": round(change, 4),
-                            "change_percent": round(change_percent, 2)
-                        })
-                except (TypeError, KeyError):
-                    continue
-            processed_results.sort(key=lambda x: x["volume"], reverse=True)
-            processed_results = processed_results[:500]
-            # 4. Ordenar y obtener top ganadores, perdedores y más activos
-            top_gainers = sorted(
-                processed_results,
-                key=lambda x: x["change_percent"],
-                reverse=True
-            )[:10]
-            
-            top_losers = sorted(
-                processed_results,
-                key=lambda x: x["change_percent"]
-            )[:10]
-            
-            most_active = processed_results[:10]
+            # 3. Obtener top ganadores, perdedores y más activos
+            top_assets = get_top_assets(processed_results, top_n=10)
+            top_gainers = top_assets["top_gainers"]
+            top_losers = top_assets["top_losers"]
+            most_active = top_assets["most_active"]
             
             # 5. Construir la respuesta
             return MarketOverview(
@@ -152,36 +125,25 @@ async def list_assets(
                     detail="No se encontraron datos de mercado"
                 )
             
-            # Procesar y ordenar por volumen
-            assets = []
-            for r in market_summary.get("results", []):
-                try:
-                    if all(k in r for k in ["T", "c", "o", "v"]):
-                        change = r["c"] - r["o"]
-                        change_percent = (change / r["o"]) * 100 if r["o"] > 0 else 0
-                        
-                        assets.append({
-                            "ticker": r["T"],
-                            "close": r["c"],
-                            "change": round(change, 4),
-                            "change_percent": round(change_percent, 2),
-                            "volume": r["v"]
-                        })
-                except (TypeError, KeyError):
-                    continue
-            
-            # Ordenar por volumen (de mayor a menor) y limitar a 500
-            assets_sorted = sorted(assets, key=lambda x: x["volume"], reverse=True)[:500]
+            # Procesar y formatear los resultados
+            processed_results = process_market_results(
+                market_summary.get("results", []),
+                max_results=500
+            )
             
             # Aplicar paginación
-            paginated_assets = assets_sorted[offset:offset + limit]
+            paginated_results = get_paginated_results(
+                processed_results,
+                offset=offset,
+                limit=limit
+            )
             
             # Crear objetos Asset básicos sin detalles adicionales
             results = [
                 Asset(
-                    id=asset["ticker"].lower(),
-                    symbol=asset["ticker"],
-                    name=asset["ticker"],  # El nombre real se puede obtener en el endpoint específico
+                    id=asset["symbol"].lower(),
+                    symbol=asset["symbol"],
+                    name=asset["symbol"],  # El nombre real se puede obtener en el endpoint específico
                     market=market_type,
                     currency="USD",  # Moneda por defecto, se puede obtener del endpoint específico
                     active=True,  # Asumimos que está activo si está en la lista
@@ -189,8 +151,9 @@ async def list_assets(
                     change=asset["change"],
                     change_percent=asset["change_percent"],
                     volume=asset["volume"],
+                    details={}  # Usamos un diccionario vacío en lugar de None
                 )
-                for asset in paginated_assets
+                for asset in paginated_results
             ]
             
             return results
