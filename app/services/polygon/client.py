@@ -8,6 +8,7 @@ import os
 from fastapi import HTTPException
 from functools import lru_cache
 from app.utils.date_utils import get_last_trading_day
+from app.utils.cache_utils import cached, market_cache
 
 class RateLimiter:
     """Clase para manejar el rate limiting"""
@@ -155,7 +156,7 @@ class MassiveClient:
                 status_code=500,
                 detail=f"Error al obtener detalles del ticker {symbol}: {str(e)}"
             )
-    @lru_cache(maxsize=32)
+    @cached(ttl_seconds=300)  # Cache por 5 minutos
     async def get_daily_market_summary(self, date: str = None) -> Dict[str, Any]:
         """
         Obtiene el resumen diario del mercado para todas las acciones.

@@ -5,10 +5,44 @@ from typing import List, Optional, Dict, Any
 
 from app.schemas.market import MarketType, MarketOverview, Asset
 from app.services.polygon.client import MassiveClient
-from app.utils.date_utils import get_last_trading_day
 from app.utils.market_utils import process_market_results, get_paginated_results, get_top_assets
+from app.utils.date_utils import get_last_trading_day
+from app.utils.cache_utils import market_cache
 
 router = APIRouter(prefix="/markets", tags=["markets"])
+
+@router.get("/cache/stats", response_model=Dict[str, Any])
+async def get_cache_stats():
+    """
+    Obtiene estadísticas del cache de mercado.
+    
+    Returns:
+        Dict[str, Any]: Estadísticas del cache incluyendo entradas y TTL
+    """
+    return market_cache.get_stats()
+
+@router.delete("/cache")
+async def clear_cache():
+    """
+    Limpia todo el cache de mercado.
+    
+    Returns:
+        Dict[str, str]: Confirmación de limpieza
+    """
+    await market_cache.clear()
+    return {"message": "Cache limpiado exitosamente"}
+
+@router.delete("/cache/market-summary")
+async def clear_market_summary_cache():
+    """
+    Limpia específicamente el cache del market summary.
+    
+    Returns:
+        Dict[str, str]: Confirmación de limpieza específica
+    """
+    await market_cache.clear_pattern("get_daily_market_summary")
+    return {"message": "Cache de market summary limpiado exitosamente"}
+
 
 @router.get("", response_model=List[dict])
 async def list_markets():
