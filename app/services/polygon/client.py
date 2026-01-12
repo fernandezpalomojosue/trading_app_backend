@@ -7,6 +7,7 @@ import aiohttp
 import os
 from fastapi import HTTPException
 from functools import lru_cache
+from app.utils.date_utils import get_last_trading_day
 
 class RateLimiter:
     """Clase para manejar el rate limiting"""
@@ -109,10 +110,10 @@ class MassiveClient:
         
             result = ticker_info['results']
         
-            yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+            date=get_last_trading_day()
             current_day = await self._make_request(
                 "GET",
-                f"/v1/open-close/{symbol.upper()}/{yesterday}",
+                f"/v1/open-close/{symbol.upper()}/{date}",
                 params={"adjusted": "true"}
             )
         

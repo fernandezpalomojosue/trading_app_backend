@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 
 from app.schemas.market import MarketType, MarketOverview, Asset
 from app.services.polygon.client import MassiveClient
+from app.utils.date_utils import get_last_trading_day
 from app.utils.market_utils import process_market_results, get_paginated_results, get_top_assets
 
 router = APIRouter(prefix="/markets", tags=["markets"])
@@ -26,7 +27,7 @@ async def list_markets():
 @router.get("/{market_type}/overview", response_model=MarketOverview)
 async def get_market_overview(market_type: MarketType):
     """
-    Obtiene un resumen del mercado de acciones con datos en tiempo real.
+    Obtiene un resumen del mercado de acciones con datos del último día hábil.
     
     Incluye:
     - Total de activos en el mercado
@@ -46,15 +47,18 @@ async def get_market_overview(market_type: MarketType):
             detail="Solo se soporta el mercado de acciones (stocks) actualmente"
         )
     
+    # Obtener el último día hábil (no fin de semana)
+    last_trading_date = get_last_trading_day()
+    
     async with MassiveClient() as client:
         try:
-            # 1. Obtener el resumen diario del mercado
-            market_summary = await client.get_daily_market_summary()
+            # 1. Obtener el resumen diario del mercado para el último día hábil
+            market_summary = await client.get_daily_market_summary(date=last_trading_date)
             
             if not market_summary or "results" not in market_summary:
                 raise HTTPException(
                     status_code=404,
-                    detail="No se encontraron datos de mercado"
+                    detail=f"No se encontraron datos de mercado para la fecha {last_trading_date}"
                 )
             
             # 2. Procesar y formatear los resultados
@@ -69,11 +73,11 @@ async def get_market_overview(market_type: MarketType):
             top_losers = top_assets["top_losers"]
             most_active = top_assets["most_active"]
             
-            # 5. Construir la respuesta
+            # 4. Construir la respuesta
             return MarketOverview(
                 market=market_type,
                 total_assets=len(processed_results),
-                status="open",
+                status="closed",  # Datos de cierre del último día hábil
                 last_updated=datetime.utcnow(),
                 top_gainers=top_gainers,
                 top_losers=top_losers,
@@ -92,7 +96,7 @@ async def get_market_overview(market_type: MarketType):
 @router.get("/{market_type}/assets", response_model=List[Asset])
 async def list_assets(
     market_type: MarketType, 
-    limit: int = 500, 
+    limit: int = 50, 
     offset: int = 0
 ):
     """
@@ -117,7 +121,7 @@ async def list_assets(
     async with MassiveClient() as client:
         try:
             # Obtener el resumen del mercado para ordenar por volumen
-            market_summary = await client.get_daily_market_summary()
+            market_summary = await client.get_daily_market_summary(date=get_last_trading_day())
             
             if not market_summary or "results" not in market_summary:
                 raise HTTPException(
