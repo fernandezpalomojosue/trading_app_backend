@@ -3,7 +3,9 @@ import re
 import uuid
 from datetime import datetime
 from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Column
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID
 from pydantic import EmailStr, validator, Field as PydanticField
 from passlib.context import CryptContext
 
@@ -50,7 +52,7 @@ class UserBase(SQLModel):
         return v
     @validator('username')
     def username_must_be_alphanumeric(cls, v):
-        if not v.isalnum():
+        if v is not None and not v.isalnum():
             raise ValueError('El nombre de usuario solo puede contener letras y números')
         return v
 
@@ -58,9 +60,8 @@ class User(UserBase, table=True):
     """Modelo de usuario para la base de datos"""
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
-        primary_key=True,
-        index=True,
-        description="ID único del usuario (UUID)"
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="ID único del usuario (UUID nativo)"
     )
     hashed_password: str = Field(
         ..., 
@@ -104,7 +105,8 @@ class UserCreate(UserBase):
             **user_data,
             hashed_password=hashed_password,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
+            id=uuid.uuid4()  # UUID nativo
         )
 
 class UserUpdate(SQLModel):

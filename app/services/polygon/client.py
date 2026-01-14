@@ -6,7 +6,6 @@ from typing import Dict, List, Any, Optional, Tuple, Union
 import aiohttp
 import os
 from fastapi import HTTPException
-from functools import lru_cache
 from app.utils.date_utils import get_last_trading_day
 from app.utils.cache_utils import cached, market_cache
 
@@ -69,15 +68,16 @@ class MassiveClient:
         }
         
         try:
+            start_time = time.time()
             async with self.session.request(
                 method, 
                 url, 
                 headers=headers,
                 **{k: v for k, v in kwargs.items() if v is not None}
             ) as response:
-                print("Yey")
                 response.raise_for_status()
-                return await response.json()
+                result = await response.json()
+                return result
         except aiohttp.ClientError as e:
             error_msg = f"Error en la petición a {url}: {str(e)}"
             if hasattr(e, 'status'):
@@ -89,7 +89,7 @@ class MassiveClient:
                 status_code=getattr(e, 'status', 500),
                 detail=error_msg
             )
-    @lru_cache(maxsize=128)
+    @cached(ttl_seconds=300)
     async def get_ticker_details(self, symbol: str) -> Dict[str, Any]:
         """Obtiene los detalles de un ticker específico con datos del día actual
         
@@ -100,7 +100,6 @@ class MassiveClient:
             Dict con los detalles del ticker incluyendo información de la empresa y datos de mercado
         """
         try:
-            # Obtener información básica del ticker
             ticker_info = await self._make_request(
                 "GET",
                 f"/v3/reference/tickers/{symbol.upper()}"
@@ -133,8 +132,7 @@ class MassiveClient:
                     'last_updated': datetime.utcnow().isoformat()
                 }
         
-            # Construir la respuesta
-            return {
+            result = {
                 'id': result.get('ticker', '').lower(),
                 'symbol': result.get('ticker', ''),
                 'name': result.get('name', ''),
@@ -148,6 +146,8 @@ class MassiveClient:
                 'primary_exchange': result.get('primary_exchange'),
                 'market_data': market_data
             }
+            
+            return result
         
         except HTTPException:
             raise
@@ -156,7 +156,7 @@ class MassiveClient:
                 status_code=500,
                 detail=f"Error al obtener detalles del ticker {symbol}: {str(e)}"
             )
-    @cached(ttl_seconds=300)  # Cache por 5 minutos
+    @cached(ttl_seconds=300)
     async def get_daily_market_summary(self, date: str = None) -> Dict[str, Any]:
         """
         Obtiene el resumen diario del mercado para todas las acciones.
@@ -167,14 +167,18 @@ class MassiveClient:
         Returns:
             Dict con los datos de mercado para todas las acciones
         """
+        start_time = time.time()
         if date is None:
             date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
     
-        return await self._make_request(
+        result = await self._make_request(
             "GET",
             f"/v2/aggs/grouped/locale/us/market/stocks/{date}",
             params={"adjusted": "true"}
         )
+        
+        return result
+    @cached(ttl_seconds=300)
     async def get_ohlc_data(
         self,
         symbol: str,
@@ -199,6 +203,7 @@ class MassiveClient:
             sort: Orden de los resultados (asc o desc)
             limit: Número máximo de resultados (hasta 50000)
         """
+        start_time = time.time()
         if not start_date:
             start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
         if not end_date:
@@ -213,7 +218,8 @@ class MassiveClient:
         }
         
         try:
-            return await self._make_request("GET", endpoint, params=params)
+            result = await self._make_request("GET", endpoint, params=params)
+            return result
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -222,5 +228,6 @@ class MassiveClient:
 
     def clear_cache(self):
         """Clear all cached data"""
-        self.get_daily_market_summary.cache_clear()
-        self.get_ticker_details.cache_clear()
+        import asyncio
+        asyncio.create_task(market_cache.clear_pattern("get_daily_market_summary"))
+        asyncio.create_task(market_cache.clear_pattern("get_ticker_details"))

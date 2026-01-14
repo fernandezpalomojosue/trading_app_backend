@@ -10,41 +10,35 @@ def process_market_results(
     results: List[Dict[str, Any]], 
     max_results: Optional[int] = None
 ) -> List[Dict[str, Any]]:
-    """
-    Process raw market results into a standardized format.
-    
-    Args:
-        results: List of raw market data results
-        max_results: Maximum number of results to return (None for all)
-        
-    Returns:
-        List of processed market data
-    """
+    """Process raw market results into a standardized format."""
     processed = []
     for r in results:
         try:
-            if all(k in r for k in ["T", "c", "o", "v"]):
-                change = r["c"] - r["o"]
-                change_percent = (change / r["o"]) * 100 if r["o"] > 0 else 0
+            if not isinstance(r, dict) or not all(k in r for k in ["T", "c", "o", "v"]):
+                continue
                 
-                processed.append({
-                    "symbol": r["T"],
-                    "open": r["o"],
-                    "high": r["h"],
-                    "low": r["l"],
-                    "close": r["c"],
-                    "volume": r["v"],
-                    "vwap": r.get("vw"),
-                    "change": round(change, 4),
-                    "change_percent": round(change_percent, 2)
-                })
-        except (TypeError, KeyError) as e:
+            open_price = r["o"]
+            close_price = r["c"]
+            
+            change = close_price - open_price
+            change_percent = (change / open_price * 100) if open_price > 0 else 0
+            
+            processed.append({
+                "symbol": r["T"],
+                "open": open_price,
+                "high": r.get("h", close_price),
+                "low": r.get("l", close_price),
+                "close": close_price,
+                "volume": r["v"],
+                "vwap": r.get("vw"),
+                "change": round(change, 4),
+                "change_percent": round(change_percent, 2)
+            })
+        except (TypeError, KeyError, ZeroDivisionError):
             continue
     
-    # Sort by volume in descending order
     processed.sort(key=lambda x: x["volume"], reverse=True)
     
-    # Apply max results if specified
     if max_results is not None:
         return processed[:max_results]
     
@@ -56,17 +50,7 @@ def get_paginated_results(
     offset: int = 0, 
     limit: Optional[int] = None
 ) -> List[Any]:
-    """
-    Get a paginated subset of data.
-    
-    Args:
-        data: List of items to paginate
-        offset: Number of items to skip
-        limit: Maximum number of items to return (None for all remaining)
-        
-    Returns:
-        Paginated subset of the data
-    """
+    """Get a paginated subset of data."""
     if limit is None:
         return data[offset:]
     return data[offset:offset + limit]
@@ -76,16 +60,9 @@ def get_top_assets(
     processed_results: List[Dict[str, Any]], 
     top_n: int = 10
 ) -> dict:
-    """
-    Get top gainers, losers, and most active assets.
+    """Get top gainers, losers, and most active assets."""
+    most_active = processed_results[:top_n]
     
-    Args:
-        processed_results: List of processed market data
-        top_n: Number of top items to return for each category
-        
-    Returns:
-        Dictionary with top gainers, losers, and most active assets
-    """
     top_gainers = sorted(
         processed_results,
         key=lambda x: x["change_percent"],
@@ -96,8 +73,6 @@ def get_top_assets(
         processed_results,
         key=lambda x: x["change_percent"]
     )[:top_n]
-    
-    most_active = processed_results[:top_n]
     
     return {
         "top_gainers": top_gainers,

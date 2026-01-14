@@ -16,7 +16,7 @@ from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["autenticacion"])
 
-@router.post("/registro", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 async def registrar_usuario(
     user_data: UserCreate,
     db: Session = Depends(get_session)

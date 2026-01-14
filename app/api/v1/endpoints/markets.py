@@ -1,5 +1,5 @@
 # app/api/v1/endpoints/markets.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
@@ -8,11 +8,13 @@ from app.services.polygon.client import MassiveClient
 from app.utils.market_utils import process_market_results, get_paginated_results, get_top_assets
 from app.utils.date_utils import get_last_trading_day
 from app.utils.cache_utils import market_cache
+from app.core.security import get_current_active_user
+from app.models.user import User
 
 router = APIRouter(prefix="/markets", tags=["markets"])
 
 @router.get("/cache/stats", response_model=Dict[str, Any])
-async def get_cache_stats():
+async def get_cache_stats(current_user: User = Depends(get_current_active_user)):
     """
     Obtiene estadísticas del cache de mercado.
     
@@ -22,7 +24,7 @@ async def get_cache_stats():
     return market_cache.get_stats()
 
 @router.delete("/cache")
-async def clear_cache():
+async def clear_cache(current_user: User = Depends(get_current_active_user)):
     """
     Limpia todo el cache de mercado.
     
@@ -33,7 +35,7 @@ async def clear_cache():
     return {"message": "Cache limpiado exitosamente"}
 
 @router.delete("/cache/market-summary")
-async def clear_market_summary_cache():
+async def clear_market_summary_cache(current_user: User = Depends(get_current_active_user)):
     """
     Limpia específicamente el cache del market summary.
     
@@ -57,7 +59,6 @@ async def list_markets():
         for market in MarketType
     ]
 
-# app/api/v1/endpoints/markets.py
 @router.get("/{market_type}/overview", response_model=MarketOverview)
 async def get_market_overview(market_type: MarketType):
     """
@@ -81,12 +82,10 @@ async def get_market_overview(market_type: MarketType):
             detail="Solo se soporta el mercado de acciones (stocks) actualmente"
         )
     
-    # Obtener el último día hábil (no fin de semana)
     last_trading_date = get_last_trading_day()
     
     async with MassiveClient() as client:
         try:
-            # 1. Obtener el resumen diario del mercado para el último día hábil
             market_summary = await client.get_daily_market_summary(date=last_trading_date)
             
             if not market_summary or "results" not in market_summary:
@@ -95,23 +94,20 @@ async def get_market_overview(market_type: MarketType):
                     detail=f"No se encontraron datos de mercado para la fecha {last_trading_date}"
                 )
             
-            # 2. Procesar y formatear los resultados
             processed_results = process_market_results(
                 market_summary.get("results", []),
                 max_results=500
             )
             
-            # 3. Obtener top ganadores, perdedores y más activos
             top_assets = get_top_assets(processed_results, top_n=10)
             top_gainers = top_assets["top_gainers"]
             top_losers = top_assets["top_losers"]
             most_active = top_assets["most_active"]
             
-            # 4. Construir la respuesta
             return MarketOverview(
                 market=market_type,
                 total_assets=len(processed_results),
-                status="closed",  # Datos de cierre del último día hábil
+                status="closed",
                 last_updated=datetime.utcnow(),
                 top_gainers=top_gainers,
                 top_losers=top_losers,
@@ -144,17 +140,17 @@ async def list_assets(
     Returns:
         List[Asset]: Lista básica de activos del mercado especificado, ordenados por volumen
     """
+    
     if market_type != MarketType.STOCKS:
         raise HTTPException(
             status_code=400,
             detail="Solo se soporta el mercado de acciones (stocks) actualmente"
         )
     
-    limit = max(1, min(500, limit))  # Limitar entre 1 y 500
+    limit = max(1, min(500, limit))
     
     async with MassiveClient() as client:
         try:
-            # Obtener el resumen del mercado para ordenar por volumen
             market_summary = await client.get_daily_market_summary(date=get_last_trading_day())
             
             if not market_summary or "results" not in market_summary:
@@ -163,33 +159,30 @@ async def list_assets(
                     detail="No se encontraron datos de mercado"
                 )
             
-            # Procesar y formatear los resultados
             processed_results = process_market_results(
                 market_summary.get("results", []),
                 max_results=500
             )
             
-            # Aplicar paginación
             paginated_results = get_paginated_results(
                 processed_results,
                 offset=offset,
                 limit=limit
             )
             
-            # Crear objetos Asset básicos sin detalles adicionales
             results = [
                 Asset(
                     id=asset["symbol"].lower(),
                     symbol=asset["symbol"],
-                    name=asset["symbol"],  # El nombre real se puede obtener en el endpoint específico
+                    name=asset["symbol"],
                     market=market_type,
-                    currency="USD",  # Moneda por defecto, se puede obtener del endpoint específico
-                    active=True,  # Asumimos que está activo si está en la lista
+                    currency="USD",
+                    active=True,
                     price=asset["close"],
                     change=asset["change"],
                     change_percent=asset["change_percent"],
                     volume=asset["volume"],
-                    details={}  # Usamos un diccionario vacío en lugar de None
+                    details={}
                 )
                 for asset in paginated_results
             ]
