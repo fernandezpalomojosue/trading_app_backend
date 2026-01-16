@@ -1,0 +1,12 @@
+# Development dependencies
+-r requirements.txt
+
+# Database migrations
+alembic
+
+# Development tools
+black
+isort
+flake8
+mypy
+pre-commit
