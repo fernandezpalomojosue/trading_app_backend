@@ -37,3 +37,6 @@ class AppBaseSettings(BaseSettings):
 @lru_cache
 def get_settings():
     return AppBaseSettings()
+
+# Instance to be imported by other modules
+settings = get_settings()
