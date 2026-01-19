@@ -1,28 +1,38 @@
 # app/main.py
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
 from app.db.base import create_db_and_tables, engine
 from app.api.v1.endpoints.routers import api_router
-from app.core.config import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    if settings.ENVIRONMENT == "development":
-        create_db_and_tables()
+    """
+    Ciclo de vida de la aplicación.
+    - Startup: crea tablas si no existen (idempotente)
+    - Shutdown: cierra conexiones
+    """
+    print(f"Starting app in {settings.ENVIRONMENT} mode...")
+    create_db_and_tables()
     yield
-    # Shutdown
+    print("Shutting down app...")
     engine.dispose()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_DESCRIPTION,
     version=settings.PROJECT_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# Configurar CORS
+# ==============================
+# CORS
+# ==============================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -31,13 +41,24 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers_list,
 )
 
-# Incluir routers
-app.include_router(api_router, prefix="/api/v1")
+# ==============================
+# Routers
+# ==============================
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# ==============================
+# Healthcheck
+# ==============================
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "ok"}
 
+# ==============================
+# Root
+# ==============================
 @app.get("/")
 async def root():
-    return {"message": "Bienvenido a la API de Trading"}
+    return {
+        "message": "Bienvenido a la API de Trading",
+        "environment": settings.ENVIRONMENT,
+    }
