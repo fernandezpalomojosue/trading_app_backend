@@ -6,7 +6,7 @@ python-dotenv==1.0.0
 # Database
 sqlmodel>=0.0.8
 alembic==1.13.1
-psycopg2-binary==2.9.9
+psycopg[binary]>=3.1
 
 # Authentication
 python-jose[cryptography]==3.3.0
