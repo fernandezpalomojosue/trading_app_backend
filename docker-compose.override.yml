@@ -1,0 +1,20 @@
+services:
+  api:
+    environment:
+      ENVIRONMENT: development
+      ECHO_SQL: "true"
+    volumes:
+      - ./app:/app/app
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+  db:
+    environment:
+      POSTGRES_USER: leo
+      POSTGRES_PASSWORD: trading_app_2024
+      POSTGRES_DB: trading_app
+    ports:
+      - "5432:5432"

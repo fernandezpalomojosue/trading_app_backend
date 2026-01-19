@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    environment:
+      ENVIRONMENT: testing
+      DATABASE_URL: postgresql://test:test@db:5432/test_db
+      SECRET_KEY: testsecret
+    depends_on:
+      db:
+        condition: service_healthy
+    command: pytest
