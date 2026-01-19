@@ -9,7 +9,6 @@ import os
 # ==========================================================
 
 class AppBaseSettings(BaseSettings):
-    # Environment
     ENVIRONMENT: str = "development"
 
     # API
@@ -21,50 +20,47 @@ class AppBaseSettings(BaseSettings):
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 día
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
-    
+
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
-    
+        return [o.strip() for o in self.CORS_ORIGINS.split(",")]
+
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: str = "*"
     CORS_ALLOW_HEADERS: str = "*"
-    
-    @property
-    def cors_allow_methods_list(self) -> List[str]:
-        return [method.strip() for method in self.CORS_ALLOW_METHODS.split(",")]
-    
-    @property
-    def cors_allow_headers_list(self) -> List[str]:
-        return [header.strip() for header in self.CORS_ALLOW_HEADERS.split(",")]
 
     # API Keys
     POLYGON_API_KEY: Optional[str] = None
 
+    # DB (se define por entorno)
+    DATABASE_URL: str
+
+    # Debug flags
+    DEBUG: bool = False
+    RELOAD: bool = False
+    ECHO_SQL: bool = False
+
     class Config:
         env_file = ".env"
         case_sensitive = True
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # Permitir campos extra en .env
+        extra = "ignore"
 
 
 # ==========================================================
-# Development settings (Postgres)
+# Development settings (Postgres local)
 # ==========================================================
 
 class DevelopmentSettings(AppBaseSettings):
-    # Database (Postgres)
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 
-    # Debug
     DEBUG: bool = True
     RELOAD: bool = True
     ECHO_SQL: bool = True
@@ -83,11 +79,19 @@ class DevelopmentSettings(AppBaseSettings):
 # ==========================================================
 
 class TestingSettings(AppBaseSettings):
-    # Database (SQLite)
     DATABASE_URL: str = "sqlite:///./test.db"
 
-    # Debug
     DEBUG: bool = True
+    ECHO_SQL: bool = False
+
+
+# ==========================================================
+# Production settings (Render / cloud)
+# ==========================================================
+
+class ProductionSettings(AppBaseSettings):
+    # DATABASE_URL viene DIRECTA del provider (Render)
+    DEBUG: bool = False
     RELOAD: bool = False
     ECHO_SQL: bool = False
 
@@ -98,10 +102,13 @@ class TestingSettings(AppBaseSettings):
 
 @lru_cache
 def get_settings():
-    environment = os.getenv("ENVIRONMENT", "development")
+    env = os.getenv("ENVIRONMENT", "development").lower()
 
-    if environment == "testing":
+    if env == "testing":
         return TestingSettings()
+
+    if env == "production":
+        return ProductionSettings()
 
     return DevelopmentSettings()
 
