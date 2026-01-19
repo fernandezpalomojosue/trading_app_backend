@@ -17,6 +17,20 @@ class AppBaseSettings(BaseSettings):
     CORS_ALLOW_HEADERS: str = "*"
     CORS_ALLOW_CREDENTIALS: bool = True
 
+    # API
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Trading App API"
+    PROJECT_DESCRIPTION: str = "API para la aplicación de trading"
+    PROJECT_VERSION: str = "0.1.0"
+
+    # Debug flags
+    DEBUG: bool = False
+    RELOAD: bool = False
+    ECHO_SQL: bool = False
+
+    # API Keys
+    POLYGON_API_KEY: str = None
+
     @property
     def cors_origins_list(self):
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o]
