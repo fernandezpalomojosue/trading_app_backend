@@ -22,16 +22,28 @@ class AppBaseSettings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    # CORS
+        # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
+    CORS_ALLOW_CREDENTIALS: bool = True
 
     @property
     def cors_origins_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",")]
 
-    CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: str = "*"
-    CORS_ALLOW_HEADERS: str = "*"
+    @property
+    def cors_allow_methods_list(self) -> List[str]:
+        if self.CORS_ALLOW_METHODS == "*":
+            return ["*"]
+        return [m.strip() for m in self.CORS_ALLOW_METHODS.split(",")]
+
+    @property
+    def cors_allow_headers_list(self) -> List[str]:
+        if self.CORS_ALLOW_HEADERS == "*":
+            return ["*"]
+        return [h.strip() for h in self.CORS_ALLOW_HEADERS.split(",")]
+
 
     # API Keys
     POLYGON_API_KEY: Optional[str] = None
