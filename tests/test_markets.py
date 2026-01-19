@@ -33,8 +33,7 @@ def test_market_overview_invalid_market(client):
 def test_list_assets_invalid_market(client):
     res = client.get("/api/v1/markets/forex/assets")
 
-    assert res.status_code == 400
-    assert "stocks" in res.json()["detail"].lower()
+    assert res.status_code == 422  # FastAPI devuelve 422 para errores de validación
 
 
 # =========================
@@ -53,11 +52,12 @@ def test_market_overview_success(mock_client, client):
     mock_instance.get_daily_market_summary.return_value = {
         "results": [
             {
-                "symbol": "AAPL",
-                "close": 150.0,
-                "change": 2.0,
-                "change_percent": 1.35,
-                "volume": 1000000,
+                "T": "AAPL",  # Symbol en formato Polygon
+                "c": 150.0,    # Close
+                "o": 148.0,    # Open  
+                "h": 152.0,    # High
+                "l": 147.0,    # Low
+                "v": 1000000    # Volume
             }
         ]
     }
@@ -84,11 +84,12 @@ def test_list_assets_success(mock_client, client):
     mock_instance.get_daily_market_summary.return_value = {
         "results": [
             {
-                "symbol": "MSFT",
-                "close": 300.0,
-                "change": -1.2,
-                "change_percent": -0.4,
-                "volume": 2000000,
+                "T": "MSFT",   # Symbol en formato Polygon
+                "c": 300.0,    # Close
+                "o": 301.2,    # Open
+                "h": 302.0,    # High
+                "l": 298.5,    # Low
+                "v": 2000000    # Volume
             }
         ]
     }

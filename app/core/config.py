@@ -24,13 +24,23 @@ class AppBaseSettings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 día
 
     # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+    
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: List[str] = ["*"]
-    CORS_ALLOW_HEADERS: List[str] = ["*"]
+    CORS_ALLOW_METHODS: str = "*"
+    CORS_ALLOW_HEADERS: str = "*"
+    
+    @property
+    def cors_allow_methods_list(self) -> List[str]:
+        return [method.strip() for method in self.CORS_ALLOW_METHODS.split(",")]
+    
+    @property
+    def cors_allow_headers_list(self) -> List[str]:
+        return [header.strip() for header in self.CORS_ALLOW_HEADERS.split(",")]
 
     # API Keys
     POLYGON_API_KEY: Optional[str] = None
@@ -39,6 +49,7 @@ class AppBaseSettings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         env_file_encoding = "utf-8"
+        extra = "ignore"  # Permitir campos extra en .env
 
 
 # ==========================================================
