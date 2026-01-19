@@ -1,6 +1,7 @@
 # app/core/config.py
 
 from pydantic_settings import BaseSettings
+from typing import Optional
 from functools import lru_cache
 import os
 
@@ -29,7 +30,7 @@ class AppBaseSettings(BaseSettings):
     ECHO_SQL: bool = False
 
     # API Keys
-    POLYGON_API_KEY: str = None
+    POLYGON_API_KEY: Optional[str] = None
 
     @property
     def cors_origins_list(self):
