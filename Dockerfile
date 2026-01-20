@@ -43,6 +43,8 @@ COPY --from=builder /usr/local /usr/local
 
 # Copiamos el código
 COPY app/ app/
+COPY tests/ tests/
+
 
 # Usuario no root (best practice)
 RUN useradd --create-home app \
