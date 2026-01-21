@@ -40,7 +40,7 @@ class TestUserModel:
         ]
         
         for email in valid_emails:
-            user = UserCreate(email=email, password="test123")
+            user = UserCreate(email=email, password="testpassword123")
             assert user.email == email.lower()  # Should be normalized
     
     def test_user_create_invalid_email(self):
@@ -71,7 +71,7 @@ class TestUserModel:
         ]
         
         for username in valid_usernames:
-            user = UserCreate(email="test@example.com", username=username, password="test123")
+            user = UserCreate(email="test@example.com", username=username, password="testpassword123")
             assert user.username == username
         
         # Invalid usernames
@@ -85,12 +85,12 @@ class TestUserModel:
         
         for username in invalid_usernames:
             with pytest.raises(ValueError, match="solo puede contener letras y números"):
-                UserCreate(email="test@example.com", username=username, password="test123")
+                UserCreate(email="test@example.com", username=username, password="testpassword123")
     
     def test_user_create_optional_fields(self):
         """Test UserCreate with optional fields"""
         # Minimal valid user
-        user = UserCreate(email="minimal@example.com", password="test123")
+        user = UserCreate(email="minimal@example.com", password="testpassword123")
         
         assert user.email == "minimal@example.com"
         assert user.username is None
@@ -146,7 +146,7 @@ class TestUserModel:
         
         user_create = UserCreate(
             email="timestamp@example.com",
-            password="test123"
+            password="testpassword123"
         )
         
         user = user_create.create_user()
@@ -197,7 +197,7 @@ class TestUserModel:
             email="public@example.com",
             username="publicuser",
             full_name="Public User",
-            password="test123"
+            password="testpassword123"
         )
         
         user = user_create.create_user()
@@ -250,17 +250,17 @@ class TestUserModel:
         """Test user model field constraints"""
         # Test balance constraint (ge=0)
         with pytest.raises(ValueError):
-            UserCreate(email="test@example.com", password="test123", balance=-100.0)
+            UserCreate(email="test@example.com", password="testpassword123", balance=-100.0)
         
         # Test password length constraints
         with pytest.raises(ValueError):
-            UserCreate(email="test@example.com", password="123")  # Too short
+            UserCreate(email="test@example.com", password="1234567")  # Too short
         
         # Test username length constraints
         with pytest.raises(ValueError):
             UserCreate(
                 email="test@example.com", 
-                password="test123", 
+                password="testpassword123", 
                 username="a" * 51  # Too long
             )
         
@@ -268,7 +268,7 @@ class TestUserModel:
         with pytest.raises(ValueError):
             UserCreate(
                 email="test@example.com", 
-                password="test123", 
+                password="testpassword123", 
                 full_name="a" * 101  # Too long
             )
     
@@ -276,7 +276,7 @@ class TestUserModel:
         """Test email case normalization"""
         user_create = UserCreate(
             email="UPPERCASE@EXAMPLE.COM",
-            password="test123"
+            password="testpassword123"
         )
         
         user = user_create.create_user()
@@ -297,7 +297,7 @@ class TestUserModel:
         """Test user model default values"""
         user_create = UserCreate(
             email="defaults@example.com",
-            password="test123"
+            password="testpassword123"
         )
         
         user = user_create.create_user()
@@ -314,7 +314,7 @@ class TestUserModel:
             email="dict@example.com",
             username="dictuser",
             full_name="Dict User",
-            password="test123",
+            password="testpassword123",
             balance=1000.0,
             is_active=False
         )

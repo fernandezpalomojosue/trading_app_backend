@@ -8,6 +8,8 @@ import os
 class AppBaseSettings(BaseSettings):
     ENVIRONMENT: str = "development"
     DATABASE_URL: str
+    TEST_DATABASE_URL: Optional[str] = None  # Add test database URL
+
 
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -31,6 +33,12 @@ class AppBaseSettings(BaseSettings):
 
     # API Keys
     POLYGON_API_KEY: Optional[str] = None
+
+    def get_database_url(self) -> str:
+        """Get the appropriate database URL based on environment."""
+        if self.ENVIRONMENT == "testing" and self.TEST_DATABASE_URL:
+            return self.TEST_DATABASE_URL
+        return self.DATABASE_URL
 
     @property
     def cors_origins_list(self):

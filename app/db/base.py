@@ -5,7 +5,7 @@ from app.core.config import settings
 
 # Crear el motor de la base de datos
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.get_database_url(),  # Use the dynamic database URL
     echo=settings.ECHO_SQL,  # Controlado por configuración
     pool_pre_ping=True,  # Verifica la conexión antes de usarla
     pool_recycle=300,  # Recicla las conexiones cada 5 minutos
