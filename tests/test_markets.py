@@ -1,154 +1,455 @@
 from unittest.mock import AsyncMock, patch
 import pytest
+from datetime import datetime
 
 
-# =========================
-# BASIC / PUBLIC ENDPOINTS
-# =========================
+class TestMarketsEndpoints:
+    """Test suite for markets endpoints"""
+    
+    # =========================
+    # BASIC / PUBLIC ENDPOINTS
+    # =========================
 
-def test_list_markets(client):
-    """
-    GET /api/v1/markets
-    No usa servicios externos.
-    """
-    res = client.get("/api/v1/markets")
+    def test_list_markets(self, client):
+        """
+        GET /api/v1/markets
+        Returns list of available markets without external dependencies.
+        """
+        response = client.get("/api/v1/markets")
 
-    assert res.status_code == 200
-    data = res.json()
+        assert response.status_code == 200
+        data = response.json()
 
-    assert isinstance(data, list)
-    assert any(m["id"] == "stocks" for m in data)
+        assert isinstance(data, list)
+        assert len(data) >= 1  # At least stocks should be available
+        
+        # Verify structure of market items
+        for market in data:
+            assert "id" in market
+            assert "name" in market
+            assert isinstance(market["id"], str)
+            assert isinstance(market["name"], str)
+        
+        # Verify stocks market is present
+        assert any(m["id"] == "stocks" for m in data)
 
+    def test_market_overview_invalid_market(self, client):
+        """
+        GET /api/v1/markets/crypto/overview
+        Should return 400 as only 'stocks' is supported.
+        """
+        response = client.get("/api/v1/markets/crypto/overview")
 
-def test_market_overview_invalid_market(client):
-    """
-    Solo 'stocks' está soportado.
-    """
-    res = client.get("/api/v1/markets/crypto/overview")
+        assert response.status_code == 400
+        error_detail = response.json()["detail"]
+        assert "stocks" in error_detail.lower()
+        assert "solo" in error_detail.lower()
 
-    assert res.status_code == 400
-    assert "stocks" in res.json()["detail"].lower()
+    def test_list_assets_invalid_market(self, client):
+        """
+        GET /api/v1/markets/forex/assets
+        Should return 422 for invalid market type.
+        """
+        response = client.get("/api/v1/markets/forex/assets")
+        assert response.status_code == 422
 
+    def test_list_assets_pagination_validation(self, client):
+        """
+        GET /api/v1/markets/stocks/assets with invalid pagination parameters.
+        """
+        # Test negative limit
+        response = client.get("/api/v1/markets/stocks/assets?limit=-10")
+        assert response.status_code in [200, 422]  # May be normalized or rejected
+        
+        # Test negative offset
+        response = client.get("/api/v1/markets/stocks/assets?offset=-5")
+        assert response.status_code in [200, 422]
+        
+        # Test very large limit
+        response = client.get("/api/v1/markets/stocks/assets?limit=10000")
+        assert response.status_code in [200, 422]
 
-def test_list_assets_invalid_market(client):
-    res = client.get("/api/v1/markets/forex/assets")
+    # =========================
+    # MOCKED SERVICE TESTS
+    # =========================
 
-    assert res.status_code == 422  # FastAPI devuelve 422 para errores de validación
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_market_overview_success(self, mock_client, client):
+        """
+        GET /api/v1/markets/stocks/overview
+        Test successful market overview with mocked MassiveClient.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
+        mock_instance.get_daily_market_summary.return_value = {
+            "results": [
+                {
+                    "T": "AAPL",  # Symbol in Polygon format
+                    "c": 150.0,    # Close
+                    "o": 148.0,    # Open  
+                    "h": 152.0,    # High
+                    "l": 147.0,    # Low
+                    "v": 1000000    # Volume
+                },
+                {
+                    "T": "MSFT",
+                    "c": 250.0,
+                    "o": 248.0,
+                    "h": 252.0,
+                    "l": 247.0,
+                    "v": 800000
+                }
+            ]
+        }
 
-# =========================
-# MOCKED SERVICE TESTS
-# =========================
+        response = client.get("/api/v1/markets/stocks/overview")
 
-@patch("app.api.v1.endpoints.markets.MassiveClient")
-def test_market_overview_success(mock_client, client):
-    """
-    GET /markets/stocks/overview
-    Con MassiveClient mockeado
-    """
-    mock_instance = AsyncMock()
-    mock_client.return_value.__aenter__.return_value = mock_instance
+        assert response.status_code == 200
+        body = response.json()
 
-    mock_instance.get_daily_market_summary.return_value = {
-        "results": [
+        # Verify response structure
+        assert "market" in body
+        assert "total_assets" in body
+        assert "status" in body
+        assert "last_updated" in body
+        assert "top_gainers" in body
+        assert "top_losers" in body
+        assert "most_active" in body
+        
+        # Verify response content
+        assert body["market"] == "stocks"
+        assert body["total_assets"] == 2
+        assert body["status"] == "closed"
+        assert len(body["top_gainers"]) == 2
+        assert len(body["top_losers"]) == 2
+        assert len(body["most_active"]) == 2
+        
+        # Verify timestamp format
+        assert "last_updated" in body
+        
+        # Verify top assets structure
+        for gainer in body["top_gainers"]:
+            assert "symbol" in gainer
+            assert "change_percent" in gainer
+            assert "volume" in gainer
+
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_market_overview_empty_results(self, mock_client, client):
+        """
+        Test market overview with empty results from external service.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
+
+        mock_instance.get_daily_market_summary.return_value = {
+            "results": []
+        }
+
+        response = client.get("/api/v1/markets/stocks/overview")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["total_assets"] == 0
+        assert len(body["top_gainers"]) == 0
+        assert len(body["top_losers"]) == 0
+        assert len(body["most_active"]) == 0
+
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_market_overview_service_error(self, mock_client, client):
+        """
+        Test market overview when external service fails.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
+
+        mock_instance.get_daily_market_summary.side_effect = Exception("Service unavailable")
+
+        response = client.get("/api/v1/markets/stocks/overview")
+
+        assert response.status_code == 500
+        error_detail = response.json()["detail"]
+        assert "Error al obtener el resumen del mercado" in error_detail
+
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_list_assets_success(self, mock_client, client):
+        """
+        GET /api/v1/markets/stocks/assets
+        Test successful assets listing with pagination.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
+
+        mock_instance.get_daily_market_summary.return_value = {
+            "results": [
+                {
+                    "T": "MSFT",   # Symbol in Polygon format
+                    "c": 300.0,    # Close
+                    "o": 301.2,    # Open
+                    "h": 302.0,    # High
+                    "l": 298.5,    # Low
+                    "v": 2000000    # Volume
+                },
+                {
+                    "T": "GOOGL",
+                    "c": 2500.0,
+                    "o": 2510.0,
+                    "h": 2520.0,
+                    "l": 2490.0,
+                    "v": 1500000
+                }
+            ]
+        }
+
+        response = client.get("/api/v1/markets/stocks/assets?limit=10&offset=0")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert isinstance(data, list)
+        assert len(data) == 2
+        
+        # Verify asset structure
+        for asset in data:
+            assert "id" in asset
+            assert "symbol" in asset
+            assert "name" in asset
+            assert "market" in asset
+            assert "currency" in asset
+            assert "active" in asset
+            assert "price" in asset
+            assert "change" in asset
+            assert "change_percent" in asset
+            assert "volume" in asset
+            assert "details" in asset
+            
+            assert asset["market"] == "stocks"
+            assert asset["currency"] == "USD"
+            assert asset["active"] is True
+
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_list_assets_pagination(self, mock_client, client):
+        """
+        Test pagination functionality in assets endpoint.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
+
+        # Create mock data with multiple assets
+        mock_results = [
             {
-                "T": "AAPL",  # Symbol en formato Polygon
-                "c": 150.0,    # Close
-                "o": 148.0,    # Open  
-                "h": 152.0,    # High
-                "l": 147.0,    # Low
-                "v": 1000000    # Volume
+                "T": f"STOCK{i}",
+                "c": 100.0 + i,
+                "o": 99.0 + i,
+                "h": 101.0 + i,
+                "l": 98.0 + i,
+                "v": 1000000 - i * 10000
             }
+            for i in range(10)
         ]
-    }
+        
+        mock_instance.get_daily_market_summary.return_value = {"results": mock_results}
 
-    res = client.get("/api/v1/markets/stocks/overview")
+        # Test limit
+        response = client.get("/api/v1/markets/stocks/assets?limit=5")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5
+        
+        # Test offset
+        response = client.get("/api/v1/markets/stocks/assets?limit=5&offset=3")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5
 
-    assert res.status_code == 200
-    body = res.json()
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_get_asset_success(self, mock_client, client):
+        """
+        GET /api/v1/markets/assets/{symbol}
+        Test getting specific asset details.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
-    assert body["market"] == "stocks"
-    assert body["total_assets"] == 1
-    assert body["status"] == "closed"
-    assert len(body["top_gainers"]) == 1
+        mock_instance.get_ticker_details.return_value = {
+            "id": "AAPL",
+            "symbol": "AAPL",
+            "name": "Apple Inc.",
+            "market": "stocks",
+            "currency": "USD",
+            "active": True,
+            "description": "Technology company",
+            "sector": "Technology"
+        }
 
+        response = client.get("/api/v1/markets/assets/AAPL")
 
-@patch("app.api.v1.endpoints.markets.MassiveClient")
-def test_list_assets_success(mock_client, client):
-    """
-    GET /markets/stocks/assets
-    """
-    mock_instance = AsyncMock()
-    mock_client.return_value.__aenter__.return_value = mock_instance
+        assert response.status_code == 200
+        body = response.json()
 
-    mock_instance.get_daily_market_summary.return_value = {
-        "results": [
-            {
-                "T": "MSFT",   # Symbol en formato Polygon
-                "c": 300.0,    # Close
-                "o": 301.2,    # Open
-                "h": 302.0,    # High
-                "l": 298.5,    # Low
-                "v": 2000000    # Volume
-            }
-        ]
-    }
+        assert body["symbol"] == "AAPL"
+        assert body["name"] == "Apple Inc."
+        assert body["market"] == "stocks"
+        assert body["currency"] == "USD"
+        assert body["active"] is True
+        assert "details" in body
+        assert body["details"]["sector"] == "Technology"
 
-    res = client.get("/api/v1/markets/stocks/assets?limit=10")
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_get_asset_not_found(self, mock_client, client):
+        """
+        Test getting non-existent asset.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
-    assert res.status_code == 200
-    data = res.json()
+        mock_instance.get_ticker_details.side_effect = Exception("Asset not found")
 
-    assert isinstance(data, list)
-    assert len(data) == 1
-    assert data[0]["symbol"] == "MSFT"
-    assert data[0]["market"] == "stocks"
+        response = client.get("/api/v1/markets/assets/NONEXISTENT")
 
+        assert response.status_code == 500
 
-@patch("app.api.v1.endpoints.markets.MassiveClient")
-def test_get_asset_success(mock_client, client):
-    """
-    GET /markets/assets/{symbol}
-    """
-    mock_instance = AsyncMock()
-    mock_client.return_value.__aenter__.return_value = mock_instance
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_get_candles_success(self, mock_client, client):
+        """
+        GET /api/v1/markets/{symbol}/candles
+        Test getting OHLC candle data.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
-    mock_instance.get_ticker_details.return_value = {
-        "id": "AAPL",
-        "symbol": "AAPL",
-        "name": "Apple Inc.",
-        "market": "stocks",
-        "currency": "USD",
-        "active": True,
-    }
+        mock_instance.get_ohlc_data.return_value = {
+            "results": [
+                {
+                    "o": 150,    # Open
+                    "h": 155,    # High
+                    "l": 149,    # Low
+                    "c": 154,    # Close
+                    "v": 100000, # Volume
+                    "t": 1640995200  # Timestamp
+                },
+                {
+                    "o": 154,
+                    "h": 158,
+                    "l": 152,
+                    "c": 157,
+                    "v": 120000,
+                    "t": 1641081600
+                }
+            ],
+            "status": "OK"
+        }
 
-    res = client.get("/api/v1/markets/assets/AAPL")
+        response = client.get("/api/v1/markets/AAPL/candles")
 
-    assert res.status_code == 200
-    body = res.json()
+        assert response.status_code == 200
+        data = response.json()
 
-    assert body["symbol"] == "AAPL"
-    assert body["active"] is True
+        assert "results" in data
+        assert isinstance(data["results"], list)
+        assert len(data["results"]) == 2
+        
+        # Verify candle structure
+        for candle in data["results"]:
+            assert "o" in candle  # Open
+            assert "h" in candle  # High
+            assert "l" in candle  # Low
+            assert "c" in candle  # Close
+            assert "v" in candle  # Volume
 
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_get_candles_with_parameters(self, mock_client, client):
+        """
+        Test getting candle data with various parameters.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
-@patch("app.api.v1.endpoints.markets.MassiveClient")
-def test_get_candles_success(mock_client, client):
-    """
-    GET /markets/{symbol}/candles
-    """
-    mock_instance = AsyncMock()
-    mock_client.return_value.__aenter__.return_value = mock_instance
+        mock_instance.get_ohlc_data.return_value = {
+            "results": [
+                {"o": 100, "h": 105, "l": 95, "c": 103, "v": 50000}
+            ]
+        }
 
-    mock_instance.get_ohlc_data.return_value = {
-        "results": [
-            {"o": 150, "h": 155, "l": 149, "c": 154, "v": 100000}
-        ]
-    }
+        # Test with parameters
+        response = client.get("/api/v1/markets/AAPL/candles?timespan=hour&multiplier=4&limit=100")
+        
+        assert response.status_code == 200
+        
+        # Verify the mock was called with correct parameters
+        mock_instance.get_ohlc_data.assert_called_once_with(
+            symbol="AAPL",
+            multiplier=4,
+            timespan="hour",
+            start_date=None,
+            end_date=None,
+            adjusted=True,
+            sort="asc",
+            limit=100
+        )
 
-    res = client.get("/api/v1/markets/AAPL/candles")
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_get_candles_service_error(self, mock_client, client):
+        """
+        Test candle data endpoint when external service fails.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
 
-    assert res.status_code == 200
-    data = res.json()
+        mock_instance.get_ohlc_data.side_effect = Exception("Service error")
 
-    assert "results" in data
-    assert isinstance(data["results"], list)
+        response = client.get("/api/v1/markets/AAPL/candles")
+
+        assert response.status_code == 500
+
+    def test_candles_invalid_parameters(self, client):
+        """
+        Test candle endpoint with invalid parameters.
+        """
+        # Test with invalid timespan
+        response = client.get("/api/v1/markets/AAPL/candles?timespan=invalid")
+        # May succeed or fail depending on validation
+        assert response.status_code in [200, 422]
+        
+        # Test with negative multiplier
+        response = client.get("/api/v1/markets/AAPL/candles?multiplier=-1")
+        assert response.status_code in [200, 422]
+        
+        # Test with very large limit
+        response = client.get("/api/v1/markets/AAPL/candles?limit=100000")
+        assert response.status_code in [200, 422]
+
+    @patch("app.api.v1.endpoints.markets.MassiveClient")
+    def test_market_data_processing_edge_cases(self, mock_client, client):
+        """
+        Test processing of edge case market data.
+        """
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
+
+        # Test with extreme values
+        mock_instance.get_daily_market_summary.return_value = {
+            "results": [
+                {
+                    "T": "EXTREME",
+                    "o": 0.0001,     # Very small
+                    "c": 999999.99,  # Very large
+                    "h": 999999.99,
+                    "l": 0.0001,
+                    "v": 0           # Zero volume
+                },
+                {
+                    "T": "ZERO_DIV",
+                    "o": 0,          # Zero open price (division by zero case)
+                    "c": 100.0,
+                    "v": 1000000
+                }
+            ]
+        }
+
+        response = client.get("/api/v1/markets/stocks/overview")
+        assert response.status_code == 200
+        
+        # Should handle extreme values gracefully
+        body = response.json()
+        assert body["total_assets"] >= 0

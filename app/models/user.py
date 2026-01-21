@@ -98,7 +98,7 @@ class UserCreate(UserBase):
     def create_user(self) -> 'User':
         """Crea y retorna un nuevo objeto User con la contraseña hasheada"""
         hashed_password = pwd_context.hash(self.password)
-        user_data = self.dict(
+        user_data = self.model_dump(
             exclude={"password"},
             exclude_unset=True,
             exclude_none=True
