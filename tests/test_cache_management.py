@@ -36,7 +36,7 @@ def test_get_cache_stats_success(client: TestClient, authenticated_user):
     data = response.json()
     assert isinstance(data, dict)
     # Cache stats should contain typical cache information
-    assert "entries" in data or "size" in data or "stats" in data
+    assert "total_entries" in data or "entries" in data or "size" in data or "stats" in data
 
 
 def test_get_cache_stats_unauthorized(client: TestClient):

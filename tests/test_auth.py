@@ -202,13 +202,13 @@ def test_user_model_email_normalization(db_session: Session):
 def test_user_model_validation():
     """Test user model validation"""
     # Valid email
-    user = UserCreate(email="valid@example.com", password="test123")
+    user = UserCreate(email="valid@example.com", password="testpassword123")
     assert user.email == "valid@example.com"
     
     # Invalid email should raise validation error
-    with pytest.raises(ValueError):
-        UserCreate(email="invalid-email", password="test123")
+    with pytest.raises(ValueError, match="Formato de email inválido"):
+        UserCreate(email="invalid-email", password="testpassword123")
     
     # Invalid username should raise validation error
-    with pytest.raises(ValueError):
-        UserCreate(email="valid@example.com", username="invalid@user", password="test123")
+    with pytest.raises(ValueError, match="solo puede contener letras y números"):
+        UserCreate(email="valid@example.com", username="invalid@user", password="testpassword123")
