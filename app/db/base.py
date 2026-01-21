@@ -3,6 +3,9 @@ from sqlmodel import SQLModel, create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
+# Para compatibilidad con Alembic
+Base = SQLModel.metadata
+
 # Crear el motor de la base de datos
 engine = create_engine(
     settings.get_database_url(),  # Use the dynamic database URL

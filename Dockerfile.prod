@@ -19,8 +19,11 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código de la app
+# Copiar código de la app y migraciones
 COPY app/ app/
+COPY alembic/ alembic/
+COPY alembic.ini .
+COPY scripts/ scripts/
 
 # Usuario no root
 RUN useradd --create-home app \

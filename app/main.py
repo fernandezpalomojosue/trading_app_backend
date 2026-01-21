@@ -13,11 +13,19 @@ from app.api.v1.endpoints.routers import api_router
 async def lifespan(app: FastAPI):
     """
     Ciclo de vida de la aplicación.
-    - Startup: crea tablas si no existen (idempotente)
+    - Startup: crea tablas solo en desarrollo/testing (no en producción)
     - Shutdown: cierra conexiones
     """
     print(f"Starting app in {settings.ENVIRONMENT} mode...")
-    create_db_and_tables()
+    
+    # Only create tables automatically in development and testing
+    if settings.ENVIRONMENT in ["development", "testing", "dev"]:
+        print("Creating tables automatically (development/testing mode)...")
+        create_db_and_tables()
+    else:
+        print("Production mode detected - skipping automatic table creation")
+        print("Please run migrations: alembic upgrade head")
+    
     yield
     print("Shutting down app...")
     engine.dispose()
