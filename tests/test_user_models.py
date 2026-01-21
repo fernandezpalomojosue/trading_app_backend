@@ -287,7 +287,7 @@ class TestUserModel:
         # Create another user with lowercase version should fail (unique constraint)
         user_create2 = UserCreate(
             email="uppercase@example.com",  # Same as normalized
-            password="test123"
+            password="testpassword123"  # Fix password length
         )
         
         # This would fail at database level due to unique constraint

@@ -40,6 +40,10 @@ class Asset(BaseModel):
     market: MarketType
     currency: str
     active: bool
+    price: Optional[float] = None
+    change: Optional[float] = None
+    change_percent: Optional[float] = None
+    volume: Optional[int] = None
     details: Dict[str, Any] = Field(
         default_factory=dict,
         description="Detalles adicionales del activo"

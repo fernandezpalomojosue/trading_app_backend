@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
-      POSTGRES_DB: test_db
+      POSTGRES_DB: test_trading_app
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test"]
       interval: 5s
@@ -17,8 +17,9 @@ services:
       dockerfile: Dockerfile.test
     environment:
       ENVIRONMENT: testing
-      DATABASE_URL: postgresql://test:test@db:5432/test_db
+      DATABASE_URL: postgresql://test:test@db:5432/test_trading_app
       SECRET_KEY: testsecret
+      MASSIVE_API_KEY: test_api_key_for_testing  # Add test API key
     depends_on:
       db:
         condition: service_healthy

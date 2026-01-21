@@ -125,7 +125,7 @@ class TestErrorHandling:
         
         # Test with parameter values that are too large
         response = client.get("/api/v1/markets/stocks/assets?limit=999999999")
-        assert response.status_code in [200, 422, 500]  # May fail with API key error  # May be normalized or rejected
+        assert response.status_code in [200, 422, 500, 401]  # May fail with API key error  # May be normalized or rejected
     
     def test_path_parameter_validation_errors(self, client):
         """

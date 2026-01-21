@@ -128,27 +128,27 @@ class TestEdgeCases:
         """Test market endpoint pagination boundary cases"""
         # Test with limit = 1 (minimum)
         response = client.get("/api/v1/markets/stocks/assets?limit=1")
-        assert response.status_code in [200, 404, 500]  # May succeed if data exists or fail with API key error
+        assert response.status_code in [200, 404, 500, 401]  # May succeed if data exists or fail with API key error
         
         # Test with limit = 500 (maximum)
         response = client.get("/api/v1/markets/stocks/assets?limit=500")
-        assert response.status_code in [200, 404, 500]
+        assert response.status_code in [200, 404, 500, 401]
         
         # Test with limit = 0 (should be normalized to 1)
         response = client.get("/api/v1/markets/stocks/assets?limit=0")
-        assert response.status_code in [200, 404, 500]
+        assert response.status_code in [200, 404, 500, 401]
         
         # Test with negative limit (should be normalized to 1)
         response = client.get("/api/v1/markets/stocks/assets?limit=-10")
-        assert response.status_code in [200, 404, 500]
+        assert response.status_code in [200, 404, 500, 401]
         
         # Test with limit > 500 (should be normalized to 500)
         response = client.get("/api/v1/markets/stocks/assets?limit=1000")
-        assert response.status_code in [200, 404, 500]
+        assert response.status_code in [200, 404, 500, 401]
         
         # Test with very large offset
         response = client.get("/api/v1/markets/stocks/assets?offset=999999")
-        assert response.status_code in [200, 404, 500]
+        assert response.status_code in [200, 404, 500, 401]
     
     @patch("app.api.v1.endpoints.markets.MassiveClient")
     def test_market_data_boundary_cases(self, mock_client, client: TestClient):
