@@ -173,6 +173,8 @@ def test_get_current_user_no_token(client: TestClient):
 
 def test_user_model_password_hashing(db_session: Session):
     """Test that user passwords are properly hashed"""
+    from app.core.security import get_password_hash
+    
     password = "testpassword123"
     hashed_password = get_password_hash(password)
     
@@ -203,6 +205,9 @@ def test_user_model_email_normalization(db_session: Session):
 
 def test_user_model_validation():
     """Test user model validation"""
+    from uuid import uuid4
+    from app.core.entities.user import UserEntity
+    
     user_id = uuid4()
     user = UserEntity(
         id=user_id,
