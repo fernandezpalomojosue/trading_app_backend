@@ -138,7 +138,7 @@ async def get_candlestick_data(
     symbol: str,
     timeframe: str = Query("1d", description="Timeframe: 1m, 5m, 15m, 1h, 1d"),
     timespan: str = Query(None, description="Alternative timespan: minute, hour, day"),
-    limit: int = Query(100, ge=1, le=500, description="Number of candlesticks to return"),
+    limit: int = Query(100, ge=1, le=5000, description="Number of candlesticks to return"),
     start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
     market_service: MarketService = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
