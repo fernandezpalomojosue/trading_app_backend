@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models.user import User, UserCreate
+from app.domain.entities.user import UserEntity
+from app.infrastructure.database.models import UserSQLModel
 
 
 class TestErrorHandlingIntegration:

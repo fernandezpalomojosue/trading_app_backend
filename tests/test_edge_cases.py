@@ -6,7 +6,8 @@ from sqlmodel import Session
 from decimal import Decimal
 import time
 
-from app.models.user import User, UserCreate
+from app.domain.entities.user import UserEntity
+from app.infrastructure.database.models import UserSQLModel
 
 
 class TestEdgeCases:
