@@ -47,8 +47,8 @@ class TestIntegration:
     def test_market_endpoints_accessibility(self, client: TestClient):
         """Test that market endpoints are accessible"""
         endpoints = [
-            "/api/v1/markets/overview/stocks",
-            "/api/v1/markets/overview/crypto",
+            "/api/v1/markets/stocks/overview",
+            "/api/v1/markets/crypto/overview",
             "/api/v1/markets/assets",
             "/api/v1/markets/assets/AAPL",
             "/api/v1/markets/search?q=AAPL"
