@@ -55,9 +55,14 @@ class UserEntity(BaseModel):
         return v.lower()
     
     @validator('username')
-    def username_must_be_alphanumeric(cls, v):
-        if v is not None and not v.isalnum():
-            raise ValueError('El nombre de usuario solo puede contener letras y números')
+    def username_must_be_valid(cls, v):
+        if v is not None:
+            # Permitir letras, números y puntos
+            if not re.match(r'^[a-zA-Z0-9.]+$', v):
+                raise ValueError('El nombre de usuario solo puede contener letras, números y puntos')
+            # No permitir puntos al inicio o final, ni puntos consecutivos
+            if v.startswith('.') or v.endswith('.') or '..' in v:
+                raise ValueError('El nombre de usuario no puede empezar o terminar con punto, ni tener puntos consecutivos')
         return v
     
     def update_timestamp(self):
