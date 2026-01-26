@@ -9,7 +9,7 @@ class TestMarketEndpoints:
     
     def test_get_market_overview_stocks(self, client: TestClient):
         """Test getting stocks market overview"""
-        response = client.get("/api/v1/markets/overview/stocks")
+        response = client.get("/api/v1/markets/stocks/overview")
         
         # Should return 200, 401 (if auth required), 422 (if no data), or 500 (if API fails)
         assert response.status_code in [200, 401, 422, 500]
@@ -23,7 +23,7 @@ class TestMarketEndpoints:
     
     def test_get_market_overview_crypto(self, client: TestClient):
         """Test getting crypto market overview"""
-        response = client.get("/api/v1/markets/overview/crypto")
+        response = client.get("/api/v1/markets/crypto/overview")
         
         # Should return 200, 401, 422, or 500
         assert response.status_code in [200, 401, 422, 500]
@@ -35,7 +35,7 @@ class TestMarketEndpoints:
     
     def test_get_market_overview_invalid_market(self, client: TestClient):
         """Test getting market overview with invalid market type"""
-        response = client.get("/api/v1/markets/overview/invalid")
+        response = client.get("/api/v1/markets/invalid/overview")
         # Should return 422 for validation or 401 if auth required
         assert response.status_code in [422, 401]
     
@@ -138,7 +138,7 @@ class TestMarketEndpointsAuthenticated:
             pytest.skip("Authentication failed, skipping test")
         
         # Test with authenticated request
-        response = client.get("/api/v1/markets/overview/stocks", headers=headers)
+        response = client.get("/api/v1/markets/stocks/overview", headers=headers)
         
         # Should return 200, 422, or 500 (but not 401)
         assert response.status_code in [200, 422, 500]
@@ -146,7 +146,7 @@ class TestMarketEndpointsAuthenticated:
     def test_protected_market_endpoint_without_auth(self, client: TestClient):
         """Test accessing protected market endpoint without auth"""
         # This test depends on whether endpoints require authentication
-        response = client.get("/api/v1/markets/overview/stocks")
+        response = client.get("/api/v1/markets/stocks/overview")
         
         # Should return 200 (if public), 401 (if auth required), 422, or 500
         assert response.status_code in [200, 401, 422, 500]
