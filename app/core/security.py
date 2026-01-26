@@ -9,7 +9,8 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.db.base import get_session
-from app.models.user import User
+from app.domain.entities.user import UserEntity
+from app.infrastructure.database.repositories import SQLUserRepository
 
 # Configuración
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -33,7 +34,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_session)
-) -> User:
+) -> UserEntity:
     """Obtiene el usuario actual a partir del token JWT"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,7 +50,8 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
     
-    user = db.query(User).filter(User.email == email).first()
+    user_repository = SQLUserRepository(db)
+    user = await user_repository.get_user_by_email(email)
     if not user:
         raise credentials_exception
     return user

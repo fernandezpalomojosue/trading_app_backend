@@ -15,7 +15,7 @@ class AppBaseSettings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    CORS_ORIGINS: str = ""
+    CORS_ORIGINS: str = "*"
     CORS_ALLOW_METHODS: str = "*"
     CORS_ALLOW_HEADERS: str = "*"
     CORS_ALLOW_CREDENTIALS: bool = True
@@ -32,7 +32,7 @@ class AppBaseSettings(BaseSettings):
     ECHO_SQL: bool = False
 
     # API Keys
-    POLYGON_API_KEY: Optional[str] = None
+    MASSIVE_API_KEY: Optional[str] = None
 
     def get_database_url(self) -> str:
         """Get the appropriate database URL based on environment."""

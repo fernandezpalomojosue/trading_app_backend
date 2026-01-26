@@ -1,7 +1,8 @@
 # app/db/base.py
-from sqlmodel import SQLModel, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel,Session,create_engine
 from app.core.config import settings
+from app.infrastructure.database.models import UserSQLModel     
+from sqlalchemy.orm import sessionmaker
 
 # Para compatibilidad con Alembic
 Base = SQLModel.metadata
@@ -15,7 +16,7 @@ engine = create_engine(
 )
 
 # Crear la sesión local
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(class_=Session, autocommit=False, autoflush=False, bind=engine)
 
 def get_session():
     with SessionLocal() as session:
@@ -23,8 +24,6 @@ def get_session():
 
 def create_db_and_tables():
     """Crea todas las tablas definidas en los modelos SQLModel."""
-    from sqlmodel import SQLModel
-    from app.models.user import User  # Importar para que SQLModel lo registre
     
     print("Creando tablas en la base de datos...")
     SQLModel.metadata.create_all(engine)
