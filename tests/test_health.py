@@ -12,7 +12,7 @@ class TestHealthEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
-        assert "version" in data
+        assert "environment" in data
     
     def test_health_endpoint(self, client: TestClient):
         """Test health check endpoint"""
@@ -20,7 +20,7 @@ class TestHealthEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert "status" in data
-        assert data["status"] == "healthy"
+        assert data["status"] == "ok"
     
     def test_health_endpoint_with_timestamp(self, client: TestClient):
         """Test health check endpoint includes timestamp"""

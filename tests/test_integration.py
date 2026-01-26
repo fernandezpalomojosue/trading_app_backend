@@ -94,8 +94,10 @@ class TestIntegration:
         
         # Check that user exists in database
         from app.infrastructure.database.models import UserSQLModel
-        user = db_session.query(UserSQLModel).filter(
-            UserSQLModel.email == user_data["email"]
+        from sqlmodel import select
+        
+        user = db_session.exec(
+            select(UserSQLModel).where(UserSQLModel.email == user_data["email"])
         ).first()
         
         if response.status_code == 201:

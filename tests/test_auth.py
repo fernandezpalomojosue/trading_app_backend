@@ -141,7 +141,8 @@ class TestUserModels:
     
     def test_user_entity_creation(self):
         """Test UserEntity creation"""
-        user_id = "123e4567-e89b-12d3-a456-426614174000"
+        import uuid
+        user_id = uuid.uuid4()
         user = UserEntity(
             id=user_id,
             email="test@example.com",

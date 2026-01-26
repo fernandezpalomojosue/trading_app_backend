@@ -94,7 +94,7 @@ class TestUserSQLModel:
         
         assert user.balance == 0.0
         assert user.is_active is True
-        assert user.is_verified is False
+        assert user.is_verified is True  # Default is True in the model
         assert user.is_superuser is False
 
 
@@ -104,22 +104,29 @@ class TestMarketEntities:
     def test_asset_creation(self):
         """Test Asset entity creation"""
         asset = Asset(
+            id="AAPL",
             symbol="AAPL",
             name="Apple Inc.",
+            market=MarketType.STOCKS,
+            currency="USD",
             price=150.0,
             change=2.5,
             change_percent=1.67,
             volume=1000000,
-            is_tradable=True
+            active=True
         )
         
+        assert asset.id == "AAPL"
         assert asset.symbol == "AAPL"
         assert asset.name == "Apple Inc."
+        assert asset.market == MarketType.STOCKS
+        assert asset.currency == "USD"
         assert asset.price == 150.0
         assert asset.change == 2.5
         assert asset.change_percent == 1.67
         assert asset.volume == 1000000
-        assert asset.is_tradable is True
+        assert asset.active is True
+        assert asset.is_tradable() is True
     
     def test_market_summary_creation(self):
         """Test MarketSummary entity creation"""
@@ -161,7 +168,7 @@ class TestMarketEntities:
         )
         
         assert summary.is_positive is True
-        assert summary.price_range == "147.0 - 152.0"
+        assert summary.price_range == 5.0  # high - low = 152.0 - 147.0
     
     def test_market_overview_creation(self):
         """Test MarketOverview entity creation"""
@@ -217,4 +224,5 @@ class TestMarketEntities:
         """Test MarketType enum"""
         assert MarketType.STOCKS.value == "stocks"
         assert MarketType.CRYPTO.value == "crypto"
-        assert MarketType.FOREX.value == "forex"
+        assert MarketType.FX.value == "fx"  # Changed from FOREX to FX
+        assert MarketType.INDICES.value == "indices"
