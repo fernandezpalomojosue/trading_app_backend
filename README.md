@@ -85,12 +85,11 @@ trading-app-backend/
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
 | GET | `/{market_type}/overview` | Overview del mercado | ✅ Requerida |
-| GET | `/assets` | Lista de activos (con query params) | ✅ Requerida |
+| GET | `/{market_type}/assets` | Lista de activos (con query params) | ✅ Requerida |
 | GET | `/assets/{symbol}` | Detalles de un activo | ✅ Requerida |
 | GET | `/search` | Buscar activos por query | ✅ Requerida |
 
-**Query Parameters para `/assets`:**
-- `market_type` (opcional): `stocks` (default: stocks)
+**Query Parameters para `/{market_type}/assets`:**
 - `limit` (opcional): 1-100 (default: 50)
 
 **Query Parameters para `/search`:**
@@ -163,7 +162,7 @@ curl -X GET "http://localhost:8000/api/v1/markets/stocks/overview" \
   -H "Authorization: Bearer $TOKEN"
 
 # Listar activos
-curl -X GET "http://localhost:8000/api/v1/markets/assets?limit=10" \
+curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
 # Buscar activos

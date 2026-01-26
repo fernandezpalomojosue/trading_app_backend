@@ -41,7 +41,7 @@ class TestMarketEndpoints:
     
     def test_get_assets_list(self, client: TestClient):
         """Test getting assets list"""
-        response = client.get("/api/v1/markets/assets")
+        response = client.get("/api/v1/markets/stocks/assets")
         
         # Should return 200, 401, 422, or 500
         assert response.status_code in [200, 401, 422, 500]
@@ -52,7 +52,7 @@ class TestMarketEndpoints:
     
     def test_get_assets_list_with_limit(self, client: TestClient):
         """Test getting assets list with limit parameter"""
-        response = client.get("/api/v1/markets/assets?limit=10")
+        response = client.get("/api/v1/markets/stocks/assets?limit=10")
         
         # Should return 200, 401, 422, or 500
         assert response.status_code in [200, 401, 422, 500]
@@ -66,7 +66,7 @@ class TestMarketEndpoints:
     
     def test_get_assets_list_invalid_limit(self, client: TestClient):
         """Test getting assets list with invalid limit"""
-        response = client.get("/api/v1/markets/assets?limit=invalid")
+        response = client.get("/api/v1/markets/stocks/assets?limit=invalid")
         # Should return 422 for validation or 401 if auth required
         assert response.status_code in [422, 401]
     

@@ -49,7 +49,7 @@ class TestIntegration:
         endpoints = [
             "/api/v1/markets/stocks/overview",
             "/api/v1/markets/crypto/overview",
-            "/api/v1/markets/assets",
+            "/api/v1/markets/stocks/assets",
             "/api/v1/markets/assets/AAPL",
             "/api/v1/markets/search?q=AAPL"
         ]
