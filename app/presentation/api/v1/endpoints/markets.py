@@ -47,6 +47,7 @@ async def get_market_overview(
 async def list_assets(
     market_type: MarketType,
     limit: int = Query(50, ge=1, le=100, description="Maximum number of assets to return"),
+    offset: int = Query(0, ge=0, description="Number of assets to skip for pagination"),
     market_service: MarketService = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
@@ -54,7 +55,7 @@ async def list_assets(
     if not market_type:
         market_type = MarketType.STOCKS  # Default to stocks
     
-    assets = await market_service.get_assets_list(market_type, limit)
+    assets = await market_service.get_assets_list(market_type, limit, offset)
     
     return [
         AssetResponse(

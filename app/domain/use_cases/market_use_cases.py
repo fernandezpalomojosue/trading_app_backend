@@ -196,9 +196,9 @@ class MarketUseCases:
         }
         return market_mapping.get(market_str.lower(), MarketType.STOCKS)
 
-    async def get_assets_list(self, market_type: MarketType, limit: int = 50) -> List[Asset]:
+    async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[Asset]:
         """Get assets list from raw market data - DOMAIN LOGIC"""
-        cache_key = f"assets_list_{market_type.value}_{limit}"
+        cache_key = f"assets_list_{market_type.value}_{limit}_{offset}"
         
         # Try cache first
         cached_assets = await self.cache_service.get(cache_key)
@@ -210,28 +210,29 @@ class MarketUseCases:
         last_trading_day = get_last_trading_day()
         raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
         
-        # 2. Process raw data to create assets
-        assets = []
+        # 2. Process raw data using efficient list comprehension
         seen_symbols = set()
         
-        for item in raw_data.get("results", []):
-            if len(assets) >= limit:
-                break
-                
+        def create_asset(item):
             symbol = item.get("T", "")
             if not symbol or symbol in seen_symbols:
-                continue
-                
-            # Create Asset from raw data
-            asset = self._convert_raw_to_asset_basic(item, market_type)
-            if asset:
-                assets.append(asset)
-                seen_symbols.add(symbol)
+                return None
+            seen_symbols.add(symbol)
+            return self._convert_raw_to_asset_basic(item, market_type)
         
-        # 3. Cache the result
-        await self.cache_service.set(cache_key, assets, ttl=300)
+        # List comprehension with filtering - much faster than explicit loop
+        all_assets = [
+            asset for asset in (create_asset(item) for item in raw_data.get("results", []))
+            if asset is not None
+        ]
         
-        return assets
+        # 3. Apply pagination using efficient slicing
+        paginated_assets = all_assets[offset:offset + limit]
+        
+        # 4. Cache the paginated result
+        await self.cache_service.set(cache_key, paginated_assets, ttl=300)
+        
+        return paginated_assets
 
     def _convert_raw_to_asset_basic(self, raw_item: Dict[str, Any], market_type: MarketType) -> Optional[Asset]:
         """Convert raw market data to basic Asset entity - DOMAIN LOGIC"""

@@ -91,6 +91,7 @@ trading-app-backend/
 
 **Query Parameters para `/{market_type}/assets`:**
 - `limit` (opcional): 1-100 (default: 50)
+- `offset` (opcional): 0+ (default: 0) - para paginación
 
 **Query Parameters para `/search`:**
 - `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
@@ -161,8 +162,12 @@ Ejemplos con endpoints de mercado (requieren autenticación):
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/overview" \
   -H "Authorization: Bearer $TOKEN"
 
-# Listar activos
+# Listar activos (primeros 10)
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=10" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Listar activos con paginación (saltar primeros 100, mostrar siguientes 50)
+curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=50&offset=100" \
   -H "Authorization: Bearer $TOKEN"
 
 # Buscar activos

@@ -23,6 +23,6 @@ class MarketService:
         """Get asset details"""
         return await self.market_use_cases.get_asset_details(symbol)
     
-    async def get_assets_list(self, market_type: MarketType, limit: int = 50) -> List[Asset]:
+    async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[Asset]:
         """Get assets list from raw market data"""
-        return await self.market_use_cases.get_assets_list(market_type, limit)
+        return await self.market_use_cases.get_assets_list(market_type, limit, offset)
