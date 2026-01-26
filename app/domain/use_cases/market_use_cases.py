@@ -284,42 +284,49 @@ class MarketUseCases:
         except (TypeError, KeyError, ZeroDivisionError):
             return None
     
-    async def get_candlestick_data(self, symbol: str, timeframe: str = "1d", limit: int = 100, start_date: str = None) -> List[CandleStick]:
+    async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> List[CandleStick]:
         """Get candlestick data for charting - DOMAIN LOGIC"""
-        cache_key = f"candles_{symbol}_{timeframe}_{limit}_{start_date or 'auto'}"
+        cache_key = f"candles_{symbol}_{timespan}_{multiplier}_{limit}_{start_date or 'auto'}_{end_date or 'auto'}"
         
         # Try cache first
         cached_candles = await self.cache_service.get(cache_key)
         if cached_candles:
             return cached_candles
         
-        # Parse timeframe to multiplier and timespan
-        multiplier, timespan = self._parse_timeframe(timeframe)
+        # Convert timespan and multiplier to Massive API format
+        massive_timespan = self._convert_to_massive_timespan(timespan)
         
         # Calculate date range
         from datetime import datetime, timedelta
-        end_date = datetime.now()
+        if end_date:
+            end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        else:
+            end_date_dt = datetime.now()
         
         if start_date:
             # Use provided start date
             start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
         else:
-            # Calculate automatic start date based on timeframe and limit
-            if timespan == "minute":
-                start_date_dt = end_date - timedelta(minutes=multiplier * limit)
-            elif timespan == "hour":
-                start_date_dt = end_date - timedelta(hours=multiplier * limit)
-            elif timespan == "day":
-                start_date_dt = end_date - timedelta(days=multiplier * limit)
+            # Calculate automatic start date based on timespan, multiplier and limit
+            if massive_timespan == "minute":
+                start_date_dt = end_date_dt - timedelta(minutes=multiplier * limit)
+            elif massive_timespan == "hour":
+                start_date_dt = end_date_dt - timedelta(hours=multiplier * limit)
+            elif massive_timespan == "day":
+                start_date_dt = end_date_dt - timedelta(days=multiplier * limit)
+            elif massive_timespan == "week":
+                start_date_dt = end_date_dt - timedelta(weeks=multiplier * limit)
+            elif massive_timespan == "month":
+                start_date_dt = end_date_dt - timedelta(days=30 * multiplier * limit)
             else:  # default to day
-                start_date_dt = end_date - timedelta(days=limit)
+                start_date_dt = end_date_dt - timedelta(days=limit)
         
         # Get candlestick data from repository
         from_str = start_date_dt.strftime("%Y-%m-%d")
-        to_str = end_date.strftime("%Y-%m-%d")
+        to_str = end_date_dt.strftime("%Y-%m-%d")
         
         raw_data = await self.market_repository.fetch_candlestick_data(
-            symbol, multiplier, timespan, from_str, to_str, limit
+            symbol, multiplier, massive_timespan, from_str, to_str, limit
         )
         
         if not raw_data or "results" not in raw_data:
@@ -339,6 +346,19 @@ class MarketUseCases:
         await self.cache_service.set(cache_key, candlesticks, ttl=300)
         
         return candlesticks
+    
+    def _convert_to_massive_timespan(self, timespan: str) -> str:
+        """Convert frontend timespan to Massive API timespan"""
+        timespan_mapping = {
+            "minute": "minute",
+            "hour": "hour",
+            "day": "day",
+            "week": "day",  # Convert weeks to days for Massive API
+            "month": "day",  # Convert months to days for Massive API
+            "quarter": "day",  # Convert quarters to days for Massive API
+            "year": "day"  # Convert years to days for Massive API
+        }
+        return timespan_mapping.get(timespan, "day")
     
     def _parse_timeframe(self, timeframe: str) -> tuple[int, str]:
         """Parse timeframe string to multiplier and timespan for Massive API"""

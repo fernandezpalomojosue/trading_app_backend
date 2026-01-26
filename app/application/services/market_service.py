@@ -27,6 +27,6 @@ class MarketService:
         """Get assets list from raw market data"""
         return await self.market_use_cases.get_assets_list(market_type, limit, offset)
     
-    async def get_candlestick_data(self, symbol: str, timeframe: str = "1d", limit: int = 100, start_date: str = None) -> List[CandleStick]:
+    async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> List[CandleStick]:
         """Get candlestick data for charting"""
-        return await self.market_use_cases.get_candlestick_data(symbol, timeframe, limit, start_date)
+        return await self.market_use_cases.get_candlestick_data(symbol, timespan, multiplier, limit, start_date, end_date)
