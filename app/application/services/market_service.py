@@ -1,7 +1,7 @@
 # app/application/services/market_service.py
 from typing import List, Optional, Dict, Any
 
-from app.domain.entities.market import Asset, MarketOverview, MarketType, MarketSummary
+from app.domain.entities.market import Asset, MarketOverview, MarketType, MarketSummary, CandleStick
 from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache, MarketUseCases
 
 
@@ -26,3 +26,7 @@ class MarketService:
     async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[Asset]:
         """Get assets list from raw market data"""
         return await self.market_use_cases.get_assets_list(market_type, limit, offset)
+    
+    async def get_candlestick_data(self, symbol: str, timeframe: str = "1d", limit: int = 100, start_date: str = None) -> List[CandleStick]:
+        """Get candlestick data for charting"""
+        return await self.market_use_cases.get_candlestick_data(symbol, timeframe, limit, start_date)

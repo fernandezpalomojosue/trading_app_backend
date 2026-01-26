@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.utils.market_utils import MarketDataProcessor
-from app.domain.entities.market import Asset, MarketSummary, MarketOverview, MarketType
+from app.domain.entities.market import Asset, MarketOverview, MarketType, MarketSummary, CandleStick
 
 
 class MarketRepository(ABC):
@@ -22,6 +22,16 @@ class MarketRepository(ABC):
     @abstractmethod
     async def fetch_raw_market_data(self, date: str) -> Dict[str, Any]:
         """Fetch raw market data from external API"""
+        pass
+    
+    @abstractmethod
+    async def fetch_symbol_data(self, symbol: str, date: str) -> Optional[Dict[str, Any]]:
+        """Fetch OHLC data for a specific symbol"""
+        pass
+    
+    @abstractmethod
+    async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
+        """Fetch candlestick data using Massive API Custom Bars endpoint"""
         pass
 
 class MarketDataCache(ABC):
@@ -272,4 +282,92 @@ class MarketUseCases:
                 }
             )
         except (TypeError, KeyError, ZeroDivisionError):
+            return None
+    
+    async def get_candlestick_data(self, symbol: str, timeframe: str = "1d", limit: int = 100, start_date: str = None) -> List[CandleStick]:
+        """Get candlestick data for charting - DOMAIN LOGIC"""
+        cache_key = f"candles_{symbol}_{timeframe}_{limit}_{start_date or 'auto'}"
+        
+        # Try cache first
+        cached_candles = await self.cache_service.get(cache_key)
+        if cached_candles:
+            return cached_candles
+        
+        # Parse timeframe to multiplier and timespan
+        multiplier, timespan = self._parse_timeframe(timeframe)
+        
+        # Calculate date range
+        from datetime import datetime, timedelta
+        end_date = datetime.now()
+        
+        if start_date:
+            # Use provided start date
+            start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        else:
+            # Calculate automatic start date based on timeframe and limit
+            if timespan == "minute":
+                start_date_dt = end_date - timedelta(minutes=multiplier * limit)
+            elif timespan == "hour":
+                start_date_dt = end_date - timedelta(hours=multiplier * limit)
+            elif timespan == "day":
+                start_date_dt = end_date - timedelta(days=multiplier * limit)
+            else:  # default to day
+                start_date_dt = end_date - timedelta(days=limit)
+        
+        # Get candlestick data from repository
+        from_str = start_date_dt.strftime("%Y-%m-%d")
+        to_str = end_date.strftime("%Y-%m-%d")
+        
+        raw_data = await self.market_repository.fetch_candlestick_data(
+            symbol, multiplier, timespan, from_str, to_str, limit
+        )
+        
+        if not raw_data or "results" not in raw_data:
+            return []
+        
+        # Convert to CandleStick entities
+        candlesticks = []
+        for result in raw_data["results"]:
+            candle = self._convert_massive_to_candlestick(result)
+            if candle:
+                candlesticks.append(candle)
+        
+        # Sort by timestamp
+        candlesticks.sort(key=lambda x: x.timestamp)
+        
+        # Cache the result
+        await self.cache_service.set(cache_key, candlesticks, ttl=300)
+        
+        return candlesticks
+    
+    def _parse_timeframe(self, timeframe: str) -> tuple[int, str]:
+        """Parse timeframe string to multiplier and timespan for Massive API"""
+        timeframe_mapping = {
+            "1m": (1, "minute"),
+            "5m": (5, "minute"),
+            "15m": (15, "minute"),
+            "1h": (1, "hour"),
+            "1d": (1, "day")
+        }
+        return timeframe_mapping.get(timeframe, (1, "day"))
+    
+    def _convert_massive_to_candlestick(self, raw_data: Dict[str, Any]) -> Optional[CandleStick]:
+        """Convert Massive API response to CandleStick entity - DOMAIN LOGIC"""
+        try:
+            if not all(k in raw_data for k in ["o", "h", "l", "c", "v", "t"]):
+                return None
+            
+            # Convert millisecond timestamp to datetime
+            from datetime import datetime, timezone
+            timestamp = datetime.fromtimestamp(raw_data["t"] / 1000, tz=timezone.utc)
+            
+            return CandleStick(
+                timestamp=timestamp,
+                open=float(raw_data["o"]),
+                high=float(raw_data["h"]),
+                low=float(raw_data["l"]),
+                close=float(raw_data["c"]),
+                volume=int(raw_data["v"])
+            )
+        except (TypeError, KeyError, ValueError):
             return None

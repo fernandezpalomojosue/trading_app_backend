@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
 
 from app.application.dto.market_dto import (
-    MarketOverviewResponse, AssetResponse
+    MarketOverviewResponse, AssetResponse, CandleStickResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
@@ -130,4 +130,41 @@ async def search_assets(
             details=asset.details
         )
         for asset in limited_assets
+    ]
+
+
+@router.get("/{symbol}/candles", response_model=List[CandleStickResponse])
+async def get_candlestick_data(
+    symbol: str,
+    timeframe: str = Query("1d", description="Timeframe: 1m, 5m, 15m, 1h, 1d"),
+    timespan: str = Query(None, description="Alternative timespan: minute, hour, day"),
+    limit: int = Query(100, ge=1, le=500, description="Number of candlesticks to return"),
+    start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
+    market_service: MarketService = Depends(get_market_service),
+    current_user = Depends(get_current_user_dependency)
+):
+    """Get candlestick data for charting"""
+    # Support both timeframe and timespan parameters
+    effective_timeframe = timeframe
+    if timespan:
+        # Convert timespan to timeframe format
+        timespan_mapping = {
+            "minute": "1m",
+            "hour": "1h", 
+            "day": "1d"
+        }
+        effective_timeframe = timespan_mapping.get(timespan, timeframe)
+    
+    candlesticks = await market_service.get_candlestick_data(symbol, effective_timeframe, limit, start_date)
+    
+    return [
+        CandleStickResponse(
+            timestamp=candle.timestamp.isoformat(),
+            open=candle.open,
+            high=candle.high,
+            low=candle.low,
+            close=candle.close,
+            volume=candle.volume
+        )
+        for candle in candlesticks
     ]

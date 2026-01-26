@@ -1,6 +1,7 @@
 # app/application/dto/market_dto.py
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 from app.domain.entities.market import MarketType
 
@@ -72,3 +73,16 @@ class CacheStatsResponse(BaseModel):
     memory_usage: Optional[str] = None
     hit_rate: Optional[float] = None
     additional_info: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CandleStickResponse(BaseModel):
+    """DTO for candlestick data responses"""
+    timestamp: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+    
+    class Config:
+        from_attributes = True

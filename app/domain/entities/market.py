@@ -76,3 +76,43 @@ class MarketOverview(BaseModel):
         elif abs(avg_loser_change) > avg_gainer_change:
             return "bearish"
         return "neutral"
+
+
+class CandleStick(BaseModel):
+    """Candlestick data for charting - OHLCV format"""
+    timestamp: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+    
+    @property
+    def is_green(self) -> bool:
+        """Check if candle is bullish (close > open)"""
+        return self.close > self.open
+    
+    @property
+    def is_red(self) -> bool:
+        """Check if candle is bearish (close < open)"""
+        return self.close < self.open
+    
+    @property
+    def body_size(self) -> float:
+        """Size of the candle body"""
+        return abs(self.close - self.open)
+    
+    @property
+    def upper_wick(self) -> float:
+        """Upper shadow/wick size"""
+        return self.high - max(self.open, self.close)
+    
+    @property
+    def lower_wick(self) -> float:
+        """Lower shadow/wick size"""
+        return min(self.open, self.close) - self.low
+    
+    @property
+    def price_range(self) -> float:
+        """Total price range (high - low)"""
+        return self.high - self.low

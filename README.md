@@ -87,11 +87,18 @@ trading-app-backend/
 | GET | `/{market_type}/overview` | Overview del mercado | ✅ Requerida |
 | GET | `/{market_type}/assets` | Lista de activos (con query params) | ✅ Requerida |
 | GET | `/assets/{symbol}` | Detalles de un activo | ✅ Requerida |
+| GET | `/{symbol}/candles` | Datos de velas para gráficos (OHLCV) | ✅ Requerida |
 | GET | `/search` | Buscar activos por query | ✅ Requerida |
 
 **Query Parameters para `/{market_type}/assets`:**
 - `limit` (opcional): 1-100 (default: 50)
 - `offset` (opcional): 0+ (default: 0) - para paginación
+
+**Query Parameters para `/{symbol}/candles`:**
+- `timeframe` (opcional): "1m", "5m", "15m", "1h", "1d" (default: "1d")
+- `timespan` (opcional): "minute", "hour", "day" (alternativa a timeframe)
+- `limit` (opcional): 1-500 (default: 100)
+- `start_date` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
 
 **Query Parameters para `/search`:**
 - `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
@@ -168,6 +175,18 @@ curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=10" \
 
 # Listar activos con paginación (saltar primeros 100, mostrar siguientes 50)
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=50&offset=100" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Datos de velas para gráficos (últimos 100 días)
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timeframe=1d&limit=100" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Datos de velas intradía (últimas 50 velas de 1 hora)
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timeframe=1h&limit=50" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Datos de velas con timespan alternativo y fecha de inicio personalizada
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&start_date=2026-01-17&limit=5000" \
   -H "Authorization: Bearer $TOKEN"
 
 # Buscar activos
