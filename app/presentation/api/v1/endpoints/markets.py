@@ -138,6 +138,7 @@ async def get_candlestick_data(
     symbol: str,
     timeframe: str = Query("1d", description="Timeframe: 1m, 5m, 15m, 1h, 1d"),
     timespan: str = Query(None, description="Alternative timespan: minute, hour, day"),
+    multiplier: int = Query(None, description="Multiplier for timespan (e.g., 5 for 5-minute candles)"),
     limit: int = Query(100, ge=1, le=5000, description="Number of candlesticks to return"),
     start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
     market_service: MarketService = Depends(get_market_service),
@@ -147,13 +148,24 @@ async def get_candlestick_data(
     # Support both timeframe and timespan parameters
     effective_timeframe = timeframe
     if timespan:
-        # Convert timespan to timeframe format
+        # Convert timespan to timeframe format with multiplier
         timespan_mapping = {
             "minute": "1m",
             "hour": "1h", 
             "day": "1d"
         }
-        effective_timeframe = timespan_mapping.get(timespan, timeframe)
+        base_timeframe = timespan_mapping.get(timespan, timeframe)
+        
+        # Apply multiplier if provided
+        if multiplier and multiplier > 1:
+            if timespan == "minute":
+                effective_timeframe = f"{multiplier}m"
+            elif timespan == "hour":
+                effective_timeframe = f"{multiplier}h"
+            elif timespan == "day":
+                effective_timeframe = f"{multiplier}d"
+        else:
+            effective_timeframe = base_timeframe
     
     candlesticks = await market_service.get_candlestick_data(symbol, effective_timeframe, limit, start_date)
     

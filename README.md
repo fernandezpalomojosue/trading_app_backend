@@ -95,9 +95,10 @@ trading-app-backend/
 - `offset` (opcional): 0+ (default: 0) - para paginación
 
 **Query Parameters para `/{symbol}/candles`:**
-- `timeframe` (opcional): "1m", "5m", "15m", "1h", "1d" (default: "1d")
+- `timeframe` (opcional): "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M" (default: "1d")
 - `timespan` (opcional): "minute", "hour", "day" (alternativa a timeframe)
-- `limit` (opcional): 1-500 (default: 100)
+- `multiplier` (opcional): entero para combinar con timespan (ej: 5 para 5-minute candles)
+- `limit` (opcional): 1-5000 (default: 100)
 - `start_date` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
 
 **Query Parameters para `/search`:**
@@ -183,6 +184,14 @@ curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timeframe=1d&limi
 
 # Datos de velas intradía (últimas 50 velas de 1 hora)
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timeframe=1h&limit=50" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Datos de velas con timespan y multiplier (5-minute candles)
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=minute&multiplier=5&limit=200" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Datos de velas con timeframe personalizado (15-minute candles)
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timeframe=15m&limit=100" \
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas con timespan alternativo y fecha de inicio personalizada
