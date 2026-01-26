@@ -86,3 +86,18 @@ class CandleStickResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class CandleData(BaseModel):
+    """Individual candle data in frontend format"""
+    t: int  # Timestamp in milliseconds
+    c: float  # Close price
+    o: float  # Open price
+    h: float  # High price
+    l: float  # Low price
+    v: int   # Volume
+
+
+class CandleStickDataResponse(BaseModel):
+    """DTO for candlestick data response in frontend format"""
+    results: List[CandleData]

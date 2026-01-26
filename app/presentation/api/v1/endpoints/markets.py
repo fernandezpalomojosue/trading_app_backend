@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
 
 from app.application.dto.market_dto import (
-    MarketOverviewResponse, AssetResponse, CandleStickResponse
+    MarketOverviewResponse, AssetResponse, CandleStickResponse, CandleStickDataResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
@@ -86,6 +86,25 @@ async def get_asset_details(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
+    # Estructurar los datos como espera el frontend
+    structured_details = {
+        "market_data": {
+            "price": asset.price,
+            "change": asset.change,
+            "change_percent": asset.change_percent,
+            "volume": asset.volume,
+            "open": asset.details.get("open"),
+            "high": asset.details.get("high"),
+            "low": asset.details.get("low"),
+            "vwap": asset.details.get("vwap")
+        },
+        "source": asset.details.get("source"),
+        "market_cap": asset.details.get("market_cap"),
+        "primary_exchange": asset.details.get("primary_exchange"),
+        "description": asset.details.get("description"),
+        "homepage_url": asset.details.get("homepage_url")
+    }
+    
     return AssetResponse(
         id=asset.id,
         symbol=asset.symbol,
@@ -97,7 +116,7 @@ async def get_asset_details(
         change=asset.change,
         change_percent=asset.change_percent,
         volume=asset.volume,
-        details=asset.details
+        details=structured_details
     )
 
 
@@ -133,7 +152,7 @@ async def search_assets(
     ]
 
 
-@router.get("/{symbol}/candles", response_model=List[CandleStickResponse])
+@router.get("/{symbol}/candles", response_model=CandleStickDataResponse)
 async def get_candlestick_data(
     symbol: str,
     timespan: str = Query("day", description="Timespan: minute, hour, day, week, month, quarter, year"),
@@ -149,14 +168,19 @@ async def get_candlestick_data(
         symbol, timespan, multiplier, limit, start_date, end_date
     )
     
-    return [
-        CandleStickResponse(
-            timestamp=candle.timestamp.isoformat(),
-            open=candle.open,
-            high=candle.high,
-            low=candle.low,
-            close=candle.close,
-            volume=candle.volume
-        )
-        for candle in candlesticks
-    ]
+    # Devolver en el formato que espera el frontend usando DTOs
+    from app.application.dto.market_dto import CandleData
+    
+    return CandleStickDataResponse(
+        results=[
+            CandleData(
+                t=int(candle.timestamp.timestamp() * 1000),  # Timestamp en milisegundos
+                c=candle.close,  # Close
+                o=candle.open,   # Open
+                h=candle.high,   # High
+                l=candle.low,    # Low
+                v=candle.volume  # Volume
+            )
+            for candle in candlesticks
+        ]
+    )
