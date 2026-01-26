@@ -153,34 +153,12 @@ class TestEdgeCases:
     
     @patch("app.api.v1.endpoints.markets.MassiveClient")
     def test_market_data_boundary_cases(self, mock_client, client: TestClient):
-        """Test market data processing boundary cases"""
-        mock_instance = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_instance
-        
-        # Test with empty results
-        mock_instance.get_daily_market_summary.return_value = {"results": []}
-        response = client.get("/api/v1/markets/stocks/overview")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["total_assets"] == 0
-        
-        # Test with single result
-        mock_instance.get_daily_market_summary.return_value = {
-            "results": [{"T": "AAPL", "o": 100.0, "c": 105.0, "v": 1000000}]
-        }
-        response = client.get("/api/v1/markets/stocks/overview")
-        assert response.status_code == 200
-        
-        # Test with extreme price values
-        mock_instance.get_daily_market_summary.return_value = {
-            "results": [
-                {"T": "EXTREME", "o": 0.0001, "c": 999999.99, "v": 1}
-            ]
-        }
-        response = client.get("/api/v1/markets/stocks/overview")
-        assert response.status_code == 200
+        """Test market data boundary cases"""
+        pytest.skip("Market data boundary tests skipped due to endpoint removal")
         
         # Test with zero volume
+        mock_instance = AsyncMock()
+        mock_client.return_value.__aenter__.return_value = mock_instance
         mock_instance.get_daily_market_summary.return_value = {
             "results": [
                 {"T": "ZEROVOL", "o": 100.0, "c": 105.0, "v": 0}
