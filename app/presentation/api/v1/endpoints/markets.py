@@ -23,7 +23,7 @@ def get_market_service() -> MarketService:
     return MarketService(market_use_cases)
 
 
-@router.get("/overview/{market_type}", response_model=MarketOverviewResponse)
+@router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
 async def get_market_overview(
     market_type: MarketType,
     market_service: MarketService = Depends(get_market_service),
