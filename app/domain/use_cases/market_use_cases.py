@@ -103,7 +103,6 @@ class MarketUseCases:
         
         # 3. Filter to top 500 assets by volume
         entities = self._filter_top_assets_by_volume(entities, 500)
-        
     
         # 4. Process with business logic (PURE DOMAIN LOGIC)
         gainers = MarketDataProcessor.get_top_gainers(entities)
@@ -164,53 +163,68 @@ class MarketUseCases:
             return cached_asset
     
         try:
-            # 1. Get market data from last trading day (OHLCV + company info)
+            # 1. Get OHLCV data from last trading day using aggregates endpoint
             last_trading_day = await self.market_repository.get_last_trading_date()
-            market_data = await self.market_repository.get_asset_raw_data(symbol)
+            print(f"DEBUG: Last trading day: {last_trading_day}")
             
-            # 2. The market_data already contains all the information we need
-            if market_data:
-                # Calculate price, change and change_percent from OHLC data
-                price = market_data.get("c")
-                open_price = market_data.get("o")
-                change = price - open_price if open_price else 0
-                change_percent = (change / open_price * 100) if open_price and open_price != 0 else 0
-                
-                combined_data = {
-                    "price": price,
-                    "change": change,
-                    "change_percent": change_percent,
-                    "volume": market_data.get("v"),
-                    "open": open_price,
-                    "high": market_data.get("h"),
-                    "low": market_data.get("l"),
-                    "vwap": market_data.get("vw"),
-                    "name": market_data.get("name"),
-                    "description": market_data.get("description"),
-                    "market_cap": market_data.get("market_cap"),
-                    "primary_exchange": market_data.get("primary_exchange"),
-                    "homepage_url": market_data.get("homepage_url"),
-                    "currency_name": market_data.get("currency_name"),
-                    "active": market_data.get("active", True)
-                }
-                
-                # 3. Convert to entity
-                asset = self._convert_raw_to_asset({
-                    "ticker": symbol,
-                    **combined_data
+            ohlcv_data = await self.market_repository.fetch_candlestick_data(
+                symbol, 1, "day", last_trading_day, last_trading_day, 1
+            )
+            print(f"DEBUG: OHLCV data: {ohlcv_data}")
+            
+            # 2. Get company information from reference endpoint
+            ticker_info = await self.market_repository.fetch_ticker_details(symbol)
+            print(f"DEBUG: Ticker info: {ticker_info}")
+            
+            # 3. Combine both data sources
+            combined_data = {}
+            
+            # Add OHLCV data (market_data)
+            if ohlcv_data and ohlcv_data.get("results"):
+                latest_data = ohlcv_data["results"][0]  # Get the most recent day
+                combined_data.update({
+                    "price": latest_data.get("c"),
+                    "change": latest_data.get("c", 0) - latest_data.get("o", 0),
+                    "change_percent": ((latest_data.get("c", 0) - latest_data.get("o", 0)) / latest_data.get("o", 1)) * 100,
+                    "volume": latest_data.get("v"),
+                    "open": latest_data.get("o"),
+                    "high": latest_data.get("h"),
+                    "low": latest_data.get("l"),
+                    "vwap": latest_data.get("vw")
                 })
-                
-                # 4. Cache if found
-                if asset:
-                    await self.cache_service.set(cache_key, asset, ttl=60)
-                
-                return asset
             
-            return None
+            # Add company information from reference endpoint
+            if ticker_info and ticker_info.get("status") == "OK" and ticker_info.get("results"):
+                company_data = ticker_info["results"]
+                combined_data.update({
+                    "name": company_data.get("name"),
+                    "description": company_data.get("description"),
+                    "market_cap": company_data.get("market_cap"),
+                    "primary_exchange": company_data.get("primary_exchange"),
+                    "homepage_url": company_data.get("homepage_url"),
+                    "currency_name": company_data.get("currency_name"),
+                    "active": company_data.get("active", True)
+                })
+            
+            print(f"DEBUG: Combined data: {combined_data}")
+            
+            # 4. Convert to entity
+            asset = self._convert_raw_to_asset({
+                "ticker": symbol,
+                **combined_data
+            }) if combined_data else None
+            
+            # 5. Cache if found
+            if asset:
+                await self.cache_service.set(cache_key, asset, ttl=60)
+            
+            return asset
             
         except Exception as e:
             # Log error but don't crash
             print(f"Error fetching asset details for {symbol}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
 
     async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[Asset]:
@@ -243,6 +257,10 @@ class MarketUseCases:
                 market=self._map_market_type(raw_data.get("market", "")),
                 currency=raw_data.get("currency_name", "USD"),
                 active=raw_data.get("active", True),
+                price=raw_data.get("price"),
+                change=raw_data.get("change"),
+                change_percent=raw_data.get("change_percent"),
+                volume=raw_data.get("volume"),
                 details=raw_data
             )
         except Exception:
