@@ -159,7 +159,7 @@ async def get_candlestick_data(
     multiplier: int = Query(1, description="Multiplier for timespan (e.g., 5 for 5-minute candles)"),
     limit: int = Query(100, ge=1, le=5000, description="Number of candlesticks to return"),
     startDate: str = Query(None, description="Start date in YYYY-MM-DD format"),
-    endDate: str = Query(None, description="End date in YYYY-MM-DD format"),
+    endDate: str = Query(None, description="End date in YYYY-MM-DD format (default: last trading date)"),
     market_service: MarketService = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):

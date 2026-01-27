@@ -99,7 +99,7 @@ trading-app-backend/
 - `multiplier` (opcional): entero para combinar con timespan (default: 1)
 - `limit` (opcional): 1-5000 (default: 100)
 - `startDate` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
-- `endDate` (opcional): "YYYY-MM-DD" - fecha de fin personalizada
+- `endDate` (opcional): "YYYY-MM-DD" - fecha de fin personalizada (default: último día de trading)
 
 **Query Parameters para `/search`:**
 - `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
@@ -178,7 +178,7 @@ curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=10" \
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=50&offset=100" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas diarias (últimos 100 días)
+# Datos de velas diarias (últimos 100 días) - usa last trading date como endDate
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&limit=100" \
   -H "Authorization: Bearer $TOKEN"
 

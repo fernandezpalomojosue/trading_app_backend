@@ -7,7 +7,7 @@ from app.domain.entities.market import Asset, MarketOverview, MarketType, Market
 
 
 class MarketRepository(ABC):
-    """Abstract repository for market operations"""
+    """Abstract interface for market data repository"""
     
     @abstractmethod
     async def get_asset_raw_data(self, symbol: str) -> Optional[Dict[str, Any]]:
@@ -32,6 +32,11 @@ class MarketRepository(ABC):
     @abstractmethod
     async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
         """Fetch candlestick data using Massive API Custom Bars endpoint"""
+        pass
+
+    @abstractmethod
+    async def get_last_trading_date(self) -> str:
+        """Get the last trading date"""
         pass
 
 class MarketDataCache(ABC):
@@ -286,6 +291,10 @@ class MarketUseCases:
     
     async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> List[CandleStick]:
         """Get candlestick data for charting - DOMAIN LOGIC"""
+        # Use last trading date as default for end_date
+        if end_date is None:
+            end_date = await self.market_repository.get_last_trading_date()
+        
         cache_key = f"candles_{symbol}_{timespan}_{multiplier}_{limit}_{start_date or 'auto'}_{end_date or 'auto'}"
         
         # Try cache first
@@ -298,10 +307,7 @@ class MarketUseCases:
         
         # Calculate date range
         from datetime import datetime, timedelta
-        if end_date:
-            end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
-        else:
-            end_date_dt = datetime.now()
+        end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
         
         if start_date:
             # Use provided start date

@@ -143,6 +143,27 @@ class PolygonMarketClient(MarketRepository):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching candlestick data: {str(e)}")
     
+    async def get_last_trading_date(self) -> str:
+        """Get the last trading date from market status - INFRASTRUCTURE ONLY"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # For now, use yesterday's date as last trading date
+            # In a real implementation, this would call a market status endpoint
+            yesterday = datetime.now() - timedelta(days=1)
+            
+            # If it's weekend, go back to Friday
+            if yesterday.weekday() == 6:  # Sunday
+                yesterday -= timedelta(days=2)
+            elif yesterday.weekday() == 5:  # Saturday
+                yesterday -= timedelta(days=1)
+            
+            return yesterday.strftime("%Y-%m-%d")
+        except Exception as e:
+            # Fallback to yesterday if there's an error
+            from datetime import datetime, timedelta
+            return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    
     def _map_polygon_market(self, polygon_market: str) -> MarketType:
         """Map Polygon market to our MarketType enum"""
         market_mapping = {
