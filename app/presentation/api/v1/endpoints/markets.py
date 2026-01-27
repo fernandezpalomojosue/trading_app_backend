@@ -167,18 +167,17 @@ async def get_candlestick_data(
         symbol, timespan, multiplier, limit, start_date, end_date
     )
     
-    # Devolver en el formato que espera el frontend usando DTOs
     from app.application.dto.market_dto import CandleData
     
     return CandleStickDataResponse(
         results=[
             CandleData(
-                t=int(candle.timestamp.timestamp() * 1000),  # Timestamp en milisegundos
-                c=candle.close,  # Close
-                o=candle.open,   # Open
-                h=candle.high,   # High
-                l=candle.low,    # Low
-                v=candle.volume  # Volume
+                t=int(candle.timestamp.timestamp() * 1000),
+                c=candle.close,
+                o=candle.open,
+                h=candle.high,
+                l=candle.low,
+                v=candle.volume
             )
             for candle in candlesticks
         ]

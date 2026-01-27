@@ -359,46 +359,12 @@ class MarketUseCases:
             "minute": "minute",
             "hour": "hour",
             "day": "day",
-            "week": "day",  # Convert weeks to days for Massive API
-            "month": "day",  # Convert months to days for Massive API
-            "quarter": "day",  # Convert quarters to days for Massive API
-            "year": "day"  # Convert years to days for Massive API
+            "week": "week",  # Keep weeks as weeks
+            "month": "month",  # Keep months as months
+            "quarter": "quarter",  # Keep quarters as quarters
+            "year": "year"  # Keep years as years
         }
-        return timespan_mapping.get(timespan, "day")
-    
-    def _parse_timeframe(self, timeframe: str) -> tuple[int, str]:
-        """Parse timeframe string to multiplier and timespan for Massive API"""
-        timeframe_mapping = {
-            "1m": (1, "minute"),
-            "5m": (5, "minute"),
-            "15m": (15, "minute"),
-            "30m": (30, "minute"),
-            "1h": (1, "hour"),
-            "4h": (4, "hour"),
-            "1d": (1, "day"),
-            "1w": (7, "day"),  # 1 week = 7 days
-            "1M": (30, "day")  # 1 month = 30 days
-        }
-        
-        # Handle dynamic multipliers (e.g., "10m", "2h", "3d")
-        if timeframe.endswith('m'):
-            minutes = int(timeframe[:-1])
-            return (minutes, "minute")
-        elif timeframe.endswith('h'):
-            hours = int(timeframe[:-1])
-            return (hours, "hour")
-        elif timeframe.endswith('d'):
-            days = int(timeframe[:-1])
-            return (days, "day")
-        elif timeframe.endswith('w'):
-            weeks = int(timeframe[:-1])
-            return (weeks * 7, "day")
-        elif timeframe.endswith('M'):
-            months = int(timeframe[:-1])
-            return (months * 30, "day")
-        
-        # Default fallback
-        return timeframe_mapping.get(timeframe, (1, "day"))
+        return timespan_mapping.get(timespan.lower(), "day")
     
     def _convert_massive_to_candlestick(self, raw_data: Dict[str, Any]) -> Optional[CandleStick]:
         """Convert Massive API response to CandleStick entity - DOMAIN LOGIC"""
