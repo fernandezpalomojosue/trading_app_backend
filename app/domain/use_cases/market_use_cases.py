@@ -39,6 +39,11 @@ class MarketRepository(ABC):
         """Get the last trading date"""
         pass
 
+    @abstractmethod
+    async def fetch_ticker_details(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetch complete ticker details from reference endpoint"""
+        pass
+
 class MarketDataCache(ABC):
     """Abstract cache service for market data"""
     
@@ -149,7 +154,7 @@ class MarketUseCases:
             return None
     
     async def get_asset_details(self, symbol: str) -> Optional[Asset]:
-        """Get detailed asset information - DOMAIN ORCHESTRATION"""
+        """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
         # Try cache first
@@ -157,17 +162,55 @@ class MarketUseCases:
         if cached_asset:
             return cached_asset
     
-        # 1. Get raw data from infrastructure
-        raw_data = await self.market_repository.get_asset_raw_data(symbol)
-    
-        # 2. Convert to entity (domain logic)
-        asset = self._convert_raw_to_asset(raw_data) if raw_data else None
-    
-        # 3. Cache if found
-        if asset:
-            await self.cache_service.set(cache_key, asset, ttl=60)
-    
-        return asset
+        try:
+            # 1. Get market data from last trading day (OHLCV + company info)
+            last_trading_day = await self.market_repository.get_last_trading_date()
+            market_data = await self.market_repository.get_asset_raw_data(symbol)
+            
+            # 2. The market_data already contains all the information we need
+            if market_data:
+                # Calculate price, change and change_percent from OHLC data
+                price = market_data.get("c")
+                open_price = market_data.get("o")
+                change = price - open_price if open_price else 0
+                change_percent = (change / open_price * 100) if open_price and open_price != 0 else 0
+                
+                combined_data = {
+                    "price": price,
+                    "change": change,
+                    "change_percent": change_percent,
+                    "volume": market_data.get("v"),
+                    "open": open_price,
+                    "high": market_data.get("h"),
+                    "low": market_data.get("l"),
+                    "vwap": market_data.get("vw"),
+                    "name": market_data.get("name"),
+                    "description": market_data.get("description"),
+                    "market_cap": market_data.get("market_cap"),
+                    "primary_exchange": market_data.get("primary_exchange"),
+                    "homepage_url": market_data.get("homepage_url"),
+                    "currency_name": market_data.get("currency_name"),
+                    "active": market_data.get("active", True)
+                }
+                
+                # 3. Convert to entity
+                asset = self._convert_raw_to_asset({
+                    "ticker": symbol,
+                    **combined_data
+                })
+                
+                # 4. Cache if found
+                if asset:
+                    await self.cache_service.set(cache_key, asset, ttl=60)
+                
+                return asset
+            
+            return None
+            
+        except Exception as e:
+            # Log error but don't crash
+            print(f"Error fetching asset details for {symbol}: {str(e)}")
+            return None
 
     async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[Asset]:
         """Search for assets by query - DOMAIN ORCHESTRATION"""

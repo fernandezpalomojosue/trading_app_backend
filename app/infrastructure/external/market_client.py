@@ -148,21 +148,40 @@ class PolygonMarketClient(MarketRepository):
         try:
             from datetime import datetime, timedelta
             
-            # For now, use yesterday's date as last trading date
-            # In a real implementation, this would call a market status endpoint
-            yesterday = datetime.now() - timedelta(days=1)
+            # Start with yesterday (never today)
+            last_trading_day = datetime.now() - timedelta(days=1)
             
             # If it's weekend, go back to Friday
-            if yesterday.weekday() == 6:  # Sunday
-                yesterday -= timedelta(days=2)
-            elif yesterday.weekday() == 5:  # Saturday
-                yesterday -= timedelta(days=1)
+            if last_trading_day.weekday() == 6:  # Sunday
+                last_trading_day -= timedelta(days=2)  # Go to Friday
+            elif last_trading_day.weekday() == 5:  # Saturday
+                last_trading_day -= timedelta(days=1)  # Go to Friday
             
-            return yesterday.strftime("%Y-%m-%d")
+            # Double-check: if somehow we got today's date, go back one more day
+            today = datetime.now()
+            if last_trading_day.date() >= today.date():
+                last_trading_day = today - timedelta(days=1)
+                # Apply weekend logic again if needed
+                if last_trading_day.weekday() == 6:  # Sunday
+                    last_trading_day -= timedelta(days=2)
+                elif last_trading_day.weekday() == 5:  # Saturday
+                    last_trading_day -= timedelta(days=1)
+            
+            return last_trading_day.strftime("%Y-%m-%d")
         except Exception as e:
             # Fallback to yesterday if there's an error
             from datetime import datetime, timedelta
             return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    async def fetch_ticker_details(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetch complete ticker details from reference endpoint - INFRASTRUCTURE ONLY"""
+        try:
+            # Use Polygon API reference endpoint for ticker details
+            data = await self._make_request(f"/v3/reference/tickers/{symbol.upper()}")
+            
+            return data if data.get("status") == "OK" else None
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching ticker details: {str(e)}")
     
     def _map_polygon_market(self, polygon_market: str) -> MarketType:
         """Map Polygon market to our MarketType enum"""
