@@ -158,14 +158,13 @@ async def get_candlestick_data(
     timespan: str = Query("day", description="Timespan: minute, hour, day, week, month, quarter, year"),
     multiplier: int = Query(1, description="Multiplier for timespan (e.g., 5 for 5-minute candles)"),
     limit: int = Query(100, ge=1, le=5000, description="Number of candlesticks to return"),
-    startDate: str = Query(None, description="Start date in YYYY-MM-DD format"),
-    endDate: str = Query(None, description="End date in YYYY-MM-DD format (default: last trading date)"),
+    start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
+    end_date: str = Query(None, description="End date in YYYY-MM-DD format (default: last trading date)"),
     market_service: MarketService = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
-):
-    """Get candlestick data for charting"""
+):  
     candlesticks = await market_service.get_candlestick_data(
-        symbol, timespan, multiplier, limit, startDate, endDate
+        symbol, timespan, multiplier, limit, start_date, end_date
     )
     
     # Devolver en el formato que espera el frontend usando DTOs
