@@ -103,6 +103,7 @@ class MarketUseCases:
         
         # 3. Filter to top 500 assets by volume
         entities = self._filter_top_assets_by_volume(entities, 500)
+        
     
         # 4. Process with business logic (PURE DOMAIN LOGIC)
         gainers = MarketDataProcessor.get_top_gainers(entities)
@@ -477,14 +478,3 @@ def _convert_massive_to_candlestick(self, raw_data: Dict[str, Any]) -> Optional[
         )
     except (TypeError, KeyError, ValueError):
         return None
-
-def _filter_top_assets_by_volume(self, entities: List[Asset], limit: int = 500) -> List[Asset]:
-    """Filter assets to keep only the top N by volume - DOMAIN LOGIC"""
-    if not entities:
-        return entities
-    
-    # Sort by volume in descending order
-    sorted_entities = sorted(entities, key=lambda x: x.volume or 0, reverse=True)
-    
-    # Return top N assets
-    return sorted_entities[:limit]
