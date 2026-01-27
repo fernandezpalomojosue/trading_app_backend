@@ -98,8 +98,8 @@ trading-app-backend/
 - `timespan` (opcional): "minute", "hour", "day", "week", "month", "quarter", "year" (default: "day")
 - `multiplier` (opcional): entero para combinar con timespan (default: 1)
 - `limit` (opcional): 1-5000 (default: 100)
-- `start_date` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
-- `end_date` (opcional): "YYYY-MM-DD" - fecha de fin personalizada
+- `startDate` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
+- `endDate` (opcional): "YYYY-MM-DD" - fecha de fin personalizada
 
 **Query Parameters para `/search`:**
 - `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
@@ -191,7 +191,7 @@ curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=minute&m
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas con rango de fechas personalizado
-curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&start_date=2026-01-17&end_date=2026-01-25&limit=5000" \
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&startDate=2026-01-17&endDate=2026-01-25&limit=5000" \
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas semanales (últimas 20 semanas)
