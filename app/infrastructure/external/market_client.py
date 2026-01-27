@@ -133,20 +133,9 @@ class PolygonMarketClient(MarketRepository):
     async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
         """Fetch candlestick data using Massive API Custom Bars endpoint - INFRASTRUCTURE ONLY"""
         try:
-            # Convert dates to timestamps if needed
-            if from_date.count('-') == 2:  # YYYY-MM-DD format
-                from datetime import datetime
-                dt_from = datetime.strptime(from_date, "%Y-%m-%d")
-                dt_to = datetime.strptime(to_date, "%Y-%m-%d")
-                from_timestamp = int(dt_from.timestamp() * 1000)
-                to_timestamp = int(dt_to.timestamp() * 1000)
-            else:
-                from_timestamp = int(from_date)
-                to_timestamp = int(to_date)
-            
             # Use Massive API Custom Bars endpoint
             data = await self._make_request(
-                f"/v2/aggs/ticker/{symbol.upper()}/range/{multiplier}/{timespan}/{from_timestamp}/{to_timestamp}",
+                f"/v2/aggs/ticker/{symbol.upper()}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
                 {"adjusted": "true", "sort": "asc", "limit": str(limit)}
             )
             
