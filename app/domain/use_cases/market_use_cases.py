@@ -95,8 +95,11 @@ class MarketUseCases:
             entity = self._convert_raw_to_entity(item)
             if entity:
                 entities.append(entity)
+        
+        # 3. Filter to top 500 assets by volume
+        entities = self._filter_top_assets_by_volume(entities, 500)
     
-        # 3. Process with business logic (PURE DOMAIN LOGIC)
+        # 4. Process with business logic (PURE DOMAIN LOGIC)
         gainers = MarketDataProcessor.get_top_gainers(entities)
         losers = MarketDataProcessor.get_top_losers(entities)
         active = MarketDataProcessor.get_most_active(entities)
@@ -384,5 +387,61 @@ class MarketUseCases:
                 close=float(raw_data["c"]),
                 volume=int(raw_data["v"])
             )
-        except (TypeError, KeyError, ValueError):
+        except (TypeError, KeyError, ZeroDivisionError):
             return None
+    
+    def _filter_top_assets_by_volume(self, entities: List[Asset], limit: int = 500) -> List[Asset]:
+        """Filter assets to keep only the top N by volume - DOMAIN LOGIC"""
+        if not entities:
+            return entities
+        
+        # Sort by volume in descending order
+        sorted_entities = sorted(entities, key=lambda x: x.volume or 0, reverse=True)
+        
+        # Return top N assets
+        return sorted_entities[:limit]
+
+def _convert_to_massive_timespan(self, timespan: str) -> str:
+    """Convert frontend timespan to Massive API timespan"""
+    timespan_mapping = {
+        "minute": "minute",
+        "hour": "hour",
+        "day": "day",
+        "week": "week",  # Keep weeks as weeks
+        "month": "month",  # Keep months as months
+        "quarter": "quarter",  # Keep quarters as quarters
+        "year": "year"  # Keep years as years
+    }
+    return timespan_mapping.get(timespan.lower(), "day")
+
+def _convert_massive_to_candlestick(self, raw_data: Dict[str, Any]) -> Optional[CandleStick]:
+    """Convert Massive API response to CandleStick entity - DOMAIN LOGIC"""
+    try:
+        if not all(k in raw_data for k in ["o", "h", "l", "c", "v", "t"]):
+            return None
+        
+        # Convert millisecond timestamp to datetime
+        from datetime import datetime, timezone
+        timestamp = datetime.fromtimestamp(raw_data["t"] / 1000, tz=timezone.utc)
+        
+        return CandleStick(
+            timestamp=timestamp,
+            open=float(raw_data["o"]),
+            high=float(raw_data["h"]),
+            low=float(raw_data["l"]),
+            close=float(raw_data["c"]),
+            volume=int(raw_data["v"])
+        )
+    except (TypeError, KeyError, ValueError):
+        return None
+
+def _filter_top_assets_by_volume(self, entities: List[Asset], limit: int = 500) -> List[Asset]:
+    """Filter assets to keep only the top N by volume - DOMAIN LOGIC"""
+    if not entities:
+        return entities
+    
+    # Sort by volume in descending order
+    sorted_entities = sorted(entities, key=lambda x: x.volume or 0, reverse=True)
+    
+    # Return top N assets
+    return sorted_entities[:limit]

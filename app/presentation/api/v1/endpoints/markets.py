@@ -86,7 +86,6 @@ async def get_asset_details(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    # Estructurar los datos como espera el frontend
     structured_details = {
         "market_data": {
             "price": asset.price,
