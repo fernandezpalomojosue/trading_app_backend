@@ -7,6 +7,7 @@ Backend para una aplicación de trading, construido con **FastAPI** + **SQLModel
 - ✅ **Arquitectura Limpia**: Separación clara entre dominio, aplicación e infraestructura
 - ✅ **Autenticación JWT**: Sistema seguro de login y registro de usuarios
 - ✅ **API de Trading**: Endpoints para obtener datos de mercado (stocks, candles)
+- ✅ **Filtrado Inteligente**: Procesa solo los 500 assets con más volumen
 - ✅ **Caché Inteligente**: Sistema de caché para optimizar respuestas
 - ✅ **Testing Completo**: Suite de tests con pytest y CI/CD
 - ✅ **Migraciones**: Gestión de esquema con Alembic
@@ -84,7 +85,7 @@ trading-app-backend/
 ### 📈 Mercados (`/api/v1/markets`)
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
-| GET | `/{market_type}/overview` | Overview del mercado | ✅ Requerida |
+| GET | `/{market_type}/overview` | Overview del mercado (top 500 assets por volumen) | ✅ Requerida |
 | GET | `/{market_type}/assets` | Lista de activos (con query params) | ✅ Requerida |
 | GET | `/assets/{symbol}` | Detalles de un activo | ✅ Requerida |
 | GET | `/{symbol}/candles` | Datos de velas para gráficos (OHLCV) | ✅ Requerida |
@@ -98,8 +99,8 @@ trading-app-backend/
 - `timespan` (opcional): "minute", "hour", "day", "week", "month", "quarter", "year" (default: "day")
 - `multiplier` (opcional): entero para combinar con timespan (default: 1)
 - `limit` (opcional): 1-5000 (default: 100)
-- `startDate` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
-- `endDate` (opcional): "YYYY-MM-DD" - fecha de fin personalizada (default: último día de trading)
+- `start_date` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
+- `end_date` (opcional): "YYYY-MM-DD" - fecha de fin personalizada (default: último día de trading)
 
 **Query Parameters para `/search`:**
 - `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
@@ -109,6 +110,8 @@ trading-app-backend/
 ### 🗄️ Gestión de Caché
 
 **Nota:** Los endpoints de caché actualmente no están implementados en la API. El sistema usa caché en memoria (`MemoryMarketCache`) internamente para optimizar respuestas.
+
+**Filtrado Inteligente:** El endpoint `/{market_type}/overview` procesa automáticamente solo los 500 assets con mayor volumen para optimizar rendimiento y enfocarse en los activos más líquidos del mercado.
 
 ### ❤️ Health Check
 | Método | Endpoint | Descripción |
@@ -191,7 +194,7 @@ curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=minute&m
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas con rango de fechas personalizado
-curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&startDate=2026-01-17&endDate=2026-01-25&limit=5000" \
+curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&start_date=2026-01-17&end_date=2026-01-25&limit=5000" \
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas semanales (últimas 20 semanas)
