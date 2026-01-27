@@ -7,7 +7,6 @@ Backend para una aplicación de trading, construido con **FastAPI** + **SQLModel
 - ✅ **Arquitectura Limpia**: Separación clara entre dominio, aplicación e infraestructura
 - ✅ **Autenticación JWT**: Sistema seguro de login y registro de usuarios
 - ✅ **API de Trading**: Endpoints para obtener datos de mercado (stocks, candles)
-- ✅ **Filtrado Inteligente**: Procesa solo los 500 assets con más volumen
 - ✅ **Caché Inteligente**: Sistema de caché para optimizar respuestas
 - ✅ **Testing Completo**: Suite de tests con pytest y CI/CD
 - ✅ **Migraciones**: Gestión de esquema con Alembic
@@ -85,7 +84,7 @@ trading-app-backend/
 ### 📈 Mercados (`/api/v1/markets`)
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
-| GET | `/{market_type}/overview` | Overview del mercado (top 500 assets por volumen) | ✅ Requerida |
+| GET | `/{market_type}/overview` | Overview del mercado | ✅ Requerida |
 | GET | `/{market_type}/assets` | Lista de activos (con query params) | ✅ Requerida |
 | GET | `/assets/{symbol}` | Detalles de un activo | ✅ Requerida |
 | GET | `/{symbol}/candles` | Datos de velas para gráficos (OHLCV) | ✅ Requerida |
@@ -110,8 +109,6 @@ trading-app-backend/
 ### 🗄️ Gestión de Caché
 
 **Nota:** Los endpoints de caché actualmente no están implementados en la API. El sistema usa caché en memoria (`MemoryMarketCache`) internamente para optimizar respuestas.
-
-**Filtrado Inteligente:** El endpoint `/{market_type}/overview` procesa automáticamente solo los 500 assets con mayor volumen para optimizar rendimiento y enfocarse en los activos más líquidos del mercado.
 
 ### ❤️ Health Check
 | Método | Endpoint | Descripción |
