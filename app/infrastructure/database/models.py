@@ -2,9 +2,31 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlmodel import SQLModel, Field, Relationship, Column
+from sqlmodel import SQLModel, Field, Relationship, Column, TEXT
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.types import TypeDecorator, CHAR
+import sqlalchemy as sa
+
+
+class UUIDType(TypeDecorator):
+    """Platform-independent UUID type for SQLite compatibility"""
+    impl = CHAR(36)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif not isinstance(value, uuid.UUID):
+            return str(uuid.UUID(value))
+        else:
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        else:
+            return uuid.UUID(value)
 
 
 class UserSQLModel(SQLModel, table=True):
@@ -13,8 +35,8 @@ class UserSQLModel(SQLModel, table=True):
     
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
-        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
-        description="ID único del usuario (UUID nativo)"
+        sa_column=Column(UUIDType(), primary_key=True, unique=True),
+        description="ID único del usuario (UUID compatible con SQLite)"
     )
     email: str = Field(unique=True, index=True, description="Email del usuario")
     username: Optional[str] = Field(

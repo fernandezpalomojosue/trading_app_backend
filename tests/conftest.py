@@ -65,7 +65,7 @@ def authenticated_user(client: TestClient, db_session: Session):
     user_data = {
         "email": "auth@example.com",
         "username": "authuser",
-        "password": "testpassword123"
+        "password": "Testpassword123"
     }
     
     # Register user
