@@ -22,7 +22,13 @@ class MockMarketRepository(MarketRepository):
     
     async def search_assets_raw(self, query: str, market_type: MarketType = None):
         self.call_count['search_assets_raw'] = self.call_count.get('search_assets_raw', 0) + 1
-        return self.data.get(f'search_{query}', [])
+        results = self.data.get(f'search_{query}', [])
+        
+        # Filter by market_type if provided
+        if market_type:
+            results = [item for item in results if item.get('market') == market_type.value]
+        
+        return results
     
     async def fetch_raw_market_data(self, date: str):
         self.call_count['fetch_raw_market_data'] = self.call_count.get('fetch_raw_market_data', 0) + 1
@@ -205,7 +211,9 @@ class TestMarketUseCases:
         
         entity = market_use_cases._convert_raw_to_entity(raw_data)
         
+        # Should handle zero division gracefully
         assert entity is not None
+        assert entity.change == 105.0  # 105.0 - 0.0
         assert entity.change_percent == 0.0  # Should not crash
     
     async def test_convert_raw_to_asset_valid_data(self, market_use_cases, sample_raw_asset_data):

@@ -136,7 +136,7 @@ class MarketUseCases:
             close_price = raw_item["c"]
         
             change = close_price - open_price
-            change_percent = (change / open_price * 100) if open_price > 0 else 0
+            change_percent = (change / open_price * 100) if open_price != 0 else 0
         
             return MarketSummary(
             symbol=raw_item["T"],
@@ -145,7 +145,7 @@ class MarketUseCases:
             high=raw_item.get("h", close_price),
             low=raw_item.get("l", close_price),
             volume=raw_item["v"],
-            vwap=raw_item["vw"],
+            vwap=raw_item.get("vw"),
             change=round(change, 4),
             change_percent=round(change_percent, 2),
             timestamp=datetime.now()

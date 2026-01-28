@@ -5,6 +5,7 @@ Tests focus on business rules for data integrity and transformation
 import pytest
 from datetime import datetime, timezone
 from app.domain.use_cases.market_use_cases import MarketUseCases
+from app.domain.entities.market import MarketType
 from tests.unit.test_market_use_cases import MockMarketRepository, MockMarketDataCache
 
 
@@ -63,9 +64,10 @@ class TestDataValidationAndNormalization:
         market_use_cases.market_repository.data['search_test'] = mock_data
         
         # Test stocks filter
-        results = await market_use_cases.search_assets("test", market_type="stocks")
+        results = await market_use_cases.search_assets("test", market_type=MarketType.STOCKS)
         assert len(results) == 1
         assert results[0].symbol == "AAPL"
+        assert results[0].market == MarketType.STOCKS
         assert results[0].market.value == "stocks"
     
     async def test_normalization_price_change_calculation(self, market_use_cases):
@@ -245,16 +247,25 @@ class TestDataValidationAndNormalization:
                 {"T": "MSFT", "c": 160.0, "o": 150.0, "v": 1200000}
             ]
         }
-        market_use_cases.market_repository.data['market_2024-01-15'] = mock_data
+        # Mock the date utils to return our test date
+        import app.utils.date_utils
+        original_get_last_trading_day = app.utils.date_utils.get_last_trading_day
+        app.utils.date_utils.get_last_trading_day = lambda: '2024-01-15'
         
-        assets = await market_use_cases.get_assets_list(MarketType.STOCKS, limit=10, offset=0)
-        
-        # Should have only 3 unique symbols
-        symbols = [asset.symbol for asset in assets]
-        assert len(symbols) == len(set(symbols))  # No duplicates
-        assert "AAPL" in symbols
-        assert "GOOGL" in symbols
-        assert "MSFT" in symbols
+        try:
+            market_use_cases.market_repository.data['market_2024-01-15'] = mock_data
+            
+            assets = await market_use_cases.get_assets_list(MarketType.STOCKS, limit=10, offset=0)
+            
+            # Should have only 3 unique symbols
+            symbols = [asset.symbol for asset in assets]
+            assert len(symbols) == len(set(symbols))  # No duplicates
+            assert "AAPL" in symbols
+            assert "GOOGL" in symbols
+            assert "MSFT" in symbols
+        finally:
+            # Restore original function
+            app.utils.date_utils.get_last_trading_day = original_get_last_trading_day
     
     async def test_validation_empty_results_handling(self, market_use_cases):
         """Should handle empty API results gracefully"""
