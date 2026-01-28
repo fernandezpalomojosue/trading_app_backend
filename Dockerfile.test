@@ -22,5 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 # Copiar código y tests
 COPY app/ app/
 COPY tests/ tests/
+COPY pyproject.toml ./
 
-CMD ["pytest", "-q"]
+# Ejecutar tests con configuración de pyproject.toml
+CMD ["pytest", "-v", "--tb=short"]
