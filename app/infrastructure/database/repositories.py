@@ -95,4 +95,3 @@ class SQLUserRepository(UserRepository):
         """Get user model with password (for authentication)"""
         statement = select(UserSQLModel).where(UserSQLModel.email == email)
         return self.session.exec(statement).first()
-#eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VydGVzdEBleGFtcGxlLmNvbSIsImV4cCI6MTc2OTUzNDQwMX0.aNPhSEzXipU8A2RroCQSpbHx9oV3zXI0PjYxv2IAtQE
