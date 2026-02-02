@@ -106,10 +106,6 @@ trading-app-backend/
 - `market_type` (opcional): `stocks` (default: todos)
 - `limit` (opcional): 1-50 (default: 20)
 
-### 🗄️ Gestión de Caché
-
-**Nota:** Los endpoints de caché actualmente no están implementados en la API. El sistema usa caché en memoria (`MemoryMarketCache`) internamente para optimizar respuestas.
-
 ### ❤️ Health Check
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|

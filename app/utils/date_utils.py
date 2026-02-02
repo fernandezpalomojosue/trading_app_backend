@@ -34,38 +34,4 @@ def get_last_trading_day(target_date: Optional[datetime] = None) -> str:
     
     return last_trading_day.strftime("%Y-%m-%d")
 
-def is_trading_day(date: datetime) -> bool:
-    """
-    Verifica si una fecha es día hábil (lunes-viernes).
-    
-    Args:
-        date: Fecha a verificar
-        
-    Returns:
-        bool: True si es día hábil, False si es fin de semana
-    """
-    return date.weekday() < 5  # 0-4 = lunes-viernes
 
-def get_previous_trading_days(days: int, end_date: Optional[datetime] = None) -> list:
-    """
-    Obtiene los últimos N días hábiles.
-    
-    Args:
-        days: Número de días hábiles a obtener
-        end_date: Fecha final (por defecto: hoy)
-        
-    Returns:
-        list: Lista de fechas en formato YYYY-MM-DD
-    """
-    if end_date is None:
-        end_date = datetime.utcnow()
-    
-    trading_days = []
-    current_date = end_date
-    
-    while len(trading_days) < days:
-        current_date -= timedelta(days=1)
-        if is_trading_day(current_date):
-            trading_days.append(current_date.strftime("%Y-%m-%d"))
-    
-    return trading_days

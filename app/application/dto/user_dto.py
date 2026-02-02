@@ -12,12 +12,6 @@ class UserRegistrationRequest(BaseModel):
     full_name: Optional[str] = Field(None, max_length=100, description="Nombre completo")
 
 
-class UserLoginRequest(BaseModel):
-    """DTO for user login requests"""
-    email: EmailStr = Field(..., description="Email del usuario")
-    password: str = Field(..., description="Contraseña")
-
-
 class UserResponse(BaseModel):
     """DTO for user responses"""
     id: UUID
@@ -39,9 +33,3 @@ class TokenResponse(BaseModel):
     """DTO for token responses"""
     access_token: str
     token_type: str = "bearer"
-
-
-class BalanceUpdateRequest(BaseModel):
-    """DTO for balance update requests"""
-    amount: float = Field(..., gt=0, description="Cantidad a agregar/restar")
-    operation: str = Field("add", pattern="^(add|subtract)$", description="Operación: add o subtract")

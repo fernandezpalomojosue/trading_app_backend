@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
 
 from app.application.dto.market_dto import (
-    MarketOverviewResponse, AssetResponse, CandleStickResponse, CandleStickDataResponse
+    MarketOverviewResponse, AssetResponse, CandleStickDataResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType

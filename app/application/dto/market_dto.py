@@ -54,40 +54,6 @@ class MarketOverviewResponse(BaseModel):
         from_attributes = True
 
 
-class MarketMoversResponse(BaseModel):
-    """DTO for market movers response"""
-    gainers: List[MarketSummaryResponse]
-    losers: List[MarketSummaryResponse]
-    most_active: List[MarketSummaryResponse]
-
-
-class SearchAssetsRequest(BaseModel):
-    """DTO for asset search requests"""
-    query: str = Field(..., min_length=2, description="Término de búsqueda")
-    market_type: Optional[MarketType] = Field(None, description="Tipo de mercado")
-
-
-class CacheStatsResponse(BaseModel):
-    """DTO for cache statistics response"""
-    entries: int
-    memory_usage: Optional[str] = None
-    hit_rate: Optional[float] = None
-    additional_info: Dict[str, Any] = Field(default_factory=dict)
-
-
-class CandleStickResponse(BaseModel):
-    """DTO for candlestick data responses"""
-    timestamp: str
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
-    
-    class Config:
-        from_attributes = True
-
-
 class CandleData(BaseModel):
     """Individual candle data in frontend format"""
     t: int  # Timestamp in milliseconds
