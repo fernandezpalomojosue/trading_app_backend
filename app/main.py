@@ -57,7 +57,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 # ==============================
 # Healthcheck
 # ==============================
-@app.get("/health", tags=["Health"])
+@app.get("/health", tags=["health"])
 def health_check():
     return {"status": "ok"}
 

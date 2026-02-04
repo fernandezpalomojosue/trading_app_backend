@@ -17,15 +17,16 @@ Backend para una aplicación de trading, construido con **FastAPI** + **SQLModel
 
 | Componente | Tecnología |
 |------------|------------|
-| **API Framework** | FastAPI |
+| **API Framework** | FastAPI 0.109.0 |
 | **Base de Datos** | PostgreSQL + SQLModel |
 | **Migraciones** | Alembic |
-| **Autenticación** | JWT (python-jose) + passlib |
-| **HTTP Clients** | httpx / aiohttp |
-| **Testing** | pytest + TestClient |
+| **Autenticación** | JWT (python-jose) + passlib + bcrypt |
+| **HTTP Clients** | httpx 0.27.0 + aiohttp 3.9.1 |
+| **Market Data** | Massive API |
+| **Testing** | pytest 8.0.2 + pytest-asyncio |
 | **CI/CD** | GitHub Actions + Docker |
 | **Deploy** | Render (Postgres managed) |
-| **Caché** | Redis (opcional) |
+| **Caché** | Memory Cache (implementación local) |
 
 ## 📁 Estructura del Proyecto
 
@@ -48,15 +49,18 @@ trading-app-backend/
 │   │   └── security/             # Utilidades de seguridad
 │   ├── presentation/             # Capa de presentación (API endpoints)
 │   │   └── api/                  # Rutas de la API
+│   │       └── v1/               # Versión 1 de la API
+│   │           └── endpoints/    # Endpoints implementados
 │   ├── schemas/                  # Pydantic schemas
 │   ├── utils/                    # Utilidades varias
 │   └── main.py                   # Punto de entrada de FastAPI
 ├── tests/                        # Suite de tests
+│   ├── fixtures/                 # Fixtures para tests
+│   ├── unit/                     # Tests unitarios
 │   ├── conftest.py               # Configuración de pytest
 │   ├── test_auth.py              # Tests de autenticación
 │   ├── test_health.py            # Tests de health check
 │   ├── test_integration.py       # Tests de integración
-│   ├── test_markets.py           # Tests de mercados
 │   ├── test_models.py            # Tests de modelos
 │   └── README.md                 # Documentación de tests
 ├── alembic/                      # Migraciones de base de datos
@@ -66,7 +70,17 @@ trading-app-backend/
 │   └── render_migrate.py         # Migraciones para Render
 ├── docker-compose.yml            # Desarrollo local
 ├── docker-compose.test.yml       # Testing/CI
+├── docker-compose.prod.yml       # Producción
+├── docker-compose.override.yml   # Override local development
 ├── Dockerfile.prod               # Producción
+├── Dockerfile.test               # Testing
+├── .dockerignore                 # Exclusiones Docker
+├── .env.example                   # Plantilla variables entorno
+├── .gitignore                     # Exclusiones Git
+├── .flake8                        # Configuración linting
+├── .python-version.txt            # Versión Python
+├── alembic.ini                    # Configuración Alembic
+├── pyproject.toml                # Configuración pytest
 └── .github/workflows/            # CI/CD pipelines
 ```
 
@@ -77,8 +91,8 @@ trading-app-backend/
 ### 🔐 Autenticación (`/api/v1/auth`)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/register` | Registrar nuevo usuario |
-| POST | `/login` | Iniciar sesión (OAuth2) |
+| POST | `/register` | Registrar nuevo usuario (requiere email, username, password, full_name opcional) |
+| POST | `/login` | Iniciar sesión (OAuth2 - usa username como email) |
 | GET | `/me` | Obtener perfil de usuario (requiere token) |
 
 ### 📈 Mercados (`/api/v1/markets`)
@@ -122,7 +136,9 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
-    "password": "testpassword123"
+    "username": "testuser",
+    "password": "testpassword123",
+    "full_name": "Test User"
   }'
 ```
 
@@ -183,6 +199,7 @@ curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=hour&mul
   -H "Authorization: Bearer $TOKEN"
 
 # Datos de velas de 5 minutos (últimas 200 velas)
+# Nota: Requiere plan con acceso a datos intradía de Massive API. Puede no estar disponible para todos los símbolos.
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=minute&multiplier=5&limit=200" \
   -H "Authorization: Bearer $TOKEN"
 
@@ -194,8 +211,12 @@ curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&mult
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=week&multiplier=1&limit=20" \
   -H "Authorization: Bearer $TOKEN"
 
-# Buscar activos
+# Buscar activos (mínimo 2 caracteres, máximo 50 resultados por defecto)
 curl -X GET "http://localhost:8000/api/v1/markets/search?q=AAPL&limit=5" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Buscar activos filtrando por tipo de mercado
+curl -X GET "http://localhost:8000/api/v1/markets/search?q=AAPL&market_type=stocks&limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
 # Detalles de un activo
@@ -221,14 +242,18 @@ cp .env.example .env
 | `ENVIRONMENT` | Entorno de ejecución | `development`/`testing`/`production` |
 | `DATABASE_URL` | URL de PostgreSQL | `postgresql://user:pass@host:5432/db` |
 | `SECRET_KEY` | Clave para JWT | `your-super-secret-key-here` |
-| `POLYGON_API_KEY` | API Key de Polygon.io | `your-polygon-api-key-here` |
+| `MASSIVE_API_KEY` | API Key de Massive API | `your-massive-api-key-here` |
+
+**Notas sobre la API Key:**
+- `MASSIVE_API_KEY` es requerida para obtener datos de mercado
+- Los datos intradía (velas de minutos) pueden requerir un plan pago de Massive API
+- Algunos símbolos pueden no tener datos históricos de alta frecuencia disponibles
 
 **Variables opcionales:**
 
 | Variable | Descripción | Default |
 |----------|-------------|---------|
 | `TEST_DATABASE_URL` | DB para testing | `postgresql://postgres:postgres@localhost/test_trading_app` |
-| `MASSIVE_API_KEY` | API Key alternativa (Massive) | - |
 | `ALGORITHM` | Algoritmo JWT | `HS256` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Expiración token (minutos) | `1440` |
 | `ECHO_SQL` | Mostrar queries SQL | `false` |
@@ -244,9 +269,7 @@ cp .env.example .env
 
 ### 2. Prioridad de APIs Externas
 
-El sistema usa:
-1. **`MASSIVE_API_KEY`** si está configurada
-2. **`POLYGON_API_KEY`** como fallback
+El sistema usa únicamente **Massive API** para obtener datos de mercado.
 
 ## 🚀 Inicio Rápido
 
@@ -305,7 +328,8 @@ python -m pytest --cov=app --cov-report=html
 
 # Tests específicos
 python -m pytest tests/test_auth.py -v
-python -m pytest tests/test_markets.py -v
+python -m pytest tests/test_models.py -v
+python -m pytest tests/test_integration.py -v
 ```
 
 ### Tests en CI/CD
@@ -321,8 +345,9 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
 - `test_auth.py`: Tests de autenticación y registro
 - `test_health.py`: Tests de health check
 - `test_integration.py`: Tests de integración
-- `test_markets.py`: Tests de endpoints de mercado
 - `test_models.py`: Tests de modelos de datos
+- `fixtures/`: Fixtures reutilizables para tests
+- `unit/`: Tests unitarios de componentes aislados
 - `README.md`: Documentación de tests
 
 ## 🗄️ Migraciones de Base de Datos
@@ -369,7 +394,7 @@ from app.infrastructure.database.models import UserSQLModel
 **Variables de Entorno requeridas:**
 - `DATABASE_URL` (URL de PostgreSQL de Render)
 - `SECRET_KEY` (clave segura para JWT)
-- `POLYGON_API_KEY` (API key para datos de mercado)
+- `MASSIVE_API_KEY` (API key para datos de mercado de Massive API)
 - `ENVIRONMENT=production`
 
 ### 2. Comandos de Deploy
@@ -402,23 +427,25 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 | Job | Trigger | Descripción |
 |-----|---------|-------------|
-| `test` | Push/PR a cualquier branch | Ejecuta tests con Docker Compose |
-| `build-and-push` | Push a `master` | Build y push imagen a GHCR |
+| `test` | Push/PR a master | Ejecuta tests con Docker Compose usando docker-compose.test.yml |
+| `build-and-push` | Push a master | Build y push imagen a GitHub Container Registry (GHCR) |
 
 ### Flujo de CI/CD
 
 1. **Development:**
-   - Push a feature branch → Tests automáticos
-   - PR → Tests completos + validación
+   - Pull Request a master → Tests automáticos con Docker
+   - Push a master → Tests + Build imagen Docker
 
 2. **Producción:**
-   - Merge a `master` → Tests + Build imagen
-   - Deploy automático a Render
+   - Merge a `master` → Tests + Build imagen + Push a GHCR
+   - Deploy manual o automático a Render usando imagen de GHCR
 
 ### Imagen Docker
 
 **Registry:** GitHub Container Registry (GHCR)
-**Tag:** `latest` para el último build de `master`
+**Tags:** 
+- `latest` para el último build de `master`
+- `{commit_sha}` para cada commit específico
 
 ---
 

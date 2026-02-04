@@ -12,7 +12,7 @@ from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
-router = APIRouter(prefix="/markets", tags=["markets"])
+router = APIRouter(prefix="/markets", tags=["market_info"])
 
 
 def get_market_service() -> MarketService:

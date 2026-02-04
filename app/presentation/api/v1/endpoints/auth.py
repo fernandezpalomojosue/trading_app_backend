@@ -12,7 +12,7 @@ from app.infrastructure.security.password_service import PasslibPasswordService
 from app.infrastructure.security.token_service import JWTTokenService
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
-router = APIRouter(prefix="/auth", tags=["autenticacion"])
+router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 def get_user_service(db: Session = Depends(get_session)) -> UserService:
