@@ -37,22 +37,24 @@ trading-app-backend/
 │   │   ├── dto/                  # Data Transfer Objects
 │   │   └── services/             # Servicios de aplicación
 │   ├── core/                     # Configuración y utilidades core
-│   ├── crud/                     # Operaciones CRUD (vacío por ahora)
-│   ├── db/                       # Configuración de base de datos
+│   │   ├── config.py             # Configuración del proyecto
+│   │   ├── database/             # Configuración y modelos de base de datos
+│   │   ├── security.py           # Utilidades de seguridad
+│   │   └── utils/                # Utilidades varias
 │   ├── domain/                   # Entidades de dominio y lógica de negocio
 │   │   ├── entities/             # Entidades del dominio
 │   │   └── use_cases/            # Casos de uso del dominio
 │   ├── infrastructure/           # Capa de infraestructura
 │   │   ├── cache/                # Sistema de caché
-│   │   ├── database/             # Modelos y configuración DB
+│   │   ├── dependencies.py       # Dependencias de la aplicación
 │   │   ├── external/              # Clientes HTTP externos
+│   │   ├── repositories.py       # Repositories de base de datos
 │   │   └── security/             # Utilidades de seguridad
 │   ├── presentation/             # Capa de presentación (API endpoints)
-│   │   └── api/                  # Rutas de la API
-│   │       └── v1/               # Versión 1 de la API
-│   │           └── endpoints/    # Endpoints implementados
-│   ├── schemas/                  # Pydantic schemas
-│   ├── utils/                    # Utilidades varias
+│   │   ├── api/                  # Rutas de la API
+│   │   │   └── v1/               # Versión 1 de la API
+│   │   │       └── endpoints/    # Endpoints implementados
+│   │   └── schemas/              # Pydantic schemas
 │   └── main.py                   # Punto de entrada de FastAPI
 ├── tests/                        # Suite de tests
 │   ├── fixtures/                 # Fixtures para tests
@@ -470,7 +472,3 @@ Si encuentras algún problema:
 1. Revisa los [issues existentes](../../issues)
 2. Crea un nuevo issue con descripción detallada
 3. Incluye logs y pasos para reproducir
-
----
-
-**Happy Trading! 🚀📈**
