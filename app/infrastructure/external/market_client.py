@@ -22,15 +22,21 @@ class RateLimiter:
     async def wait_if_needed(self):
         async with self.lock:
             now = time.time()
-            self.calls = [t for t in self.calls if now - t < 60]
+            # Mantener solo llamadas de los últimos 60 segundos
+            one_minute_ago = now - 60
+            self.calls = [t for t in self.calls if t > one_minute_ago]
             
             if len(self.calls) >= self.calls_per_minute:
-                oldest_call = self.calls[0]
+                # Esperar hasta que pase 1 minuto desde la llamada más antigua
+                oldest_call = min(self.calls)
                 wait_time = 60 - (now - oldest_call)
                 if wait_time > 0:
+                    print(f"Rate limit alcanzado. Esperando {wait_time:.1f} segundos...")
                     await asyncio.sleep(wait_time)
+                    # Después de esperar, resetear para evitar acumulación
+                    self.calls = []
             
-            self.calls.append(time.time())
+            self.calls.append(now)
 
 
 class PolygonMarketClient(MarketRepository):
