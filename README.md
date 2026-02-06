@@ -1,88 +1,88 @@
 # Trading App Backend
 
-Backend para una aplicación de trading, construido con **FastAPI** + **SQLModel** (PostgreSQL) y tests en CI con Docker. Incluye autenticación JWT, endpoints de mercado (stocks) y caché.
+Backend for a trading application, built with **FastAPI** + **SQLModel** (PostgreSQL) and CI testing with Docker. Includes JWT authentication, market endpoints (stocks), and caching.
 
-## 🚀 Características
+## 🚀 Features
 
-- ✅ **Arquitectura Limpia**: Separación clara entre dominio, aplicación e infraestructura
-- ✅ **Autenticación JWT**: Sistema seguro de login y registro de usuarios
-- ✅ **API de Trading**: Endpoints para obtener datos de mercado (stocks, candles)
-- ✅ **Caché Inteligente**: Sistema de caché para optimizar respuestas
-- ✅ **Testing Completo**: Suite de tests con pytest y CI/CD
-- ✅ **Migraciones**: Gestión de esquema con Alembic
-- ✅ **Docker Ready**: Contenerización para desarrollo y producción
-- ✅ **Deploy Automático**: Configuración para Render y GitHub Actions
+- ✅ **Clean Architecture**: Clear separation between domain, application, and infrastructure
+- ✅ **JWT Authentication**: Secure user login and registration system
+- ✅ **Trading API**: Endpoints for market data (stocks, candles)
+- ✅ **Smart Caching**: Caching system to optimize responses
+- ✅ **Complete Testing**: Test suite with pytest and CI/CD
+- ✅ **Migrations**: Schema management with Alembic
+- ✅ **Docker Ready**: Containerization for development and production
+- ✅ **Automatic Deploy**: Configuration for Render and GitHub Actions
 
 ## 🛠️ Tech Stack
 
-| Componente | Tecnología |
-|------------|------------|
+| Component | Technology |
+|-----------|------------|
 | **API Framework** | FastAPI 0.109.0 |
-| **Base de Datos** | PostgreSQL + SQLModel |
-| **Migraciones** | Alembic |
-| **Autenticación** | JWT (python-jose) + passlib + bcrypt |
+| **Database** | PostgreSQL + SQLModel |
+| **Migrations** | Alembic |
+| **Authentication** | JWT (python-jose) + passlib + bcrypt |
 | **HTTP Clients** | httpx 0.27.0 + aiohttp 3.9.1 |
 | **Market Data** | Massive API |
 | **Testing** | pytest 8.0.2 + pytest-asyncio |
 | **CI/CD** | GitHub Actions + Docker |
 | **Deploy** | Render (Postgres managed) |
-| **Caché** | Memory Cache (implementación local) |
+| **Cache** | Memory Cache (local implementation) |
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 trading-app-backend/
-├── app/                          # Código fuente de la API
-│   ├── application/              # Capa de aplicación
+├── app/                          # API source code
+│   ├── application/              # Application layer
 │   │   ├── dto/                  # Data Transfer Objects
-│   │   └── services/             # Servicios de aplicación
-│   ├── core/                     # Configuración y utilidades core
-│   │   ├── config.py             # Configuración del proyecto
-│   │   ├── database/             # Configuración y modelos de base de datos
-│   │   ├── security.py           # Utilidades de seguridad
-│   │   └── utils/                # Utilidades varias
-│   ├── domain/                   # Entidades de dominio y lógica de negocio
-│   │   ├── entities/             # Entidades del dominio
-│   │   └── use_cases/            # Casos de uso del dominio
-│   ├── infrastructure/           # Capa de infraestructura
-│   │   ├── cache/                # Sistema de caché
-│   │   ├── dependencies.py       # Dependencias de la aplicación
-│   │   ├── external/              # Clientes HTTP externos
-│   │   ├── repositories.py       # Repositories de base de datos
-│   │   └── security/             # Utilidades de seguridad
-│   ├── presentation/             # Capa de presentación (API endpoints)
-│   │   ├── api/                  # Rutas de la API
-│   │   │   └── v1/               # Versión 1 de la API
-│   │   │       └── endpoints/    # Endpoints implementados
+│   │   └── services/             # Application services
+│   ├── core/                     # Core configuration and utilities
+│   │   ├── config.py             # Project configuration
+│   │   ├── database/             # Database configuration and models
+│   │   ├── security.py           # Security utilities
+│   │   └── utils/                # Various utilities
+│   ├── domain/                   # Domain entities and business logic
+│   │   ├── entities/             # Domain entities
+│   │   └── use_cases/            # Domain use cases
+│   ├── infrastructure/           # Infrastructure layer
+│   │   ├── cache/                # Caching system
+│   │   ├── dependencies.py       # Application dependencies
+│   │   ├── external/              # External HTTP clients
+│   │   ├── repositories.py       # Database repositories
+│   │   └── security/             # Security utilities
+│   ├── presentation/             # Presentation layer (API endpoints)
+│   │   ├── api/                  # API routes
+│   │   │   └── v1/               # API version 1
+│   │   │       └── endpoints/    # Implemented endpoints
 │   │   └── schemas/              # Pydantic schemas
-│   └── main.py                   # Punto de entrada de FastAPI
-├── tests/                        # Suite de tests
-│   ├── fixtures/                 # Fixtures para tests
-│   ├── unit/                     # Tests unitarios
-│   ├── conftest.py               # Configuración de pytest
-│   ├── test_auth.py              # Tests de autenticación
-│   ├── test_health.py            # Tests de health check
-│   ├── test_integration.py       # Tests de integración
-│   ├── test_models.py            # Tests de modelos
-│   └── README.md                 # Documentación de tests
-├── alembic/                      # Migraciones de base de datos
-├── scripts/                      # Scripts de utilidad
-│   ├── init_db.py                # Inicialización de DB
-│   ├── migrate.py                # Script de migraciones
-│   └── render_migrate.py         # Migraciones para Render
-├── docker-compose.yml            # Desarrollo local
+│   └── main.py                   # FastAPI entry point
+├── tests/                        # Test suite
+│   ├── fixtures/                 # Test fixtures
+│   ├── unit/                     # Unit tests
+│   ├── conftest.py               # pytest configuration
+│   ├── test_auth.py              # Authentication tests
+│   ├── test_health.py            # Health check tests
+│   ├── test_integration.py       # Integration tests
+│   ├── test_models.py            # Model tests
+│   └── README.md                 # Test documentation
+├── alembic/                      # Database migrations
+├── scripts/                      # Utility scripts
+│   ├── init_db.py                # DB initialization
+│   ├── migrate.py                # Migration script
+│   └── render_migrate.py         # Render migrations
+├── docker-compose.yml            # Local development
 ├── docker-compose.test.yml       # Testing/CI
-├── docker-compose.prod.yml       # Producción
-├── docker-compose.override.yml   # Override local development
-├── Dockerfile.prod               # Producción
+├── docker-compose.prod.yml       # Production
+├── docker-compose.override.yml   # Local development override
+├── Dockerfile.prod               # Production
 ├── Dockerfile.test               # Testing
-├── .dockerignore                 # Exclusiones Docker
-├── .env.example                   # Plantilla variables entorno
-├── .gitignore                     # Exclusiones Git
-├── .flake8                        # Configuración linting
-├── .python-version.txt            # Versión Python
-├── alembic.ini                    # Configuración Alembic
-├── pyproject.toml                # Configuración pytest
+├── .dockerignore                 # Docker exclusions
+├── .env.example                   # Environment variables template
+├── .gitignore                     # Git exclusions
+├── .flake8                        # Linting configuration
+├── .python-version.txt            # Python version
+├── alembic.ini                    # Alembic configuration
+├── pyproject.toml                # pytest configuration
 └── .github/workflows/            # CI/CD pipelines
 ```
 
@@ -90,48 +90,48 @@ trading-app-backend/
 
 **Base URL**: `http://localhost:8000`
 
-### 🔐 Autenticación (`/api/v1/auth`)
-| Método | Endpoint | Descripción |
+### 🔐 Authentication (`/api/v1/auth`)
+| Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/register` | Registrar nuevo usuario (requiere email, username, password, full_name opcional) |
-| POST | `/login` | Iniciar sesión (OAuth2 - usa username como email) |
-| GET | `/me` | Obtener perfil de usuario (requiere token) |
+| POST | `/register` | Register new user (requires email, username, password, optional full_name) |
+| POST | `/login` | Login (OAuth2 - uses username as email) |
+| GET | `/me` | Get user profile (requires token) |
 
-### 📈 Mercados (`/api/v1/markets`)
-| Método | Endpoint | Descripción | Autenticación |
+### 📈 Markets (`/api/v1/markets`)
+| Method | Endpoint | Description | Authentication |
 |--------|----------|-------------|---------------|
-| GET | `/{market_type}/overview` | Overview del mercado | ✅ Requerida |
-| GET | `/{market_type}/assets` | Lista de activos (con query params) | ✅ Requerida |
-| GET | `/assets/{symbol}` | Detalles de un activo | ✅ Requerida |
-| GET | `/{symbol}/candles` | Datos de velas para gráficos (OHLCV) | ✅ Requerida |
-| GET | `/search` | Buscar activos por query | ✅ Requerida |
+| GET | `/{market_type}/overview` | Market overview | ✅ Required |
+| GET | `/{market_type}/assets` | Asset list (with query params) | ✅ Required |
+| GET | `/assets/{symbol}` | Asset details | ✅ Required |
+| GET | `/{symbol}/candles` | Candle data for charts (OHLCV) | ✅ Required |
+| GET | `/search` | Search assets by query | ✅ Required |
 
-**Query Parameters para `/{market_type}/assets`:**
-- `limit` (opcional): 1-100 (default: 50)
-- `offset` (opcional): 0+ (default: 0) - para paginación
+**Query Parameters for `/{market_type}/assets`:**
+- `limit` (optional): 1-100 (default: 50)
+- `offset` (optional): 0+ (default: 0) - for pagination
 
-**Query Parameters para `/{symbol}/candles`:**
-- `timespan` (opcional): "minute", "hour", "day", "week", "month", "quarter", "year" (default: "day")
-- `multiplier` (opcional): entero para combinar con timespan (default: 1)
-- `limit` (opcional): 1-5000 (default: 100)
-- `start_date` (opcional): "YYYY-MM-DD" - fecha de inicio personalizada
-- `end_date` (opcional): "YYYY-MM-DD" - fecha de fin personalizada (default: último día de trading)
+**Query Parameters for `/{symbol}/candles`:**
+- `timespan` (optional): "minute", "hour", "day", "week", "month", "quarter", "year" (default: "day")
+- `multiplier` (optional): integer to combine with timespan (default: 1)
+- `limit` (optional): 1-5000 (default: 100)
+- `start_date` (optional): "YYYY-MM-DD" - custom start date
+- `end_date` (optional): "YYYY-MM-DD" - custom end date (default: last trading day)
 
-**Query Parameters para `/search`:**
-- `q` (requerido): Query de búsqueda (mínimo 2 caracteres)
-- `market_type` (opcional): `stocks` (default: todos)
-- `limit` (opcional): 1-50 (default: 20)
+**Query Parameters for `/search`:**
+- `q` (required): Search query (minimum 2 characters)
+- `market_type` (optional): `stocks` (default: all)
+- `limit` (optional): 1-50 (default: 20)
 
 ### ❤️ Health Check
-| Método | Endpoint | Descripción |
+| Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Estado general de la API |
+| GET | `/health` | General API status |
 
-## Ejemplos (curl)
+## Examples (curl)
 
 Base URL: `http://localhost:8000`
 
-### Registrar usuario
+### Register user
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/register" \
@@ -144,9 +144,9 @@ curl -X POST "http://localhost:8000/api/v1/auth/register" \
   }'
 ```
 
-### Login (obtener token)
+### Login (get token)
 
-El login usa `OAuth2PasswordRequestForm` (form-urlencoded). El campo `username` corresponde al **email**.
+Login uses `OAuth2PasswordRequestForm` (form-urlencoded). The `username` field corresponds to the **email**.
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/auth/login" \
@@ -154,15 +154,15 @@ curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -d "username=user@example.com&password=testpassword123"
 ```
 
-Respuesta esperada (ejemplo):
+Expected response (example):
 
 ```json
 {"access_token":"...","token_type":"bearer"}
 ```
 
-### Usar el token (Bearer)
+### Use the token (Bearer)
 
-Guarda el token en una variable (requiere `jq`):
+Save the token in a variable (requires `jq`):
 
 ```bash
 TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/login" \
@@ -170,236 +170,236 @@ TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/login" \
   -d "username=user@example.com&password=testpassword123" | jq -r '.access_token')
 ```
 
-Probar endpoint protegido:
+Test protected endpoint:
 
 ```bash
 curl -X GET "http://localhost:8000/api/v1/auth/me" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-Ejemplos con endpoints de mercado (requieren autenticación):
+Examples with market endpoints (require authentication):
 
 ```bash
-# Obtener overview del mercado
+# Get market overview
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/overview" \
   -H "Authorization: Bearer $TOKEN"
 
-# Listar activos (primeros 10)
+# List assets (first 10)
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
-# Listar activos con paginación (saltar primeros 100, mostrar siguientes 50)
+# List assets with pagination (skip first 100, show next 50)
 curl -X GET "http://localhost:8000/api/v1/markets/stocks/assets?limit=50&offset=100" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas diarias (últimos 100 días) - usa last trading date como endDate
+# Daily candle data (last 100 days) - uses last trading date as endDate
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&limit=100" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas intradía (últimas 50 velas de 1 hora)
+# Intraday candle data (last 50 1-hour candles)
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=hour&multiplier=1&limit=50" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas de 5 minutos (últimas 200 velas)
-# Nota: Requiere plan con acceso a datos intradía de Massive API. Puede no estar disponible para todos los símbolos.
+# 5-minute candle data (last 200 candles)
+# Note: Requires plan with intraday data access from Massive API. May not be available for all symbols.
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=minute&multiplier=5&limit=200" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas con rango de fechas personalizado
+# Candle data with custom date range
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=day&multiplier=1&start_date=2026-01-17&end_date=2026-01-25&limit=5000" \
   -H "Authorization: Bearer $TOKEN"
 
-# Datos de velas semanales (últimas 20 semanas)
+# Weekly candle data (last 20 weeks)
 curl -X GET "http://localhost:8000/api/v1/markets/AAPL/candles?timespan=week&multiplier=1&limit=20" \
   -H "Authorization: Bearer $TOKEN"
 
-# Buscar activos (mínimo 2 caracteres, máximo 50 resultados por defecto)
+# Search assets (minimum 2 characters, maximum 50 results by default)
 curl -X GET "http://localhost:8000/api/v1/markets/search?q=AAPL&limit=5" \
   -H "Authorization: Bearer $TOKEN"
 
-# Buscar activos filtrando por tipo de mercado
+# Search assets filtering by market type
 curl -X GET "http://localhost:8000/api/v1/markets/search?q=AAPL&market_type=stocks&limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
-# Detalles de un activo
+# Asset details
 curl -X GET "http://localhost:8000/api/v1/markets/assets/AAPL" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-## 🔧 Configuración del Entorno
+## 🔧 Environment Configuration
 
-### 1. Variables de Entorno
+### 1. Environment Variables
 
-Copia `.env.example` a `.env` y configura las siguientes variables:
+Copy `.env.example` to `.env` and configure the following variables:
 
 ```bash
-# Entorno
+# Environment
 cp .env.example .env
 ```
 
-**Variables requeridas:**
+**Required variables:**
 
-| Variable | Descripción | Ejemplo |
+| Variable | Description | Example |
 |----------|-------------|---------|
-| `ENVIRONMENT` | Entorno de ejecución | `development`/`testing`/`production` |
-| `DATABASE_URL` | URL de PostgreSQL | `postgresql://user:pass@host:5432/db` |
-| `SECRET_KEY` | Clave para JWT | `your-super-secret-key-here` |
-| `MASSIVE_API_KEY` | API Key de Massive API | `your-massive-api-key-here` |
+| `ENVIRONMENT` | Execution environment | `development`/`testing`/`production` |
+| `DATABASE_URL` | PostgreSQL URL | `postgresql://user:pass@host:5432/db` |
+| `SECRET_KEY` | Key for JWT | `your-super-secret-key-here` |
+| `MASSIVE_API_KEY` | Massive API API Key | `your-massive-api-key-here` |
 
-**Notas sobre la API Key:**
-- `MASSIVE_API_KEY` es requerida para obtener datos de mercado
-- Los datos intradía (velas de minutos) pueden requerir un plan pago de Massive API
-- Algunos símbolos pueden no tener datos históricos de alta frecuencia disponibles
+**Notes about the API Key:**
+- `MASSIVE_API_KEY` is required to get market data
+- Intraday data (minute candles) may require a paid plan from Massive API
+- Some symbols may not have high-frequency historical data available
 
-**Variables opcionales:**
+**Optional variables:**
 
-| Variable | Descripción | Default |
+| Variable | Description | Default |
 |----------|-------------|---------|
-| `TEST_DATABASE_URL` | DB para testing | `postgresql://postgres:postgres@localhost/test_trading_app` |
-| `ALGORITHM` | Algoritmo JWT | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Expiración token (minutos) | `1440` |
-| `ECHO_SQL` | Mostrar queries SQL | `false` |
-| `DEBUG` | Modo debug | `false` |
-| `RELOAD` | Auto-reload en desarrollo | `false` |
-| `PROJECT_NAME` | Nombre del proyecto | `Trading App API` |
-| `PROJECT_DESCRIPTION` | Descripción del proyecto | `API para la aplicación de trading` |
-| `PROJECT_VERSION` | Versión del proyecto | `0.1.0` |
-| `CORS_ORIGINS` | Orígenes permitidos (comma-separated) | `*` |
-| `CORS_ALLOW_CREDENTIALS` | Permitir credenciales CORS | `true` |
-| `CORS_ALLOW_METHODS` | Métodos HTTP permitidos | `*` |
-| `CORS_ALLOW_HEADERS` | Headers permitidos | `*` |
+| `TEST_DATABASE_URL` | DB for testing | `postgresql://postgres:postgres@localhost/test_trading_app` |
+| `ALGORITHM` | JWT algorithm | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration (minutes) | `1440` |
+| `ECHO_SQL` | Show SQL queries | `false` |
+| `DEBUG` | Debug mode | `false` |
+| `RELOAD` | Auto-reload in development | `false` |
+| `PROJECT_NAME` | Project name | `Trading App API` |
+| `PROJECT_DESCRIPTION` | Project description | `API for the trading application` |
+| `PROJECT_VERSION` | Project version | `0.1.0` |
+| `CORS_ORIGINS` | Allowed origins (comma-separated) | `*` |
+| `CORS_ALLOW_CREDENTIALS` | Allow CORS credentials | `true` |
+| `CORS_ALLOW_METHODS` | Allowed HTTP methods | `*` |
+| `CORS_ALLOW_HEADERS` | Allowed headers | `*` |
 
-### 2. Prioridad de APIs Externas
+### 2. External API Priority
 
-El sistema usa únicamente **Massive API** para obtener datos de mercado.
+The system uses only **Massive API** to get market data.
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### Opción 1: Docker (Recomendado)
+### Option 1: Docker (Recommended)
 
-**Requisitos:** Docker + Docker Compose
+**Requirements:** Docker + Docker Compose
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone <repository-url>
 cd trading-app-backend
 
-# Configurar variables de entorno
+# Configure environment variables
 cp .env.example .env
-# Editar .env con tus valores
+# Edit .env with your values
 
-# Iniciar servicios
+# Start services
 docker compose up --build
 ```
 
-**Accesos:**
+**Access:**
 - API: `http://localhost:8000`
 - Postgres: `localhost:5432`
 - API Docs: `http://localhost:8000/docs`
 
-### Opción 2: Desarrollo Local
+### Option 2: Local Development
 
-**Requisitos:** Python 3.9+
+**Requirements:** Python 3.9+
 
 ```bash
-# Instalar dependencias
+# Install dependencies
 pip install -r requirements.txt -r requirements-dev.txt
 
-# Configurar variables de entorno
+# Configure environment variables
 cp .env.example .env
-# Editar .env con tus valores
+# Edit .env with your values
 
-# Iniciar servidor de desarrollo
+# Start development server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-**Accesos:**
+**Access:**
 - API: `http://localhost:8000`
 - API Docs: `http://localhost:8000/docs`
 
 ## 🧪 Testing
 
-### Tests Locales
+### Local Tests
 
 ```bash
-# Ejecutar todos los tests
+# Run all tests
 python -m pytest
 
-# Con coverage
+# With coverage
 python -m pytest --cov=app --cov-report=html
 
-# Tests específicos
+# Specific tests
 python -m pytest tests/test_auth.py -v
 python -m pytest tests/test_models.py -v
 python -m pytest tests/test_integration.py -v
 ```
 
-### Tests en CI/CD
+### CI/CD Tests
 
-Para replicar el entorno de GitHub Actions localmente:
+To replicate the GitHub Actions environment locally:
 
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from api
 ```
 
-**Estructura de Tests:**
-- `conftest.py`: Configuración de pytest y fixtures
-- `test_auth.py`: Tests de autenticación y registro
-- `test_health.py`: Tests de health check
-- `test_integration.py`: Tests de integración
-- `test_models.py`: Tests de modelos de datos
-- `fixtures/`: Fixtures reutilizables para tests
-- `unit/`: Tests unitarios de componentes aislados
-- `README.md`: Documentación de tests
+**Test Structure:**
+- `conftest.py`: pytest configuration and fixtures
+- `test_auth.py`: Authentication and registration tests
+- `test_health.py`: Health check tests
+- `test_integration.py`: Integration tests
+- `test_models.py`: Data model tests
+- `fixtures/`: Reusable test fixtures
+- `unit/`: Unit tests of isolated components
+- `README.md`: Test documentation
 
-## 🗄️ Migraciones de Base de Datos
+## 🗄️ Database Migrations
 
-### Entornos
+### Environments
 
-- **Development/Testing**: Las tablas se crean automáticamente al iniciar
-- **Production**: **NO** se crean tablas automáticamente. Se requieren migraciones
+- **Development/Testing**: Tables are created automatically on startup
+- **Production**: **DO NOT** create tables automatically. Migrations are required
 
-### Comandos Principales
+### Main Commands
 
 ```bash
-# Crear nueva migración
-alembic revision --autogenerate -m "Descripción del cambio"
+# Create new migration
+alembic revision --autogenerate -m "Description of change"
 
-# Aplicar migraciones
+# Apply migrations
 alembic upgrade head
 
-# Ver estado actual
+# Check current status
 alembic current
 
-# Ver historial completo
+# View complete history
 alembic history
 
-# Revertir última migración
+# Revert last migration
 alembic downgrade -1
 ```
 
 ### Troubleshooting
 
-**Error común:** `No module named 'app.models'`
+**Common error:** `No module named 'app.models'`
 
-**Solución:** Asegúrate que `alembic/env.py` importe desde la ruta correcta:
+**Solution:** Make sure `alembic/env.py` imports from the correct path:
 ```python
 from app.infrastructure.database.models import UserSQLModel
 ```
 
-📖 **Guía completa:** Ver `MIGRATIONS.md` para más detalles.
+📖 **Complete guide:** See `MIGRATIONS.md` for more details.
 
-## 🚀 Producción (Render)
+## 🚀 Production (Render)
 
-### 1. Configuración en Render
+### 1. Render Configuration
 
-**Variables de Entorno requeridas:**
-- `DATABASE_URL` (URL de PostgreSQL de Render)
-- `SECRET_KEY` (clave segura para JWT)
-- `MASSIVE_API_KEY` (API key para datos de mercado de Massive API)
+**Required Environment Variables:**
+- `DATABASE_URL` (Render PostgreSQL URL)
+- `SECRET_KEY` (secure key for JWT)
+- `MASSIVE_API_KEY` (API key for market data from Massive API)
 - `ENVIRONMENT=production`
 
-### 2. Comandos de Deploy
+### 2. Deploy Commands
 
 **Build Command:**
 ```bash
@@ -412,63 +412,63 @@ python scripts/render_migrate.py
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-### 3. Flujo de Deploy
+### 3. Deploy Flow
 
-1. **Push a master** → GitHub Actions crea imagen Docker
-2. **Deploy automático** → Render ejecuta build y start commands
-3. **Migraciones** → Se aplican automáticamente durante el build
-4. **API Live** → Disponible en la URL de Render
+1. **Push to master** → GitHub Actions creates Docker image
+2. **Automatic deploy** → Render executes build and start commands
+3. **Migrations** → Applied automatically during build
+4. **API Live** → Available at Render URL
 
 ## 🔄 CI/CD Pipeline
 
 ### GitHub Actions Workflow
 
-**Archivo:** `.github/workflows/python-app.yml`
+**File:** `.github/workflows/python-app.yml`
 
 **Jobs:**
 
-| Job | Trigger | Descripción |
+| Job | Trigger | Description |
 |-----|---------|-------------|
-| `test` | Push/PR a master | Ejecuta tests con Docker Compose usando docker-compose.test.yml |
-| `build-and-push` | Push a master | Build y push imagen a GitHub Container Registry (GHCR) |
+| `test` | Push/PR to master | Run tests with Docker Compose using docker-compose.test.yml |
+| `build-and-push` | Push to master | Build and push image to GitHub Container Registry (GHCR) |
 
-### Flujo de CI/CD
+### CI/CD Flow
 
 1. **Development:**
-   - Pull Request a master → Tests automáticos con Docker
-   - Push a master → Tests + Build imagen Docker
+   - Pull Request to master → Automatic tests with Docker
+   - Push to master → Tests + Build Docker image
 
-2. **Producción:**
-   - Merge a `master` → Tests + Build imagen + Push a GHCR
-   - Deploy manual o automático a Render usando imagen de GHCR
+2. **Production:**
+   - Merge to `master` → Tests + Build image + Push to GHCR
+   - Manual or automatic deploy to Render using GHCR image
 
-### Imagen Docker
+### Docker Image
 
 **Registry:** GitHub Container Registry (GHCR)
 **Tags:** 
-- `latest` para el último build de `master`
-- `{commit_sha}` para cada commit específico
+- `latest` for latest build of `master`
+- `{commit_sha}` for each specific commit
 
 ---
 
-## 📚 Documentación Adicional
+## 📚 Additional Documentation
 
-- [📖 Guía de Migraciones](MIGRATIONS.md)
-- [🔧 API Documentation](http://localhost:8000/docs) (cuando está corriendo)
+- [📖 Migration Guide](MIGRATIONS.md)
+- [🔧 API Documentation](http://localhost:8000/docs) (when running)
 - [🐳 Docker Configuration](docker-compose.yml)
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crear feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit cambios (`git commit -m 'Add amazing feature'`)
-4. Push al branch (`git push origin feature/amazing-feature`)
-5. Abrir Pull Request
+1. Fork the project
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-## 🆘 Soporte
+## 🆘 Support
 
-Si encuentras algún problema:
+If you encounter any issues:
 
-1. Revisa los [issues existentes](../../issues)
-2. Crea un nuevo issue con descripción detallada
-3. Incluye logs y pasos para reproducir
+1. Check [existing issues](../../issues)
+2. Create a new issue with detailed description
+3. Include logs and steps to reproduce
