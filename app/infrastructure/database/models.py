@@ -1,20 +1,23 @@
 # app/infrastructure/database/models.py
 import uuid
+import os
 from datetime import datetime, timezone
-from typing import Optional
-from sqlmodel import SQLModel, Field, Relationship, Column, TEXT
-from sqlalchemy import String
+from typing import Optional, ClassVar
+from sqlmodel import SQLModel, Field, Relationship, Column
 from sqlalchemy.dialects.postgresql import UUID
-import sqlalchemy as sa
+from sqlalchemy import String
 
 
 class UserSQLModel(SQLModel, table=True):
     """SQLModel for User table - Infrastructure layer"""
     __tablename__ = "users"
     
+    # Use String for SQLite compatibility in tests, UUID for PostgreSQL in production
+    id_column_type: ClassVar = String(36) if os.getenv("TESTING") == "true" else UUID(as_uuid=True)
+    
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
-        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        sa_column=Column(id_column_type, primary_key=True, unique=True),
         description="ID único del usuario (UUID)"
     )
     email: str = Field(unique=True, index=True, description="Email del usuario")

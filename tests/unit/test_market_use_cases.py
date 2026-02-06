@@ -382,21 +382,21 @@ class TestMarketUseCases:
         assert timespan == "day"
     
     async def test_filter_top_assets_by_volume(self, market_use_cases):
-        """Should filter assets to top N by volume"""
-        assets = [
-            Asset(id="A", symbol="A", name="A", market=MarketType.STOCKS, currency="USD", volume=1000),
-            Asset(id="B", symbol="B", name="B", market=MarketType.STOCKS, currency="USD", volume=3000),
-            Asset(id="C", symbol="C", name="C", market=MarketType.STOCKS, currency="USD", volume=2000),
-            Asset(id="D", symbol="D", name="D", market=MarketType.STOCKS, currency="USD", volume=5000),
-            Asset(id="E", symbol="E", name="E", market=MarketType.STOCKS, currency="USD", volume=None)
+        """Should filter raw data to top N by volume"""
+        raw_items = [
+            {"T": "A", "v": 1000},
+            {"T": "B", "v": 3000},
+            {"T": "C", "v": 2000},
+            {"T": "D", "v": 5000},
+            {"T": "E", "v": None}
         ]
         
-        filtered = market_use_cases._filter_top_assets_by_volume(assets, limit=3)
+        filtered = market_use_cases._filter_top_assets_by_volume(raw_items, limit=3)
         
         assert len(filtered) == 3
-        assert filtered[0].symbol == "D"  # 5000
-        assert filtered[1].symbol == "B"  # 3000
-        assert filtered[2].symbol == "C"  # 2000
+        assert filtered[0]["T"] == "D"  # 5000
+        assert filtered[1]["T"] == "B"  # 3000
+        assert filtered[2]["T"] == "C"  # 2000
     
     async def test_filter_top_assets_by_volume_empty_list(self, market_use_cases):
         """Should handle empty list gracefully"""
@@ -405,12 +405,12 @@ class TestMarketUseCases:
     
     async def test_filter_top_assets_by_volume_none_volumes(self, market_use_cases):
         """Should handle None volumes correctly"""
-        assets = [
-            Asset(id="A", symbol="A", name="A", market=MarketType.STOCKS, currency="USD", volume=None),
-            Asset(id="B", symbol="B", name="B", market=MarketType.STOCKS, currency="USD", volume=None)
+        raw_items = [
+            {"T": "A", "v": None},
+            {"T": "B", "v": None}
         ]
         
-        filtered = market_use_cases._filter_top_assets_by_volume(assets, limit=5)
+        filtered = market_use_cases._filter_top_assets_by_volume(raw_items, limit=5)
         
-        # Should return all assets when all have None volume
-        assert len(filtered) == 2
+        # Should return empty list when all have None volume
+        assert len(filtered) == 0

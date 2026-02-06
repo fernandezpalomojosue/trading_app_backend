@@ -81,8 +81,6 @@ class MarketUseCases:
     
     async def get_market_summary(self, market_type: MarketType) -> MarketOverview:
         """Get market summary with optimized single API call and business logic in domain"""
-        from app.utils.date_utils import get_last_trading_day
-        
         cache_key = f"market_summary_{market_type.value}"
     
         # Try cache first
@@ -90,27 +88,23 @@ class MarketUseCases:
         if cached_data:
             return cached_data
     
-        # 1. Get raw data from infrastructure
-        last_trading_day = get_last_trading_day()
-        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
+        # 1. Get and filter raw market data
+        filtered_raw_data = await self._get_and_filter_market_data(500)
     
-        # 2. Convert to domain entities
+        # 2. Convert filtered data to domain entities
         entities = []
-        for item in raw_data.get("results", []):
+        for item in filtered_raw_data:
             entity = self._convert_raw_to_entity(item)
             if entity:
                 entities.append(entity)
         
-        # 3. Filter to top 500 assets by volume
-        entities = self._filter_top_assets_by_volume(entities, 500)
-    
-        # 4. Process with business logic (PURE DOMAIN LOGIC)
+        # 3. Process with business logic (PURE DOMAIN LOGIC)
         gainers = MarketDataProcessor.get_top_gainers(entities)
         losers = MarketDataProcessor.get_top_losers(entities)
         active = MarketDataProcessor.get_most_active(entities)
         total_assets = MarketDataProcessor.calculate_total_assets(entities)
     
-        # 4. Build overview
+        # 3. Build overview
         overview = MarketOverview(
         market=market_type,
         total_assets=total_assets,
@@ -121,7 +115,7 @@ class MarketUseCases:
         most_active=active
         )
     
-        # 5. Cache result
+        # 4. Cache result
         await self.cache_service.set(cache_key, overview, ttl=300)
     
         return overview
@@ -285,12 +279,10 @@ class MarketUseCases:
         if cached_assets:
             return cached_assets
         
-        # 1. Get raw data from infrastructure
-        from app.utils.date_utils import get_last_trading_day
-        last_trading_day = get_last_trading_day()
-        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
+        # 1. Get and filter raw market data
+        filtered_raw_data = await self._get_and_filter_market_data()
         
-        # 2. Process raw data using efficient list comprehension
+        # 2. Process filtered data using efficient list comprehension
         seen_symbols = set()
         
         def create_asset(item):
@@ -302,7 +294,7 @@ class MarketUseCases:
         
         # List comprehension with filtering - much faster than explicit loop
         all_assets = [
-            asset for asset in (create_asset(item) for item in raw_data.get("results", []))
+            asset for asset in (create_asset(item) for item in filtered_raw_data)
             if asset is not None
         ]
         
@@ -452,16 +444,28 @@ class MarketUseCases:
         except (TypeError, KeyError, ZeroDivisionError):
             return None
     
-    def _filter_top_assets_by_volume(self, entities: List[Asset], limit: int = 500) -> List[Asset]:
-        """Filter assets to keep only the top N by volume - DOMAIN LOGIC"""
-        if not entities:
-            return entities
+    async def _get_and_filter_market_data(self, limit: int = 500) -> List[Dict[str, Any]]:
+        """Get raw market data and filter by volume - reusable function"""
+        from app.utils.date_utils import get_last_trading_day
         
-        # Sort by volume in descending order
-        sorted_entities = sorted(entities, key=lambda x: x.volume or 0, reverse=True)
+        # 1. Get raw data from infrastructure
+        last_trading_day = get_last_trading_day()
+        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
+    
+        # 2. Filter raw data to top assets by volume
+        return self._filter_top_assets_by_volume(raw_data.get("results", []), limit)
+    
+    def _filter_top_assets_by_volume(self, raw_items: List[Dict[str, Any]], limit: int = 500) -> List[Dict[str, Any]]:
+        """Filter raw data to keep only the top N by volume - DOMAIN LOGIC"""
+        if not raw_items:
+            return raw_items
         
-        # Return top N assets
-        return sorted_entities[:limit]
+        # Filter out items without volume data and sort by volume in descending order
+        valid_items = [item for item in raw_items if "v" in item and item["v"] is not None]
+        sorted_items = sorted(valid_items, key=lambda x: x["v"], reverse=True)
+        
+        # Return top N items
+        return sorted_items[:limit]
 
 def _convert_to_massive_timespan(self, timespan: str) -> str:
     """Convert frontend timespan to Massive API timespan"""
