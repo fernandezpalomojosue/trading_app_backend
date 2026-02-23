@@ -4,7 +4,7 @@ Tests focus on business rules, calculations, and invariants
 """
 import pytest
 from datetime import datetime, timezone
-from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick, MarketOverview
+from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 
 
 class TestAsset:
@@ -258,95 +258,3 @@ class TestCandleStick:
         assert candle.price_range == 8.0  # 105.0 - 97.0
 
 
-class TestMarketOverview:
-    """Test MarketOverview entity business logic"""
-    
-    def test_get_market_health_bullish(self):
-        """Market should be bullish when gainers outperform losers"""
-        timestamp = datetime.now(timezone.utc)
-        
-        gainers = [
-            MarketSummary(symbol="A", open=100, high=110, low=90, close=105, volume=1000, change_percent=5.0),
-            MarketSummary(symbol="B", open=100, high=115, low=90, close=110, volume=1000, change_percent=10.0)
-        ]
-        
-        losers = [
-            MarketSummary(symbol="C", open=100, high=105, low=90, close=95, volume=1000, change_percent=-5.0),
-            MarketSummary(symbol="D", open=100, high=102, low=90, close=98, volume=1000, change_percent=-2.0)
-        ]
-        
-        overview = MarketOverview(
-            market=MarketType.STOCKS,
-            total_assets=100,
-            status="active",
-            last_updated=timestamp,
-            top_gainers=gainers,
-            top_losers=losers
-        )
-        
-        # Avg gainer: 7.5%, Avg loser: -3.5% -> Bullish
-        assert overview.get_market_health() == "bullish"
-    
-    def test_get_market_health_bearish(self):
-        """Market should be bearish when losers outperform gainers"""
-        timestamp = datetime.now(timezone.utc)
-        
-        gainers = [
-            MarketSummary(symbol="A", open=100, high=102, low=90, close=101, volume=1000, change_percent=1.0)
-        ]
-        
-        losers = [
-            MarketSummary(symbol="C", open=100, high=105, low=80, close=85, volume=1000, change_percent=-15.0),
-            MarketSummary(symbol="D", open=100, high=102, low=85, close=90, volume=1000, change_percent=-10.0)
-        ]
-        
-        overview = MarketOverview(
-            market=MarketType.STOCKS,
-            total_assets=100,
-            status="active",
-            last_updated=timestamp,
-            top_gainers=gainers,
-            top_losers=losers
-        )
-        
-        # Avg gainer: 1.0%, Avg loser: -12.5% -> Bearish
-        assert overview.get_market_health() == "bearish"
-    
-    def test_get_market_health_neutral(self):
-        """Market should be neutral when gainers and losers are balanced"""
-        timestamp = datetime.now(timezone.utc)
-        
-        gainers = [
-            MarketSummary(symbol="A", open=100, high=110, low=90, close=105, volume=1000, change_percent=5.0)
-        ]
-        
-        losers = [
-            MarketSummary(symbol="C", open=100, high=105, low=90, close=95, volume=1000, change_percent=-5.0)
-        ]
-        
-        overview = MarketOverview(
-            market=MarketType.STOCKS,
-            total_assets=100,
-            status="active",
-            last_updated=timestamp,
-            top_gainers=gainers,
-            top_losers=losers
-        )
-        
-        # Avg gainer: 5.0%, Avg loser: -5.0% -> Neutral
-        assert overview.get_market_health() == "neutral"
-    
-    def test_get_market_health_unknown_with_empty_data(self):
-        """Market health should be unknown with no data"""
-        timestamp = datetime.now(timezone.utc)
-        
-        overview = MarketOverview(
-            market=MarketType.STOCKS,
-            total_assets=100,
-            status="active",
-            last_updated=timestamp,
-            top_gainers=[],
-            top_losers=[]
-        )
-        
-        assert overview.get_market_health() == "unknown"

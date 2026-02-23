@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from app.domain.entities.user import UserEntity
-from app.domain.entities.market import Asset, MarketSummary, MarketOverview, MarketType
+from app.domain.entities.market import Asset, MarketSummary, MarketType
 from app.infrastructure.database.models import UserSQLModel
 
 
@@ -169,56 +169,6 @@ class TestMarketEntities:
         
         assert summary.is_positive is True
         assert summary.price_range == 5.0  # high - low = 152.0 - 147.0
-    
-    def test_market_overview_creation(self):
-        """Test MarketOverview entity creation"""
-        timestamp = datetime.now(timezone.utc)
-        
-        gainers = [
-            MarketSummary(
-                symbol="AAPL",
-                open=148.0,
-                close=150.0,
-                high=152.0,
-                low=147.0,
-                volume=1000000,
-                change=2.0,
-                change_percent=1.35
-            )
-        ]
-        
-        losers = [
-            MarketSummary(
-                symbol="TSLA",
-                open=200.0,
-                close=195.0,
-                high=205.0,
-                low=194.0,
-                volume=2000000,
-                change=-5.0,
-                change_percent=-2.5
-            )
-        ]
-        
-        most_active = gainers + losers
-        
-        overview = MarketOverview(
-            market=MarketType.STOCKS,
-            total_assets=2,
-            status="active",
-            last_updated=timestamp,
-            top_gainers=gainers,
-            top_losers=losers,
-            most_active=most_active
-        )
-        
-        assert overview.market == MarketType.STOCKS
-        assert overview.total_assets == 2
-        assert overview.status == "active"
-        assert overview.last_updated == timestamp
-        assert len(overview.top_gainers) == 1
-        assert len(overview.top_losers) == 1
-        assert len(overview.most_active) == 2
     
     def test_market_type_enum(self):
         """Test MarketType enum"""

@@ -1,10 +1,14 @@
 # tests/conftest.py
 import pytest
 import uuid
+import os
 from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from app.main import app
 from app.db.base import get_session
@@ -14,12 +18,13 @@ from app.infrastructure.database.models import UserSQLModel
 
 @pytest.fixture(scope="session")
 def engine():
-    """Create test database engine"""
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    """Create test database engine using PostgreSQL"""
+    # Use PostgreSQL for testing (same as development)
+    test_db_url = os.getenv("DATABASE_URL")
+    if not test_db_url:
+        raise ValueError("DATABASE_URL environment variable is required for testing")
+    
+    engine = create_engine(test_db_url)
     SQLModel.metadata.create_all(engine)
     return engine
 

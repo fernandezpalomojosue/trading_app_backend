@@ -5,7 +5,7 @@ Provides reusable test data and mock implementations
 import pytest
 from datetime import datetime, timezone
 from typing import List, Dict, Any
-from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick, MarketOverview
+from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache
 
 
@@ -186,71 +186,6 @@ def sample_candlestick():
         low=98.0,
         close=103.0,
         volume=1000000
-    )
-
-
-@pytest.fixture
-def sample_market_overview():
-    """Sample market overview for testing"""
-    timestamp = datetime.now(timezone.utc)
-    
-    gainers = [
-        MarketSummary(
-            symbol="AAPL",
-            open=100.0,
-            high=110.0,
-            low=90.0,
-            close=105.0,
-            volume=1000000,
-            change=5.0,
-            change_percent=5.0
-        ),
-        MarketSummary(
-            symbol="MSFT",
-            open=150.0,
-            high=165.0,
-            low=140.0,
-            close=160.0,
-            volume=1200000,
-            change=10.0,
-            change_percent=6.67
-        )
-    ]
-    
-    losers = [
-        MarketSummary(
-            symbol="GOOGL",
-            open=200.0,
-            high=205.0,
-            low=180.0,
-            close=190.0,
-            volume=800000,
-            change=-10.0,
-            change_percent=-5.0
-        )
-    ]
-    
-    active = [
-        MarketSummary(
-            symbol="TSLA",
-            open=300.0,
-            high=310.0,
-            low=280.0,
-            close=285.0,
-            volume=2000000,
-            change=-15.0,
-            change_percent=-5.0
-        )
-    ]
-    
-    return MarketOverview(
-        market=MarketType.STOCKS,
-        total_assets=100,
-        status="active",
-        last_updated=timestamp,
-        top_gainers=gainers,
-        top_losers=losers,
-        most_active=active
     )
 
 

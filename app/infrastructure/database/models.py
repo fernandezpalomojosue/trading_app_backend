@@ -12,8 +12,7 @@ class UserSQLModel(SQLModel, table=True):
     """SQLModel for User table - Infrastructure layer"""
     __tablename__ = "users"
     
-    # Use String for SQLite compatibility in tests, UUID for PostgreSQL in production
-    id_column_type: ClassVar = String(36) if os.getenv("TESTING") == "true" else UUID(as_uuid=True)
+    id_column_type: ClassVar = UUID(as_uuid=True)
     
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,

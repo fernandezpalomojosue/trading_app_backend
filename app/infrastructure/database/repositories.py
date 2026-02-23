@@ -50,15 +50,15 @@ class SQLUserRepository(UserRepository):
         if not user_model:
             raise ValueError("User not found")
         
-        # Update fields using SQLModel approach
-        user_data = user.model_dump(exclude_unset=True)
-        for field, value in user_data.items():
-            if hasattr(user_model, field):
-                setattr(user_model, field, value)
-        
+        # Update fields
+        user_model.username = user.username
+        user_model.full_name = user.full_name
+        user_model.is_active = user.is_active
+        user_model.is_verified = user.is_verified
+        user_model.is_superuser = user.is_superuser
+        user_model.balance = user.balance
         user_model.updated_at = user.updated_at
         
-        self.session.add(user_model)
         self.session.commit()
         self.session.refresh(user_model)
         

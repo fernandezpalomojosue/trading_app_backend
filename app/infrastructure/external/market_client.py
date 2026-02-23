@@ -6,7 +6,7 @@ from typing import Dict, List, Any, Optional
 import aiohttp
 from fastapi import HTTPException
 
-from app.domain.entities.market import Asset, MarketSummary, MarketOverview, MarketType
+from app.domain.entities.market import Asset, MarketSummary, MarketType
 from app.domain.use_cases.market_use_cases import MarketRepository
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import settings

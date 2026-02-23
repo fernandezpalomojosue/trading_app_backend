@@ -53,31 +53,6 @@ class MarketSummary(BaseModel):
         return self.high - self.low
 
 
-class MarketOverview(BaseModel):
-    """Market overview entity"""
-    market: MarketType
-    total_assets: int
-    status: str
-    last_updated: datetime
-    top_gainers: List[MarketSummary] = []
-    top_losers: List[MarketSummary] = []
-    most_active: List[MarketSummary] = []
-    
-    def get_market_health(self) -> str:
-        """Determine overall market health based on gainers/losers ratio"""
-        if not self.top_gainers or not self.top_losers:
-            return "unknown"
-        
-        avg_gainer_change = sum(g.change_percent or 0 for g in self.top_gainers) / len(self.top_gainers)
-        avg_loser_change = sum(l.change_percent or 0 for l in self.top_losers) / len(self.top_losers)
-        
-        if avg_gainer_change > abs(avg_loser_change):
-            return "bullish"
-        elif abs(avg_loser_change) > avg_gainer_change:
-            return "bearish"
-        return "neutral"
-
-
 class CandleStick(BaseModel):
     """Candlestick data for charting - OHLCV format"""
     timestamp: datetime
