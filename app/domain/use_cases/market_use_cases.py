@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.utils.market_utils import MarketDataProcessor
-from app.domain.entities.market import Asset, MarketOverview, MarketType, MarketSummary, CandleStick
+from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
 
 
