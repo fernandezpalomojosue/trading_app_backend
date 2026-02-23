@@ -23,7 +23,18 @@ class MockMarketRepository(MarketRepository):
     
     async def search_assets_raw(self, query: str, market_type: MarketType = None):
         self._record_call('search_assets_raw', query=query, market_type=market_type)
-        return self.data.get(f'search_{query}', [])
+        results = self.data.get(f'search_{query}', [])
+        
+        # Filter by market_type if provided
+        if market_type is not None:
+            filtered_results = []
+            for result in results:
+                result_market = result.get('market', '').lower()
+                if result_market == market_type.value.lower():
+                    filtered_results.append(result)
+            return filtered_results
+        
+        return results
     
     async def fetch_raw_market_data(self, date: str):
         self._record_call('fetch_raw_market_data', date=date)

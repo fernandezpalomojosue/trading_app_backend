@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.domain.entities.market import MarketType
 from app.application.dto.market_dto import AssetResponse
+from tests.fixtures.market_fixtures import MockMarketRepository, MockMarketDataCache
 
 
 class TestDataValidationAndNormalization:
