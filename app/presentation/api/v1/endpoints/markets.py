@@ -30,17 +30,7 @@ async def get_market_overview(
     current_user = Depends(get_current_user_dependency)
 ):
     """Get market overview by type"""
-    overview = await market_service.get_market_overview(market_type)
-    
-    return MarketOverviewResponse(
-        market=overview.market,
-        total_assets=overview.total_assets,
-        status=overview.status,
-        last_updated=overview.last_updated.isoformat(),
-        top_gainers=overview.top_gainers,
-        top_losers=overview.top_losers,
-        most_active=overview.most_active
-    )
+    return await market_service.get_market_overview(market_type)
 
 
 @router.get("/{market_type}/assets", response_model=List[AssetResponse])
@@ -57,22 +47,7 @@ async def list_assets(
     
     assets = await market_service.get_assets_list(market_type, limit, offset)
     
-    return [
-        AssetResponse(
-            id=asset.id,
-            symbol=asset.symbol,
-            name=asset.name,
-            market=asset.market,
-            currency=asset.currency,
-            active=asset.active,
-            price=asset.price,
-            change=asset.change,
-            change_percent=asset.change_percent,
-            volume=asset.volume,
-            details=asset.details
-        )
-        for asset in assets
-    ]
+    return assets
 
 
 @router.get("/assets/{symbol}", response_model=AssetResponse)
@@ -86,37 +61,7 @@ async def get_asset_details(
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
-    structured_details = {
-        "market_data": {
-            "price": asset.price,
-            "change": asset.change,
-            "change_percent": asset.change_percent,
-            "volume": asset.volume,
-            "open": asset.details.get("open"),
-            "high": asset.details.get("high"),
-            "low": asset.details.get("low"),
-            "vwap": asset.details.get("vwap")
-        },
-        "source": asset.details.get("source"),
-        "market_cap": asset.details.get("market_cap"),
-        "primary_exchange": asset.details.get("primary_exchange"),
-        "description": asset.details.get("description"),
-        "homepage_url": asset.details.get("homepage_url")
-    }
-    
-    return AssetResponse(
-        id=asset.id,
-        symbol=asset.symbol,
-        name=asset.name,
-        market=asset.market,
-        currency=asset.currency,
-        active=asset.active,
-        price=asset.price,
-        change=asset.change,
-        change_percent=asset.change_percent,
-        volume=asset.volume,
-        details=structured_details
-    )
+    return asset
 
 
 @router.get("/search", response_model=List[AssetResponse])
@@ -131,24 +76,7 @@ async def search_assets(
     assets = await market_service.search_assets(q, market_type)
     
     # Apply limit
-    limited_assets = assets[:limit]
-    
-    return [
-        AssetResponse(
-            id=asset.id,
-            symbol=asset.symbol,
-            name=asset.name,
-            market=asset.market,
-            currency=asset.currency,
-            active=asset.active,
-            price=asset.price,
-            change=asset.change,
-            change_percent=asset.change_percent,
-            volume=asset.volume,
-            details=asset.details
-        )
-        for asset in limited_assets
-    ]
+    return assets[:limit]
 
 
 @router.get("/{symbol}/candles", response_model=CandleStickDataResponse)
@@ -162,22 +90,6 @@ async def get_candlestick_data(
     market_service: MarketService = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):  
-    candlesticks = await market_service.get_candlestick_data(
+    return await market_service.get_candlestick_data(
         symbol, timespan, multiplier, limit, start_date, end_date
-    )
-    
-    from app.application.dto.market_dto import CandleData
-    
-    return CandleStickDataResponse(
-        results=[
-            CandleData(
-                t=int(candle.timestamp.timestamp() * 1000),
-                c=candle.close,
-                o=candle.open,
-                h=candle.high,
-                l=candle.low,
-                v=candle.volume
-            )
-            for candle in candlesticks
-        ]
     )

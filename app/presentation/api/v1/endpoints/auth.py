@@ -31,23 +31,11 @@ async def register_user(
 ):
     """Register a new user"""
     try:
-        user = await user_service.register_user(
+        return await user_service.register_user(
             email=user_data.email,
             password=user_data.password,
             username=user_data.username,
             full_name=user_data.full_name
-        )
-        return UserResponse(
-            id=user.id,
-            email=user.email,
-            username=user.username,
-            full_name=user.full_name,
-            is_active=user.is_active,
-            is_verified=user.is_verified,
-            is_superuser=user.is_superuser,
-            balance=user.balance,
-            created_at=user.created_at.isoformat(),
-            updated_at=user.updated_at.isoformat()
         )
     except ValueError as e:
         raise HTTPException(
@@ -75,18 +63,14 @@ async def login(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(
-    current_user = Depends(get_current_user_dependency)
+    current_user = Depends(get_current_user_dependency),
+    user_service: UserService = Depends(get_user_service)
 ):
     """Get current user profile"""
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        username=current_user.username,
-        full_name=current_user.full_name,
-        is_active=current_user.is_active,
-        is_verified=current_user.is_verified,
-        is_superuser=current_user.is_superuser,
-        balance=current_user.balance,
-        created_at=current_user.created_at.isoformat(),
-        updated_at=current_user.updated_at.isoformat()
-    )
+    user_response = await user_service.get_user_profile_response(current_user.id)
+    if not user_response:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user_response

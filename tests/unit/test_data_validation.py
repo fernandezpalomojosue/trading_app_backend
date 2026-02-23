@@ -6,6 +6,7 @@ import pytest
 from datetime import datetime, timezone
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.domain.entities.market import MarketType
+from app.application.dto.market_dto import AssetResponse
 from tests.unit.test_market_use_cases import MockMarketRepository, MockMarketDataCache
 
 

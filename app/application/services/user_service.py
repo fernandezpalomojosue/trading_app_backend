@@ -2,6 +2,7 @@
 from typing import Optional
 from uuid import UUID
 
+from app.application.dto.user_dto import UserResponse
 from app.domain.entities.user import UserEntity, UserCredentials
 from app.domain.use_cases.user_use_cases import UserRepository, PasswordService, TokenService, UserUseCases
 
@@ -12,19 +13,11 @@ class UserService:
     def __init__(self, user_use_cases: UserUseCases):
         self.user_use_cases = user_use_cases
     
-    async def register_user(self, email: str, password: str, username: Optional[str] = None, full_name: Optional[str] = None) -> UserEntity:
+    async def register_user(self, email: str, password: str, username: Optional[str] = None, full_name: Optional[str] = None) -> UserResponse:
         """Register a new user"""
         credentials = UserCredentials(email=email, password=password)
         
-        user = await self.user_use_cases.register_user(credentials)
-        
-        # Update additional fields if provided
-        if username:
-            user.username = username
-        if full_name:
-            user.full_name = full_name
-        
-        return await self.user_use_cases.user_repository.update_user(user)
+        return await self.user_use_cases.register_user(credentials, username, full_name)
     
     async def authenticate_user(self, email: str, password: str) -> Optional[str]:
         """Authenticate user and return access token"""
@@ -33,6 +26,10 @@ class UserService:
     async def get_user_profile(self, user_id: UUID) -> Optional[UserEntity]:
         """Get user profile"""
         return await self.user_use_cases.get_user_profile(user_id)
+    
+    async def get_user_profile_response(self, user_id: UUID) -> Optional[UserResponse]:
+        """Get user profile as DTO"""
+        return await self.user_use_cases.get_user_profile_response(user_id)
     
     async def update_balance(self, user_id: UUID, amount: float, operation: str = "add") -> UserEntity:
         """Update user balance"""

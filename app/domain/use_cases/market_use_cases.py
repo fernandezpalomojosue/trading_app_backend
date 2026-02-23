@@ -4,6 +4,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.entities.market import Asset, MarketOverview, MarketType, MarketSummary, CandleStick
+from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
 
 
 class MarketRepository(ABC):
@@ -79,7 +80,7 @@ class MarketUseCases:
         self.market_repository = market_repository
         self.cache_service = cache_service
     
-    async def get_market_summary(self, market_type: MarketType) -> MarketOverview:
+    async def get_market_summary(self, market_type: MarketType) -> MarketOverviewResponse:
         """Get market summary with optimized single API call and business logic in domain"""
         cache_key = f"market_summary_{market_type.value}"
     
@@ -104,21 +105,21 @@ class MarketUseCases:
         active = MarketDataProcessor.get_most_active(entities)
         total_assets = MarketDataProcessor.calculate_total_assets(entities)
     
-        # 3. Build overview
-        overview = MarketOverview(
-        market=market_type,
-        total_assets=total_assets,
-        status="active",
-        last_updated=datetime.now(),
-        top_gainers=gainers,
-        top_losers=losers,
-        most_active=active
+        # 4. Build overview DTO directly
+        overview_response = MarketOverviewResponse(
+            market=market_type,
+            total_assets=total_assets,
+            status="active",
+            last_updated=datetime.now().isoformat(),
+            top_gainers=gainers,
+            top_losers=losers,
+            most_active=active
         )
     
-        # 4. Cache result
-        await self.cache_service.set(cache_key, overview, ttl=300)
+        # 5. Cache the DTO result
+        await self.cache_service.set(cache_key, overview_response, ttl=300)
     
-        return overview
+        return overview_response
 
     def _convert_raw_to_entity(self, raw_item: Dict[str, Any]) -> Optional[MarketSummary]:
         """Convert raw API data to MarketSummary entity"""
@@ -147,7 +148,7 @@ class MarketUseCases:
         except (TypeError, KeyError, ZeroDivisionError):
             return None
     
-    async def get_asset_details(self, symbol: str) -> Optional[Asset]:
+    async def get_asset_details(self, symbol: str) -> Optional[AssetResponse]:
         """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
@@ -202,17 +203,46 @@ class MarketUseCases:
             
             print(f"DEBUG: Combined data: {combined_data}")
             
-            # 4. Convert to entity
-            asset = self._convert_raw_to_asset({
-                "ticker": symbol,
-                **combined_data
-            }) if combined_data else None
+            # 4. Build AssetResponse directly with structured details
+            if combined_data:
+                structured_details = {
+                    "market_data": {
+                        "price": combined_data.get("price"),
+                        "change": combined_data.get("change"),
+                        "change_percent": combined_data.get("change_percent"),
+                        "volume": combined_data.get("volume"),
+                        "open": combined_data.get("open"),
+                        "high": combined_data.get("high"),
+                        "low": combined_data.get("low"),
+                        "vwap": combined_data.get("vwap")
+                    },
+                    "source": "market_data",
+                    "market_cap": combined_data.get("market_cap"),
+                    "primary_exchange": combined_data.get("primary_exchange"),
+                    "description": combined_data.get("description"),
+                    "homepage_url": combined_data.get("homepage_url")
+                }
+                
+                asset_response = AssetResponse(
+                    id=symbol,
+                    symbol=symbol,
+                    name=combined_data.get("name", symbol),
+                    market=self._map_market_type(combined_data.get("market", "stocks")),
+                    currency=combined_data.get("currency_name", "USD"),
+                    active=combined_data.get("active", True),
+                    price=combined_data.get("price"),
+                    change=combined_data.get("change"),
+                    change_percent=combined_data.get("change_percent"),
+                    volume=combined_data.get("volume"),
+                    details=structured_details
+                )
+                
+                # 5. Cache DTO
+                await self.cache_service.set(cache_key, asset_response, ttl=60)
+                
+                return asset_response
             
-            # 5. Cache if found
-            if asset:
-                await self.cache_service.set(cache_key, asset, ttl=60)
-            
-            return asset
+            return None
             
         except Exception as e:
             # Log error but don't crash
@@ -221,7 +251,7 @@ class MarketUseCases:
             traceback.print_exc()
             return None
 
-    async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[Asset]:
+    async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[AssetResponse]:
         """Search for assets by query - DOMAIN ORCHESTRATION"""
         if not query or len(query) < 2:
             return []
@@ -229,14 +259,27 @@ class MarketUseCases:
         # 1. Get raw data from infrastructure
         raw_results = await self.market_repository.search_assets_raw(query, market_type)
     
-        # 2. Convert to entities (domain logic)
-        assets = []
+        # 2. Convert to AssetResponse DTOs directly
+        asset_responses = []
         for raw_data in raw_results:
             asset = self._convert_raw_to_asset(raw_data)
             if asset:
-                assets.append(asset)
+                asset_response = AssetResponse(
+                    id=asset.id,
+                    symbol=asset.symbol,
+                    name=asset.name,
+                    market=asset.market,
+                    currency=asset.currency,
+                    active=asset.active,
+                    price=asset.price,
+                    change=asset.change,
+                    change_percent=asset.change_percent,
+                    volume=asset.volume,
+                    details=asset.details
+                )
+                asset_responses.append(asset_response)
     
-        return assets
+        return asset_responses
 
     def _convert_raw_to_asset(self, raw_data: Dict[str, Any]) -> Optional[Asset]:
         """Convert raw API data to Asset entity - DOMAIN LOGIC"""
@@ -270,7 +313,7 @@ class MarketUseCases:
         }
         return market_mapping.get(market_str.lower(), MarketType.STOCKS)
 
-    async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[Asset]:
+    async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[AssetResponse]:
         """Get assets list from raw market data - DOMAIN LOGIC"""
         cache_key = f"assets_list_{market_type.value}_{limit}_{offset}"
         
@@ -301,10 +344,28 @@ class MarketUseCases:
         # 3. Apply pagination using efficient slicing
         paginated_assets = all_assets[offset:offset + limit]
         
-        # 4. Cache the paginated result
-        await self.cache_service.set(cache_key, paginated_assets, ttl=300)
+        # 4. Convert to AssetResponse DTOs
+        asset_responses = [
+            AssetResponse(
+                id=asset.id,
+                symbol=asset.symbol,
+                name=asset.name,
+                market=asset.market,
+                currency=asset.currency,
+                active=asset.active,
+                price=asset.price,
+                change=asset.change,
+                change_percent=asset.change_percent,
+                volume=asset.volume,
+                details=asset.details
+            )
+            for asset in paginated_assets
+        ]
         
-        return paginated_assets
+        # 5. Cache the paginated result
+        await self.cache_service.set(cache_key, asset_responses, ttl=300)
+        
+        return asset_responses
 
     def _convert_raw_to_asset_basic(self, raw_item: Dict[str, Any], market_type: MarketType) -> Optional[Asset]:
         """Convert raw market data to basic Asset entity - DOMAIN LOGIC"""
@@ -346,7 +407,7 @@ class MarketUseCases:
         except (TypeError, KeyError, ZeroDivisionError):
             return None
     
-    async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> List[CandleStick]:
+    async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> CandleStickDataResponse:
         """Get candlestick data for charting - DOMAIN LOGIC"""
         # Use last trading date as default for end_date
         if end_date is None:
@@ -393,9 +454,9 @@ class MarketUseCases:
         )
         
         if not raw_data or "results" not in raw_data:
-            return []
+            return CandleStickDataResponse(results=[])
         
-        # Convert to CandleStick entities
+        # Convert to CandleStick entities first
         candlesticks = []
         for result in raw_data["results"]:
             candle = self._convert_massive_to_candlestick(result)
@@ -405,10 +466,26 @@ class MarketUseCases:
         # Sort by timestamp
         candlesticks.sort(key=lambda x: x.timestamp)
         
-        # Cache the result
-        await self.cache_service.set(cache_key, candlesticks, ttl=300)
+        # Convert to CandleData DTOs
+        candle_data_list = [
+            CandleData(
+                t=int(candle.timestamp.timestamp() * 1000),
+                c=candle.close,
+                o=candle.open,
+                h=candle.high,
+                l=candle.low,
+                v=candle.volume
+            )
+            for candle in candlesticks
+        ]
         
-        return candlesticks
+        # Build response
+        response = CandleStickDataResponse(results=candle_data_list)
+        
+        # Cache the result
+        await self.cache_service.set(cache_key, response, ttl=300)
+        
+        return response
     
     def _convert_to_massive_timespan(self, timespan: str) -> str:
         """Convert frontend timespan to Massive API timespan"""
