@@ -7,57 +7,56 @@ from sqlalchemy.dialects.postgresql import UUID
 
 
 class UserSQLModel(SQLModel, table=True):
-    """SQLModel for User table - Infrastructure layer"""
+    """SQLModel for User table"""
     __tablename__ = "users"
     
-    # Use UUID for both production and testing (PostgreSQL)
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
-        description="ID único del usuario (UUID)"
+        description="User unique ID (UUID)"
     )
-    email: str = Field(unique=True, index=True, description="Email del usuario")
+    email: str = Field(unique=True, index=True, description="User email")
     username: Optional[str] = Field(
         default=None, 
         index=True, 
         min_length=3, 
         max_length=50,
-        description="Nombre de usuario único (opcional)"
+        description="Unique username (optional)"
     )
     full_name: Optional[str] = Field(
         default=None, 
         max_length=100, 
-        description="Nombre completo del usuario"
+        description="User full name"
     )
     hashed_password: str = Field(
         ..., 
         min_length=8, 
-        description="Contraseña hasheada"
+        description="Hashed password"
     )
     is_active: bool = Field(
         default=True, 
-        description="Indica si el usuario está activo"
+        description="Indicates if user is active"
     )
     is_verified: bool = Field(
         default=True,
-        description="Indica si el email del usuario ha sido verificado"
+        description="Indicates if user email has been verified"
     )
     is_superuser: bool = Field(
         default=False, 
-        description="Indica si el usuario es administrador"
+        description="Indicates if user is admin"
     )
     balance: float = Field(
         default=0.0, 
         ge=0, 
-        description="Saldo del usuario"
+        description="User balance"
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        description="Fecha de creación del usuario"
+        description="User creation date"
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        description="Última actualización del usuario"
+        description="User last update date"
     )
     
     __table_args__ = (
@@ -66,7 +65,6 @@ class UserSQLModel(SQLModel, table=True):
     
     @classmethod
     def from_domain_entity(cls, user_entity):
-        """Create SQLModel from domain entity"""
         return cls(
             id=user_entity.id,
             email=user_entity.email,
@@ -81,7 +79,6 @@ class UserSQLModel(SQLModel, table=True):
         )
     
     def to_domain_entity(self):
-        """Convert SQLModel to domain entity"""
         from app.domain.entities.user import UserEntity
         
         return UserEntity(

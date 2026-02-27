@@ -16,7 +16,6 @@ router = APIRouter(prefix="/markets", tags=["market_info"])
 
 
 def get_market_service() -> MarketService:
-    """Dependency to get market service"""
     cache_service = MemoryMarketCache()
     market_repository = PolygonMarketClient()
     market_use_cases = MarketUseCases(market_repository, cache_service)

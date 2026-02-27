@@ -12,37 +12,30 @@ class MarketRepository(ABC):
     
     @abstractmethod
     async def get_asset_raw_data(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """Get raw asset data from external API"""
         pass
 
     @abstractmethod
     async def search_assets_raw(self, query: str, market_type: Optional[MarketType] = None) -> List[Dict[str, Any]]:
-        """Search for assets - returns raw data"""
         pass
 
     @abstractmethod
     async def fetch_raw_market_data(self, date: str) -> Dict[str, Any]:
-        """Fetch raw market data from external API"""
         pass
     
     @abstractmethod
     async def fetch_symbol_data(self, symbol: str, date: str) -> Optional[Dict[str, Any]]:
-        """Fetch OHLC data for a specific symbol"""
         pass
     
     @abstractmethod
     async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
-        """Fetch candlestick data using Massive API Custom Bars endpoint"""
         pass
 
     @abstractmethod
     async def get_last_trading_date(self) -> str:
-        """Get the last trading date"""
         pass
 
     @abstractmethod
     async def fetch_ticker_details(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """Fetch complete ticker details from reference endpoint"""
         pass
 
 class MarketDataCache(ABC):
@@ -81,31 +74,25 @@ class MarketUseCases:
         self.cache_service = cache_service
     
     async def get_market_summary(self, market_type: MarketType) -> MarketOverviewResponse:
-        """Get market summary with optimized single API call and business logic in domain"""
         cache_key = f"market_summary_{market_type.value}"
     
-        # Try cache first
         cached_data = await self.cache_service.get(cache_key)
         if cached_data:
             return cached_data
     
-        # 1. Get and filter raw market data
         filtered_raw_data = await self._get_and_filter_market_data(500)
     
-        # 2. Convert filtered data to domain entities
         entities = []
         for item in filtered_raw_data:
             entity = self._convert_raw_to_entity(item)
             if entity:
                 entities.append(entity)
         
-        # 3. Process with business logic (PURE DOMAIN LOGIC)
         gainers = MarketDataProcessor.get_top_gainers(entities)
         losers = MarketDataProcessor.get_top_losers(entities)
         active = MarketDataProcessor.get_most_active(entities)
         total_assets = MarketDataProcessor.calculate_total_assets(entities)
     
-        # 4. Build overview DTO directly
         overview_response = MarketOverviewResponse(
             market=market_type,
             total_assets=total_assets,
@@ -116,13 +103,11 @@ class MarketUseCases:
             most_active=active
         )
     
-        # 5. Cache the DTO result
         await self.cache_service.set(cache_key, overview_response, ttl=300)
     
         return overview_response
 
     def _convert_raw_to_entity(self, raw_item: Dict[str, Any]) -> Optional[MarketSummary]:
-        """Convert raw API data to MarketSummary entity"""
         try:
             if not all(k in raw_item for k in ["T", "c", "o", "v"]):
                 return None
@@ -149,16 +134,13 @@ class MarketUseCases:
             return None
     
     async def get_asset_details(self, symbol: str) -> Optional[AssetResponse]:
-        """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
-        # Try cache first
         cached_asset = await self.cache_service.get(cache_key)
         if cached_asset:
             return cached_asset
     
         try:
-            # 1. Get OHLCV data from last trading day using aggregates endpoint
             last_trading_day = await self.market_repository.get_last_trading_date()
             print(f"DEBUG: Last trading day: {last_trading_day}")
             
@@ -167,16 +149,13 @@ class MarketUseCases:
             )
             print(f"DEBUG: OHLCV data: {ohlcv_data}")
             
-            # 2. Get company information from reference endpoint
             ticker_info = await self.market_repository.fetch_ticker_details(symbol)
             print(f"DEBUG: Ticker info: {ticker_info}")
             
-            # 3. Combine both data sources
             combined_data = {}
             
-            # Add OHLCV data (market_data)
             if ohlcv_data and ohlcv_data.get("results"):
-                latest_data = ohlcv_data["results"][0]  # Get the most recent day
+                latest_data = ohlcv_data["results"][0]
                 combined_data.update({
                     "price": latest_data.get("c"),
                     "change": latest_data.get("c", 0) - latest_data.get("o", 0),
@@ -188,7 +167,6 @@ class MarketUseCases:
                     "vwap": latest_data.get("vw")
                 })
             
-            # Add company information from reference endpoint
             if ticker_info and ticker_info.get("status") == "OK" and ticker_info.get("results"):
                 company_data = ticker_info["results"]
                 combined_data.update({
@@ -203,7 +181,6 @@ class MarketUseCases:
             
             print(f"DEBUG: Combined data: {combined_data}")
             
-            # 4. Build AssetResponse directly with structured details
             if combined_data:
                 structured_details = {
                     "market_data": {
@@ -237,7 +214,6 @@ class MarketUseCases:
                     details=structured_details
                 )
                 
-                # 5. Cache DTO
                 await self.cache_service.set(cache_key, asset_response, ttl=60)
                 
                 return asset_response
@@ -245,21 +221,17 @@ class MarketUseCases:
             return None
             
         except Exception as e:
-            # Log error but don't crash
             print(f"Error fetching asset details for {symbol}: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
 
     async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[AssetResponse]:
-        """Search for assets by query - DOMAIN ORCHESTRATION"""
         if not query or len(query) < 2:
             return []
     
-        # 1. Get raw data from infrastructure
         raw_results = await self.market_repository.search_assets_raw(query, market_type)
     
-        # 2. Convert to AssetResponse DTOs directly
         asset_responses = []
         for raw_data in raw_results:
             asset = self._convert_raw_to_asset(raw_data)
@@ -282,7 +254,6 @@ class MarketUseCases:
         return asset_responses
 
     def _convert_raw_to_asset(self, raw_data: Dict[str, Any]) -> Optional[Asset]:
-        """Convert raw API data to Asset entity - DOMAIN LOGIC"""
         if not raw_data:
             return None
     
