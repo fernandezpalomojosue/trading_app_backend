@@ -10,13 +10,26 @@ from app.domain.entities.market import MarketType
 from app.domain.use_cases.market_use_cases import MarketUseCases, MarketRepository, MarketDataCache
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
+from app.infrastructure.cache.redis_cache import RedisMarketCache
+from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
 
 def get_market_service() -> MarketService:
-    cache_service = MemoryMarketCache()
+    settings = get_settings()
+    
+    # Choose cache implementation based on configuration
+    if settings.CACHE_TYPE == "redis":
+        cache_service = RedisMarketCache(
+            redis_url=settings.REDIS_URL,
+            default_ttl=settings.CACHE_DEFAULT_TTL,
+            key_prefix=settings.CACHE_KEY_PREFIX
+        )
+    else:
+        cache_service = MemoryMarketCache()
+    
     market_repository = PolygonMarketClient()
     market_use_cases = MarketUseCases(market_repository, cache_service)
     return MarketService(market_use_cases)

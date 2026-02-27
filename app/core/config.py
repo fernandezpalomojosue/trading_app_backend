@@ -34,6 +34,12 @@ class AppBaseSettings(BaseSettings):
     # API Keys
     MASSIVE_API_KEY: Optional[str] = None
 
+    # Redis Configuration
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CACHE_DEFAULT_TTL: int = 300
+    CACHE_KEY_PREFIX: str = "trading_app:"
+    CACHE_TYPE: str = "memory"  # "memory" or "redis"
+
     def get_database_url(self) -> str:
         """Get the appropriate database URL based on environment."""
         if self.ENVIRONMENT == "testing" and self.TEST_DATABASE_URL:

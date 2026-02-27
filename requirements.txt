@@ -17,6 +17,9 @@ python-multipart==0.0.9
 # Market Data
 polygon-api-client==1.13.3
 
+# Cache
+redis[hiredis]==5.0.1
+
 # Utilities
 pydantic==2.6.1
 pydantic-settings==2.2.1
