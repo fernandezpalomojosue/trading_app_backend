@@ -2,7 +2,11 @@
 
 Backend for a trading application, built with **FastAPI** + **SQLModel** (PostgreSQL) and CI testing with Docker. Includes JWT authentication, market endpoints (stocks), and caching.
 
-## 🚀 Features
+## 🖼️ Project Overview
+
+![Architecture Flowchart](assets/images/ArchitectureChart.jpeg)
+
+## � Features
 
 - ✅ **Clean Architecture**: Clear separation between domain, application, and infrastructure
 - ✅ **JWT Authentication**: Secure user login and registration system
@@ -377,17 +381,6 @@ alembic history
 # Revert last migration
 alembic downgrade -1
 ```
-
-### Troubleshooting
-
-**Common error:** `No module named 'app.models'`
-
-**Solution:** Make sure `alembic/env.py` imports from the correct path:
-```python
-from app.infrastructure.database.models import UserSQLModel
-```
-
-📖 **Complete guide:** See `MIGRATIONS.md` for more details.
 
 ## 🚀 Production (Render)
 
