@@ -23,7 +23,7 @@ class Asset(BaseModel):
     price: Optional[float] = None
     change: Optional[float] = None
     change_percent: Optional[float] = None
-    volume: Optional[int] = None
+    volume: Optional[float] = None
     details: Dict[str, Any] = Field(default_factory=dict)
     
     def is_tradable(self) -> bool:

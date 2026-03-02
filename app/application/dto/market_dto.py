@@ -17,7 +17,7 @@ class AssetResponse(BaseModel):
     price: Optional[float]
     change: Optional[float]
     change_percent: Optional[float]
-    volume: Optional[int]
+    volume: Optional[float]
     details: Dict[str, Any] = Field(default_factory=dict)
     
     class Config:
