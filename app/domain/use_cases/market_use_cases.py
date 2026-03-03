@@ -269,7 +269,7 @@ class MarketUseCases:
                 change=raw_data.get("change"),
                 change_percent=raw_data.get("change_percent"),
                 volume=raw_data.get("volume"),
-                details=raw_data
+                details=raw_data if isinstance(raw_data, dict) else {}
             )
         except Exception:
             return None
@@ -366,7 +366,7 @@ class MarketUseCases:
                 price=close_price,
                 change=round(change, 4) if change is not None else None,
                 change_percent=round(change_percent, 2) if change_percent is not None else None,
-                volume=int(volume),
+                volume=volume,
                 details={
                     "source": "market_raw_data",
                     "open": raw_item.get("o"),
