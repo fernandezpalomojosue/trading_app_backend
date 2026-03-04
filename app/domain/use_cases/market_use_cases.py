@@ -138,7 +138,12 @@ class MarketUseCases:
     
         cached_asset = await self.cache_service.get(cache_key)
         if cached_asset:
-            return cached_asset
+            # Reconstruct AssetResponse from cached JSON data
+            try:
+                return AssetResponse(**cached_asset)
+            except Exception as e:
+                print(f"Error reconstructing AssetResponse from cache: {e}")
+                return None
     
         try:
             last_trading_day = await self.market_repository.get_last_trading_date()
@@ -214,7 +219,22 @@ class MarketUseCases:
                     details=structured_details
                 )
                 
-                await self.cache_service.set(cache_key, asset_response, ttl=60)
+                # Cache the raw data instead of the AssetResponse object
+                cache_data = {
+                    "id": symbol,
+                    "symbol": symbol,
+                    "name": combined_data.get("name", symbol),
+                    "market": self._map_market_type(combined_data.get("market", "stocks")),
+                    "currency": combined_data.get("currency_name", "USD"),
+                    "active": combined_data.get("active", True),
+                    "price": combined_data.get("price"),
+                    "change": combined_data.get("change"),
+                    "change_percent": combined_data.get("change_percent"),
+                    "volume": combined_data.get("volume"),
+                    "details": structured_details
+                }
+                
+                await self.cache_service.set(cache_key, cache_data, ttl=60)
                 
                 return asset_response
             
