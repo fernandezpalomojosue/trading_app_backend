@@ -78,7 +78,13 @@ class MarketUseCases:
     
         cached_data = await self.cache_service.get(cache_key)
         if cached_data:
-            return cached_data
+            # Reconstruct MarketOverviewResponse from cached JSON data
+            try:
+                return MarketOverviewResponse(**cached_data)
+            except Exception as e:
+                print(f"Error reconstructing MarketOverviewResponse from cache: {e}")
+                # Fallback: create new response
+                pass
     
         filtered_raw_data = await self._get_and_filter_market_data(500)
     
@@ -103,7 +109,18 @@ class MarketUseCases:
             most_active=active
         )
     
-        await self.cache_service.set(cache_key, overview_response, ttl=300)
+        # Cache the raw data instead of the MarketOverviewResponse object
+        cache_data = {
+            "market": market_type,
+            "total_assets": total_assets,
+            "status": "active",
+            "last_updated": datetime.now().isoformat(),
+            "top_gainers": [gain.model_dump() for gain in gainers],
+            "top_losers": [loss.model_dump() for loss in losers],
+            "most_active": [active.model_dump() for active in active]
+        }
+        
+        await self.cache_service.set(cache_key, cache_data, ttl=300)
     
         return overview_response
 
@@ -311,7 +328,13 @@ class MarketUseCases:
         # Try cache first
         cached_assets = await self.cache_service.get(cache_key)
         if cached_assets:
-            return cached_assets
+            # Reconstruct AssetResponse list from cached JSON data
+            try:
+                return [AssetResponse(**asset) for asset in cached_assets]
+            except Exception as e:
+                print(f"Error reconstructing AssetResponse list from cache: {e}")
+                # Fallback: create new list
+                pass
         
         # 1. Get and filter raw market data
         filtered_raw_data = await self._get_and_filter_market_data()
@@ -353,8 +376,9 @@ class MarketUseCases:
             for asset in paginated_assets
         ]
         
-        # 5. Cache the paginated result
-        await self.cache_service.set(cache_key, asset_responses, ttl=300)
+        # 5. Cache the paginated result as raw data
+        cache_data = [asset.model_dump() for asset in asset_responses]
+        await self.cache_service.set(cache_key, cache_data, ttl=300)
         
         return asset_responses
 
@@ -409,7 +433,13 @@ class MarketUseCases:
         # Try cache first
         cached_candles = await self.cache_service.get(cache_key)
         if cached_candles:
-            return cached_candles
+            # Reconstruct CandleStickDataResponse from cached JSON data
+            try:
+                return CandleStickDataResponse(**cached_candles)
+            except Exception as e:
+                print(f"Error reconstructing CandleStickDataResponse from cache: {e}")
+                # Fallback: create new response
+                pass
         
         # Convert timespan and multiplier to Massive API format
         massive_timespan = self._convert_to_massive_timespan(timespan)
@@ -473,8 +503,12 @@ class MarketUseCases:
         # Build response
         response = CandleStickDataResponse(results=candle_data_list)
         
-        # Cache the result
-        await self.cache_service.set(cache_key, response, ttl=300)
+        # Cache the raw data instead of the CandleStickDataResponse object
+        cache_data = {
+            "results": [candle.model_dump() for candle in candle_data_list]
+        }
+        
+        await self.cache_service.set(cache_key, cache_data, ttl=300)
         
         return response
     
