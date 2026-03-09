@@ -37,11 +37,18 @@ async def register_user(
             username=user_data.username,
             full_name=user_data.full_name
         )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    except Exception as e:
+        # Importar BusinessError localmente para evitar import circular
+        from app.domain.use_cases.user_use_cases import BusinessError
+        
+        if isinstance(e, BusinessError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        else:
+            # Dejar que FastAPI maneje los errores de validación (deberían ser 422)
+            raise
 
 
 @router.post("/login", response_model=TokenResponse)

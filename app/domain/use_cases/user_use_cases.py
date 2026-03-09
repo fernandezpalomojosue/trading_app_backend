@@ -1,10 +1,16 @@
 # app/domain/use_cases/user_use_cases.py
+import uuid
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from uuid import UUID
 
 from app.application.dto.user_dto import UserResponse
 from app.domain.entities.user import UserEntity, UserCredentials
+
+
+class BusinessError(Exception):
+    """Custom exception for business logic errors"""
+    pass
 
 
 class UserRepository(ABC):
@@ -80,7 +86,7 @@ class UserUseCases:
         """Register a new user"""
         # Check if user already exists
         if await self.user_repository.user_exists(credentials.email):
-            raise ValueError("Email already registered")
+            raise BusinessError("Email already registered")
         
         # Create user entity with provided fields or defaults
         user = UserEntity(
