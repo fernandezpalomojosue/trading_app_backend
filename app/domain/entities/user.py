@@ -47,22 +47,15 @@ class UserEntity(BaseModel):
         description="Última actualización del usuario"
     )
     
-    @validator('email')
-    def validate_email(cls, v):
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, v):
-            raise ValueError("Formato de email inválido")
-        return v.lower()
-    
     @validator('username')
     def username_must_be_valid(cls, v):
         if v is not None:
             # Permitir letras, números y puntos
             if not re.match(r'^[a-zA-Z0-9.]+$', v):
-                raise ValueError('El nombre de usuario solo puede contener letras, números y puntos')
+                raise ValueError('Username can only contain letters, numbers and dots')
             # No permitir puntos al inicio o final, ni puntos consecutivos
             if v.startswith('.') or v.endswith('.') or '..' in v:
-                raise ValueError('El nombre de usuario no puede empezar o terminar con punto, ni tener puntos consecutivos')
+                raise ValueError('Username cannot start or end with dots or have consecutive dots')
         return v
     
     def update_timestamp(self):
@@ -99,7 +92,7 @@ class UserCredentials(BaseModel):
     def validate_email_format(cls, v):
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, v):
-            raise ValueError("Formato de email inválido")
+            raise ValueError("Invalid email format")
         return v.lower()
     
     @validator('password')

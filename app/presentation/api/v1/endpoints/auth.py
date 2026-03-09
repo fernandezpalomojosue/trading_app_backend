@@ -61,7 +61,7 @@ async def login(
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales incorrectas",
+            detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
