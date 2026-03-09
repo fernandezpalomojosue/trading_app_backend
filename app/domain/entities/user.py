@@ -18,25 +18,25 @@ class UserEntity(BaseModel):
     )
     full_name: Optional[str] = Field(
         default=None, 
-        max_length=100, 
-        description="Nombre completo del usuario"
+        max_length=100,
+        description="Nombre completo del usuario (opcional)"
     )
     is_active: bool = Field(
         default=True, 
-        description="Indica si el usuario está activo"
+        description="Usuario está activo"
     )
     is_verified: bool = Field(
-        default=True,
-        description="Indica si el email del usuario ha sido verificado"
+        default=True, 
+        description="Usuario está verificado"
     )
     is_superuser: bool = Field(
         default=False, 
-        description="Indica si el usuario es administrador"
+        description="Usuario es superusuario"
     )
     balance: float = Field(
         default=0.0, 
         ge=0, 
-        description="Saldo del usuario"
+        description="Balance del usuario"
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -94,6 +94,13 @@ class UserCredentials(BaseModel):
     """User credentials entity - separate from user entity for security"""
     email: str
     password: str = Field(..., min_length=8, max_length=100)
+    
+    @validator('email')
+    def validate_email_format(cls, v):
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, v):
+            raise ValueError("Formato de email inválido")
+        return v.lower()
     
     @validator('password')
     def validate_password_strength(cls, v):
