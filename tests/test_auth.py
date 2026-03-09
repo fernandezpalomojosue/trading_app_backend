@@ -15,7 +15,7 @@ class TestAuthEndpoints:
         user_data = {
             "email": "newuser@example.com",
             "username": "newuser",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         
         response = client.post("/api/v1/auth/register", json=user_data)
@@ -35,7 +35,7 @@ class TestAuthEndpoints:
         user_data = {
             "email": "duplicate@example.com",
             "username": "duplicateuser",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         
         # First registration
@@ -74,14 +74,14 @@ class TestAuthEndpoints:
         user_data = {
             "email": "login@example.com",
             "username": "loginuser",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         client.post("/api/v1/auth/register", json=user_data)
         
         # Then login
         login_data = {
             "username": "login@example.com",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         
         response = client.post("/api/v1/auth/login", data=login_data)

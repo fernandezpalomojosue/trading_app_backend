@@ -13,7 +13,7 @@ class TestIntegration:
         user_data = {
             "email": "integration@example.com",
             "username": "integrationuser",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         
         register_response = client.post("/api/v1/auth/register", json=user_data)
@@ -85,7 +85,7 @@ class TestIntegration:
         user_data = {
             "email": "isolated@example.com",
             "username": "isolateduser",
-            "password": "testpassword123"
+            "password": "Testpassword123"  # Added uppercase letter
         }
         
         # Register user
