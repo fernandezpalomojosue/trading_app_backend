@@ -34,7 +34,7 @@ class UserEntity(BaseModel):
         description="Usuario es superusuario"
     )
     balance: float = Field(
-        default=0.0, 
+        default=10000.0, 
         ge=0, 
         description="Balance del usuario"
     )
