@@ -85,6 +85,8 @@ jobs:
           script: |
             const { owner, repo, number } = context.issue;
             
+            console.log(`Processing PR #${number} in ${owner}/${repo}`);
+            
             // Get PR details
             const pr = await github.rest.pulls.get({
               owner,
@@ -92,37 +94,64 @@ jobs:
               pull_number: number,
             });
             
+            console.log('PR details:', {
+              number: pr.data.number,
+              title: pr.data.title,
+              head: pr.data.head.ref,
+              base: pr.data.base.ref,
+              mergeable: pr.data.mergeable,
+              headRepo: pr.data.head.repo.full_name
+            });
+            
             // Check if PR is from a trusted source (same repository)
             if (pr.data.head.repo.full_name !== `${owner}/${repo}`) {
-              console.log('PR from fork, skipping auto-merge');
+              console.log(' PR from fork, skipping auto-merge');
               return;
             }
+            
+            console.log(' PR from same repository');
             
             // Check if PR is mergeable and has no conflicts
             if (!pr.data.mergeable) {
-              console.log('PR has conflicts, skipping auto-merge');
+              console.log(' PR has conflicts, skipping auto-merge');
               return;
             }
             
-            // Check required status checks (all tests passed)
-            const requiredChecks = ['test'];
+            console.log(' PR is mergeable');
+            
+            // Get all status checks
             const status = await github.rest.repos.getCombinedStatusForRef({
               owner,
               repo,
               ref: pr.data.head.sha,
             });
             
+            console.log(' All status checks:', status.data.statuses.map(s => ({
+              context: s.context,
+              state: s.state,
+              description: s.description
+            })));
+            
+            // Check required status checks (all tests passed)
+            const requiredChecks = ['test'];
+            console.log(' Looking for required checks:', requiredChecks);
+            
             const allChecksPassed = requiredChecks.every(check => {
               const checkStatus = status.data.statuses.find(s => s.context === check);
-              return checkStatus && checkStatus.state === 'success';
+              const passed = checkStatus && checkStatus.state === 'success';
+              console.log(`  ${check}: ${passed ? ' ' : ' '} (${checkStatus ? checkStatus.state : 'NOT FOUND'})`);
+              return passed;
             });
             
             if (!allChecksPassed) {
-              console.log('Not all required checks passed, skipping auto-merge');
+              console.log(' Not all required checks passed, skipping auto-merge');
+              console.log(' Available contexts:', status.data.statuses.map(s => s.context));
               return;
             }
             
-            // Merge the PR
+            console.log(' All required checks passed, proceeding with merge');
+            
+            // Merge PR
             try {
               await github.rest.pulls.merge({
                 owner,
@@ -132,7 +161,7 @@ jobs:
                 merge_method: 'squash'
               });
               
-              console.log(`Successfully merged PR #${number}`);
+              console.log(` Successfully merged PR #${number}`);
             } catch (error) {
-              console.error(`Failed to merge PR #${number}:`, error.message);
+              console.error(` Failed to merge PR #${number}:`, error.message);
             }
