@@ -90,35 +90,7 @@ jobs:
             
             console.log(`Processing PR #${number} in ${owner}/${repo}`);
             
-            // Retry mechanism to wait for status checks
-            let retries = 5;
-            let statusData = null;
-            
-            while (retries > 0) {
-              console.log(`🔄 Checking status checks... (${6 - retries}/5 attempts)`);
-              
-              statusData = await github.rest.repos.getCombinedStatusForRef({
-                owner,
-                repo,
-                ref: pr.data.head.sha,
-              });
-              
-              if (statusData.data.statuses.length > 0) {
-                console.log(`✅ Found ${statusData.data.statuses.length} status checks`);
-                break;
-              }
-              
-              console.log(`⏳ No status checks yet, waiting 30 seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 30000));
-              retries--;
-            }
-            
-            if (statusData.data.statuses.length === 0) {
-              console.log('❌ No status checks found after 5 attempts, skipping auto-merge');
-              return;
-            }
-            
-            // Get PR details
+            // Get PR details FIRST
             const pr = await github.rest.pulls.get({
               owner,
               repo,
@@ -149,6 +121,34 @@ jobs:
             }
             
             console.log('✅ PR is mergeable');
+            
+            // Retry mechanism to wait for status checks
+            let retries = 5;
+            let statusData = null;
+            
+            while (retries > 0) {
+              console.log(`🔄 Checking status checks... (${6 - retries}/5 attempts)`);
+              
+              statusData = await github.rest.repos.getCombinedStatusForRef({
+                owner,
+                repo,
+                ref: pr.data.head.sha,
+              });
+              
+              if (statusData.data.statuses.length > 0) {
+                console.log(`✅ Found ${statusData.data.statuses.length} status checks`);
+                break;
+              }
+              
+              console.log(`⏳ No status checks yet, waiting 30 seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 30000));
+              retries--;
+            }
+            
+            if (statusData.data.statuses.length === 0) {
+              console.log('❌ No status checks found after 5 attempts, skipping auto-merge');
+              return;
+            }
             
             console.log('🔍 All status checks:', JSON.stringify(statusData.data.statuses, null, 2));
             
@@ -193,7 +193,7 @@ jobs:
                 merge_method: 'squash'
               });
               
-              console.log(` Successfully merged PR #${number}`);
+              console.log(`🎉 Successfully merged PR #${number}`);
             } catch (error) {
-              console.error(` Failed to merge PR #${number}:`, error.message);
+              console.error(`❌ Failed to merge PR #${number}:`, error.message);
             }
