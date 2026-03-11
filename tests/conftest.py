@@ -33,6 +33,13 @@ def engine():
 def db_session(engine):
     """Create test database session"""
     with Session(engine) as session:
+        # Clean up database before each test
+        from app.infrastructure.database.models import UserSQLModel, PortfolioHoldingSQLModel, TransactionSQLModel
+        session.query(TransactionSQLModel).delete()
+        session.query(PortfolioHoldingSQLModel).delete()
+        session.query(UserSQLModel).delete()
+        session.commit()
+        
         yield session
 
 
@@ -48,20 +55,19 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def sample_user():
-    """Sample user entity for testing"""
-    return UserEntity(
-        id=uuid.uuid4(),
-        email="test@example.com",
-        username="testuser",
-        balance=1000.0,
-        is_active=True,
-        is_verified=True,
-        is_superuser=False,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
-    )
+# Import user fixtures
+from tests.fixtures.user_fixtures import (
+    sample_user,
+    sample_user_sql,
+    sample_inactive_user,
+    sample_unverified_user,
+    sample_superuser,
+    multiple_users,
+    user_test_data,
+    user_edge_cases,
+    user_credentials_data,
+    mock_user_repository
+)
 
 
 @pytest.fixture

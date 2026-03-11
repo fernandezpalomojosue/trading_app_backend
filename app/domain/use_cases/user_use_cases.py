@@ -96,7 +96,7 @@ class UserUseCases:
             is_active=True,
             is_verified=True,
             is_superuser=False,
-            balance=0.0
+            balance=10000.0
         )
         
         # Hash password
