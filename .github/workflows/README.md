@@ -56,9 +56,9 @@ Para mayor seguridad, se recomienda configurar branch protection rules:
 
 ### Environment Variables
 
-No se requieren variables de entorno adicionales. El workflow utiliza:
-- `GITHUB_TOKEN` (automático)
-- `github.actor` (automático)
+- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` - Forzado para compatibilidad
+- `GITHUB_TOKEN` - Automático para operaciones de GitHub
+- `github.actor` - Automático para autenticación
 
 ### Security Considerations
 
@@ -66,6 +66,7 @@ No se requieren variables de entorno adicionales. El workflow utiliza:
 - **No se procesan forks** automáticamente
 - **Tests obligatorios** antes de cualquier merge
 - **Permisos mínimos** necesarios para cada job
+- **Node.js 24** para seguridad y compatibilidad
 
 ### Troubleshooting
 
