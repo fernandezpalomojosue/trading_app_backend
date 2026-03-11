@@ -34,7 +34,7 @@ class UserEntity(BaseModel):
         description="Usuario es superusuario"
     )
     balance: float = Field(
-        default=0.0, 
+        default=10000.0, 
         ge=0, 
         description="Balance del usuario"
     )
@@ -50,9 +50,9 @@ class UserEntity(BaseModel):
     @validator('username')
     def username_must_be_valid(cls, v):
         if v is not None:
-            # Permitir letras, números y puntos
-            if not re.match(r'^[a-zA-Z0-9.]+$', v):
-                raise ValueError('Username can only contain letters, numbers and dots')
+            # Permitir letras, números, puntos y guiones bajos
+            if not re.match(r'^[a-zA-Z0-9._]+$', v):
+                raise ValueError('Username can only contain letters, numbers, dots and underscores')
             # No permitir puntos al inicio o final, ni puntos consecutivos
             if v.startswith('.') or v.endswith('.') or '..' in v:
                 raise ValueError('Username cannot start or end with dots or have consecutive dots')

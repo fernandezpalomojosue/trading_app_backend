@@ -2,19 +2,24 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
+    branches: [ master, main ]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    name: test
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Run tests with Docker
         run: |
@@ -31,7 +36,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
 
     permissions:
       contents: read
@@ -39,17 +44,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.prod
@@ -57,3 +62,78 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  auto-merge:
+    name: Auto-merge PR
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Auto-merge PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            
+            console.log(`Processing PR #${number} in ${owner}/${repo}`);
+            
+            // Get PR details FIRST
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number,
+            });
+            
+            console.log('PR details:', {
+              number: pr.data.number,
+              title: pr.data.title,
+              head: pr.data.head.ref,
+              base: pr.data.base.ref,
+              mergeable: pr.data.mergeable,
+              headRepo: pr.data.head.repo.full_name
+            });
+            
+            // Check if PR is from a trusted source (same repository)
+            if (pr.data.head.repo.full_name !== `${owner}/${repo}`) {
+              console.log('❌ PR from fork, skipping auto-merge');
+              return;
+            }
+            
+            console.log('✅ PR from same repository');
+            
+            // Check if PR is mergeable and has no conflicts
+            if (!pr.data.mergeable) {
+              console.log('❌ PR has conflicts, skipping auto-merge');
+              return;
+            }
+            
+            console.log('✅ PR is mergeable');
+            
+            // Since this job has 'needs: test', we know tests passed
+            console.log('✅ Tests already passed (job dependency), proceeding with merge');
+            
+            // Merge PR
+            try {
+              await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: number,
+                commit_title: `Auto-merge PR #${number}: ${pr.data.title}`,
+                merge_method: 'squash'
+              });
+              
+              console.log(`🎉 Successfully merged PR #${number}`);
+            } catch (error) {
+              console.error(`❌ Failed to merge PR #${number}:`, error.message);
+            }

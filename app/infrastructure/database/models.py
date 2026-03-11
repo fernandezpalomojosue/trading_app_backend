@@ -46,7 +46,7 @@ class UserSQLModel(SQLModel, table=True):
         description="Indicates if user is admin"
     )
     balance: float = Field(
-        default=0.0, 
+        default=10000.0, 
         ge=0, 
         description="User balance"
     )
@@ -93,3 +93,98 @@ class UserSQLModel(SQLModel, table=True):
             created_at=self.created_at,
             updated_at=self.updated_at
         )
+    
+
+class PortfolioHoldingSQLModel(SQLModel, table=True):
+    """SQLModel for Portfolio Holdings table"""
+    __tablename__ = "portfolio_holdings"
+    
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="Portfolio holding unique ID (UUID)"
+    )
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), index=True),
+        description="User ID who owns this holding"
+    )
+    symbol: str = Field(
+        index=True,
+        description="Stock symbol (e.g., AAPL, GOOGL)"
+    )
+    quantity: float = Field(
+        gt=0,
+        description="Number of shares owned"
+    )
+    average_price: float = Field(
+        gt=0,
+        description="Average purchase price per share"
+    )
+    current_price: float = Field(
+        gt=0,
+        description="Current market price per share"
+    )
+    total_value: float = Field(
+        gt=0,
+        description="Total value of holding (quantity * current_price)"
+    )
+    unrealized_pnl: float = Field(
+        description="Unrealized profit/loss (total_value - total_cost)"
+    )
+    pnl_percentage: float = Field(
+        description="Unrealized P&L percentage"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Holding creation date"
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Holding last update date"
+    )
+    
+    __table_args__ = (
+        {"sqlite_autoincrement": False},
+    )
+
+
+class TransactionSQLModel(SQLModel, table=True):
+    """SQLModel for Transactions table"""
+    __tablename__ = "transactions"
+    
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="Transaction unique ID (UUID)"
+    )
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), index=True),
+        description="User ID who made this transaction"
+    )
+    symbol: str = Field(
+        index=True,
+        description="Stock symbol (e.g., AAPL, GOOGL)"
+    )
+    transaction_type: str = Field(
+        description="Transaction type: BUY or SELL"
+    )
+    quantity: float = Field(
+        gt=0,
+        description="Number of shares transacted"
+    )
+    price: float = Field(
+        gt=0,
+        description="Price per share at time of transaction"
+    )
+    total_amount: float = Field(
+        gt=0,
+        description="Total amount of transaction (quantity * price)"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Transaction date"
+    )
+    
+    __table_args__ = (
+        {"sqlite_autoincrement": False},
+    )
