@@ -80,9 +80,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Wait for test job completion
-        run: sleep 120
-
       - name: Auto-merge PR
         uses: actions/github-script@v8
         with:
@@ -123,45 +120,8 @@ jobs:
             
             console.log('✅ PR is mergeable');
             
-            // Check workflow runs instead of status checks
-            console.log('� Checking workflow runs...');
-            
-            const runs = await github.rest.actions.listWorkflowRunsForRepo({
-              owner,
-              repo,
-              head_sha: pr.data.head.sha,
-              event: 'pull_request'
-            });
-            
-            console.log(`🔍 Found ${runs.data.workflow_runs.length} workflow runs`);
-            
-            // Find the test workflow run
-            const testRun = runs.data.workflow_runs.find(run => 
-              run.name === 'CI' && 
-              run.head_sha === pr.data.head.sha &&
-              run.status === 'completed' &&
-              run.conclusion === 'success'
-            );
-            
-            console.log(`🔍 Test run found:`, testRun ? {
-              name: testRun.name,
-              status: testRun.status,
-              conclusion: testRun.conclusion,
-              created_at: testRun.created_at
-            } : 'NONE');
-            
-            if (!testRun) {
-              console.log('❌ Test workflow not completed successfully, skipping auto-merge');
-              console.log('🔍 Available runs:', runs.data.workflow_runs.map(r => ({
-                name: r.name,
-                status: r.status,
-                conclusion: r.conclusion,
-                head_sha: r.head_sha
-              })));
-              return;
-            }
-            
-            console.log('✅ Test workflow completed successfully, proceeding with merge');
+            // Since this job has 'needs: test', we know tests passed
+            console.log('✅ Tests already passed (job dependency), proceeding with merge');
             
             // Merge PR
             try {
