@@ -79,6 +79,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Wait for status checks
+        run: sleep 60
+
       - name: Auto-merge PR
         uses: actions/github-script@v8
         with:
@@ -86,6 +89,34 @@ jobs:
             const { owner, repo, number } = context.issue;
             
             console.log(`Processing PR #${number} in ${owner}/${repo}`);
+            
+            // Retry mechanism to wait for status checks
+            let retries = 5;
+            let status = null;
+            
+            while (retries > 0) {
+              console.log(`🔄 Checking status checks... (${6 - retries}/5 attempts)`);
+              
+              status = await github.rest.repos.getCombinedStatusForRef({
+                owner,
+                repo,
+                ref: pr.data.head.sha,
+              });
+              
+              if (status.data.statuses.length > 0) {
+                console.log(`✅ Found ${status.data.statuses.length} status checks`);
+                break;
+              }
+              
+              console.log(`⏳ No status checks yet, waiting 30 seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 30000));
+              retries--;
+            }
+            
+            if (status.data.statuses.length === 0) {
+              console.log('❌ No status checks found after 5 attempts, skipping auto-merge');
+              return;
+            }
             
             // Get PR details
             const pr = await github.rest.pulls.get({
