@@ -126,13 +126,10 @@ jobs:
               ref: pr.data.head.sha,
             });
             
-            console.log(' All status checks:', status.data.statuses.map(s => ({
-              context: s.context,
-              state: s.state,
-              description: s.description
-            })));
+            console.log(' All status checks:', JSON.stringify(status.data.statuses, null, 2));
             
-            console.log(' Available status check contexts:', status.data.statuses.map(s => s.context));
+            console.log('🔍 Available status check contexts:', status.data.statuses.map(s => s.context));
+            console.log('🔍 Full status check details:', JSON.stringify(status.data.statuses, null, 2));
             
             // Look for any status check that contains 'test' or 'ci'
             const testCheck = status.data.statuses.find(s => 
@@ -140,17 +137,26 @@ jobs:
               s.context.toLowerCase().includes('ci')
             );
             
-            console.log(`🔍 Found test/ci-related check:`, testCheck ? {
-              context: testCheck.context,
-              state: testCheck.state,
-              description: testCheck.description
-            } : 'NONE');
+            // Also try exact matches for common patterns
+            const exactMatches = ['test', 'ci', 'test (1)', 'ci (1)'];
+            const exactCheck = status.data.statuses.find(s => 
+              exactMatches.includes(s.context)
+            );
             
-            if (!testCheck || testCheck.state !== 'success') {
-              console.log('❌ Test/CI check not found or not passed, skipping auto-merge');
+            console.log(`🔍 Found test/ci-related check:`, testCheck ? testCheck.context : 'NONE');
+            console.log(`🔍 Found exact match:`, exactCheck ? exactCheck.context : 'NONE');
+            
+            // Use either check (flexible or exact)
+            const finalCheck = testCheck || exactCheck;
+            
+            if (!finalCheck || finalCheck.state !== 'success') {
+              console.log('❌ No suitable check found or not passed, skipping auto-merge');
+              console.log('❌ Final check used:', finalCheck ? finalCheck.context : 'NONE');
+              console.log('❌ Final check state:', finalCheck ? finalCheck.state : 'NONE');
               return;
             }
             
+            console.log('✅ Using check for merge:', finalCheck.context);
             console.log('✅ Test/CI check passed, proceeding with merge');
             
             // Merge PR
