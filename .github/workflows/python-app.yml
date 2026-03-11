@@ -132,24 +132,25 @@ jobs:
               description: s.description
             })));
             
-            // Check required status checks (all tests passed)
-            const requiredChecks = ['test'];
-            console.log(' Looking for required checks:', requiredChecks);
+            console.log(' Available status check contexts:', status.data.statuses.map(s => s.context));
             
-            const allChecksPassed = requiredChecks.every(check => {
-              const checkStatus = status.data.statuses.find(s => s.context === check);
-              const passed = checkStatus && checkStatus.state === 'success';
-              console.log(`  ${check}: ${passed ? ' ' : ' '} (${checkStatus ? checkStatus.state : 'NOT FOUND'})`);
-              return passed;
-            });
+            // Look for any status check that contains 'test'
+            const testCheck = status.data.statuses.find(s => 
+              s.context.toLowerCase().includes('test')
+            );
             
-            if (!allChecksPassed) {
-              console.log(' Not all required checks passed, skipping auto-merge');
-              console.log(' Available contexts:', status.data.statuses.map(s => s.context));
+            console.log(` Found test-related check:`, testCheck ? {
+              context: testCheck.context,
+              state: testCheck.state,
+              description: testCheck.description
+            } : 'NONE');
+            
+            if (!testCheck || testCheck.state !== 'success') {
+              console.log(' Test check not found or not passed, skipping auto-merge');
               return;
             }
             
-            console.log(' All required checks passed, proceeding with merge');
+            console.log(' Test check passed, proceeding with merge');
             
             // Merge PR
             try {
