@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
+    branches: [ master, main ]
 
 jobs:
   test:
@@ -12,6 +13,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # For pull_request events, checkout the PR head
+          # For push events, checkout the branch
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -31,7 +36,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
 
     permissions:
       contents: read
@@ -57,3 +62,78 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  auto-merge:
+    name: Auto-merge PR
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Auto-merge PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            
+            // Get PR details
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number,
+            });
+            
+            // Check if PR is from a trusted source (same repository)
+            if (pr.data.head.repo.full_name !== `${owner}/${repo}`) {
+              console.log('PR from fork, skipping auto-merge');
+              return;
+            }
+            
+            // Check if PR is mergeable and has no conflicts
+            if (!pr.data.mergeable) {
+              console.log('PR has conflicts, skipping auto-merge');
+              return;
+            }
+            
+            // Check required status checks (all tests passed)
+            const requiredChecks = ['test'];
+            const status = await github.rest.repos.getCombinedStatusForRef({
+              owner,
+              repo,
+              ref: pr.data.head.sha,
+            });
+            
+            const allChecksPassed = requiredChecks.every(check => {
+              const checkStatus = status.data.statuses.find(s => s.context === check);
+              return checkStatus && checkStatus.state === 'success';
+            });
+            
+            if (!allChecksPassed) {
+              console.log('Not all required checks passed, skipping auto-merge');
+              return;
+            }
+            
+            // Merge the PR
+            try {
+              await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: number,
+                commit_title: `Auto-merge PR #${number}: ${pr.data.title}`,
+                merge_method: 'squash'
+              });
+              
+              console.log(`Successfully merged PR #${number}`);
+            } catch (error) {
+              console.error(`Failed to merge PR #${number}:`, error.message);
+            }
