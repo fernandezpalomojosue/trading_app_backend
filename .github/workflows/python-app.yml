@@ -12,6 +12,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    name: test
 
     steps:
       - name: Checkout code
@@ -79,8 +80,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Wait for status checks
-        run: sleep 60
+      - name: Wait for test job completion
+        run: sleep 120
 
       - name: Auto-merge PR
         uses: actions/github-script@v8
@@ -122,66 +123,45 @@ jobs:
             
             console.log('✅ PR is mergeable');
             
-            // Retry mechanism to wait for status checks
-            let retries = 5;
-            let statusData = null;
+            // Check workflow runs instead of status checks
+            console.log('� Checking workflow runs...');
             
-            while (retries > 0) {
-              console.log(`🔄 Checking status checks... (${6 - retries}/5 attempts)`);
-              
-              statusData = await github.rest.repos.getCombinedStatusForRef({
-                owner,
-                repo,
-                ref: pr.data.head.sha,
-              });
-              
-              if (statusData.data.statuses.length > 0) {
-                console.log(`✅ Found ${statusData.data.statuses.length} status checks`);
-                break;
-              }
-              
-              console.log(`⏳ No status checks yet, waiting 30 seconds...`);
-              await new Promise(resolve => setTimeout(resolve, 30000));
-              retries--;
-            }
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner,
+              repo,
+              head_sha: pr.data.head.sha,
+              event: 'pull_request'
+            });
             
-            if (statusData.data.statuses.length === 0) {
-              console.log('❌ No status checks found after 5 attempts, skipping auto-merge');
+            console.log(`🔍 Found ${runs.data.workflow_runs.length} workflow runs`);
+            
+            // Find the test workflow run
+            const testRun = runs.data.workflow_runs.find(run => 
+              run.name === 'CI' && 
+              run.head_sha === pr.data.head.sha &&
+              run.status === 'completed' &&
+              run.conclusion === 'success'
+            );
+            
+            console.log(`🔍 Test run found:`, testRun ? {
+              name: testRun.name,
+              status: testRun.status,
+              conclusion: testRun.conclusion,
+              created_at: testRun.created_at
+            } : 'NONE');
+            
+            if (!testRun) {
+              console.log('❌ Test workflow not completed successfully, skipping auto-merge');
+              console.log('🔍 Available runs:', runs.data.workflow_runs.map(r => ({
+                name: r.name,
+                status: r.status,
+                conclusion: r.conclusion,
+                head_sha: r.head_sha
+              })));
               return;
             }
             
-            console.log('🔍 All status checks:', JSON.stringify(statusData.data.statuses, null, 2));
-            
-            console.log('🔍 Available status check contexts:', statusData.data.statuses.map(s => s.context));
-            console.log('🔍 Full status check details:', JSON.stringify(statusData.data.statuses, null, 2));
-            
-            // Look for any status check that contains 'test' or 'ci'
-            const testCheck = statusData.data.statuses.find(s => 
-              s.context.toLowerCase().includes('test') || 
-              s.context.toLowerCase().includes('ci')
-            );
-            
-            // Also try exact matches for common patterns
-            const exactMatches = ['test', 'ci', 'test (1)', 'ci (1)'];
-            const exactCheck = statusData.data.statuses.find(s => 
-              exactMatches.includes(s.context)
-            );
-            
-            console.log(`🔍 Found test/ci-related check:`, testCheck ? testCheck.context : 'NONE');
-            console.log(`🔍 Found exact match:`, exactCheck ? exactCheck.context : 'NONE');
-            
-            // Use either check (flexible or exact)
-            const finalCheck = testCheck || exactCheck;
-            
-            if (!finalCheck || finalCheck.state !== 'success') {
-              console.log('❌ No suitable check found or not passed, skipping auto-merge');
-              console.log('❌ Final check used:', finalCheck ? finalCheck.context : 'NONE');
-              console.log('❌ Final check state:', finalCheck ? finalCheck.state : 'NONE');
-              return;
-            }
-            
-            console.log('✅ Using check for merge:', finalCheck.context);
-            console.log('✅ Test/CI check passed, proceeding with merge');
+            console.log('✅ Test workflow completed successfully, proceeding with merge');
             
             // Merge PR
             try {
