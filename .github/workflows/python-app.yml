@@ -92,19 +92,19 @@ jobs:
             
             // Retry mechanism to wait for status checks
             let retries = 5;
-            let status = null;
+            let statusData = null;
             
             while (retries > 0) {
               console.log(`🔄 Checking status checks... (${6 - retries}/5 attempts)`);
               
-              status = await github.rest.repos.getCombinedStatusForRef({
+              statusData = await github.rest.repos.getCombinedStatusForRef({
                 owner,
                 repo,
                 ref: pr.data.head.sha,
               });
               
-              if (status.data.statuses.length > 0) {
-                console.log(`✅ Found ${status.data.statuses.length} status checks`);
+              if (statusData.data.statuses.length > 0) {
+                console.log(`✅ Found ${statusData.data.statuses.length} status checks`);
                 break;
               }
               
@@ -113,7 +113,7 @@ jobs:
               retries--;
             }
             
-            if (status.data.statuses.length === 0) {
+            if (statusData.data.statuses.length === 0) {
               console.log('❌ No status checks found after 5 attempts, skipping auto-merge');
               return;
             }
@@ -136,41 +136,34 @@ jobs:
             
             // Check if PR is from a trusted source (same repository)
             if (pr.data.head.repo.full_name !== `${owner}/${repo}`) {
-              console.log(' PR from fork, skipping auto-merge');
+              console.log('❌ PR from fork, skipping auto-merge');
               return;
             }
             
-            console.log(' PR from same repository');
+            console.log('✅ PR from same repository');
             
             // Check if PR is mergeable and has no conflicts
             if (!pr.data.mergeable) {
-              console.log(' PR has conflicts, skipping auto-merge');
+              console.log('❌ PR has conflicts, skipping auto-merge');
               return;
             }
             
-            console.log(' PR is mergeable');
+            console.log('✅ PR is mergeable');
             
-            // Get all status checks
-            const status = await github.rest.repos.getCombinedStatusForRef({
-              owner,
-              repo,
-              ref: pr.data.head.sha,
-            });
+            console.log('🔍 All status checks:', JSON.stringify(statusData.data.statuses, null, 2));
             
-            console.log(' All status checks:', JSON.stringify(status.data.statuses, null, 2));
-            
-            console.log('🔍 Available status check contexts:', status.data.statuses.map(s => s.context));
-            console.log('🔍 Full status check details:', JSON.stringify(status.data.statuses, null, 2));
+            console.log('🔍 Available status check contexts:', statusData.data.statuses.map(s => s.context));
+            console.log('🔍 Full status check details:', JSON.stringify(statusData.data.statuses, null, 2));
             
             // Look for any status check that contains 'test' or 'ci'
-            const testCheck = status.data.statuses.find(s => 
+            const testCheck = statusData.data.statuses.find(s => 
               s.context.toLowerCase().includes('test') || 
               s.context.toLowerCase().includes('ci')
             );
             
             // Also try exact matches for common patterns
             const exactMatches = ['test', 'ci', 'test (1)', 'ci (1)'];
-            const exactCheck = status.data.statuses.find(s => 
+            const exactCheck = statusData.data.statuses.find(s => 
               exactMatches.includes(s.context)
             );
             
