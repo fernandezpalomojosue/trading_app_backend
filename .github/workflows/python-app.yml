@@ -134,23 +134,24 @@ jobs:
             
             console.log(' Available status check contexts:', status.data.statuses.map(s => s.context));
             
-            // Look for any status check that contains 'test'
+            // Look for any status check that contains 'test' or 'ci'
             const testCheck = status.data.statuses.find(s => 
-              s.context.toLowerCase().includes('test')
+              s.context.toLowerCase().includes('test') || 
+              s.context.toLowerCase().includes('ci')
             );
             
-            console.log(` Found test-related check:`, testCheck ? {
+            console.log(`🔍 Found test/ci-related check:`, testCheck ? {
               context: testCheck.context,
               state: testCheck.state,
               description: testCheck.description
             } : 'NONE');
             
             if (!testCheck || testCheck.state !== 'success') {
-              console.log(' Test check not found or not passed, skipping auto-merge');
+              console.log('❌ Test/CI check not found or not passed, skipping auto-merge');
               return;
             }
             
-            console.log(' Test check passed, proceeding with merge');
+            console.log('✅ Test/CI check passed, proceeding with merge');
             
             // Merge PR
             try {
