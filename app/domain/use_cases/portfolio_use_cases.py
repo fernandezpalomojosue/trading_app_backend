@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 
 from app.domain.entities.portfolio import PortfolioHolding, Transaction, TransactionType, Portfolio
 from app.domain.entities.user import UserEntity
+from app.application.dto.portfolio_dto import (
+    PortfolioSummaryResponse,
+    HoldingResponse,
+    TransactionResponse
+)
 
 
 class PortfolioRepository(ABC):
@@ -54,7 +59,7 @@ class PortfolioUseCases:
     def __init__(self, portfolio_repository: PortfolioRepository):
         self.portfolio_repository = portfolio_repository
     
-    async def get_portfolio_summary(self, user_id: uuid.UUID) -> dict:
+    async def get_portfolio_summary(self, user_id: uuid.UUID) -> PortfolioSummaryResponse:
         """Get complete portfolio summary"""
         holdings = await self.portfolio_repository.get_user_holdings(user_id)
         cash_balance = await self.portfolio_repository.get_user_balance(user_id)
@@ -65,26 +70,55 @@ class PortfolioUseCases:
             cash_balance=cash_balance
         )
         
-        return {
-            "user_id": user_id,
-            "cash_balance": cash_balance,
-            "total_holdings_value": sum(holding.total_value for holding in holdings),
-            "total_portfolio_value": portfolio.calculate_total_portfolio_value(),
-            "total_unrealized_pnl": portfolio.calculate_total_unrealized_pnl(),
-            "unrealized_pnl_percentage": portfolio.calculate_unrealized_pnl_percentage(),
-            "holdings_count": len(holdings),
-            "updated_at": datetime.now(timezone.utc)
-        }
+        return PortfolioSummaryResponse(
+            user_id=user_id,
+            cash_balance=cash_balance,
+            total_holdings_value=sum(holding.total_value for holding in holdings),
+            total_portfolio_value=portfolio.calculate_total_portfolio_value(),
+            total_unrealized_pnl=portfolio.calculate_total_unrealized_pnl(),
+            unrealized_pnl_percentage=portfolio.calculate_unrealized_pnl_percentage(),
+            holdings_count=len(holdings),
+            updated_at=datetime.now(timezone.utc)
+        )
     
-    async def get_holdings(self, user_id: uuid.UUID) -> List[PortfolioHolding]:
+    async def get_holdings(self, user_id: uuid.UUID) -> List[HoldingResponse]:
         """Get all user holdings"""
-        return await self.portfolio_repository.get_user_holdings(user_id)
+        holdings = await self.portfolio_repository.get_user_holdings(user_id)
+        
+        return [
+            HoldingResponse(
+                id=holding.id,
+                symbol=holding.symbol,
+                quantity=holding.quantity,
+                average_price=holding.average_price,
+                current_price=holding.current_price,
+                total_value=holding.total_value,
+                unrealized_pnl=holding.unrealized_pnl,
+                pnl_percentage=holding.pnl_percentage,
+                created_at=holding.created_at,
+                updated_at=holding.updated_at
+            )
+            for holding in holdings
+        ]
     
-    async def get_transactions(self, user_id: uuid.UUID) -> List[Transaction]:
+    async def get_transactions(self, user_id: uuid.UUID) -> List[TransactionResponse]:
         """Get all user transactions"""
-        return await self.portfolio_repository.get_user_transactions(user_id)
+        transactions = await self.portfolio_repository.get_user_transactions(user_id)
+        
+        return [
+            TransactionResponse(
+                id=transaction.id,
+                symbol=transaction.symbol,
+                transaction_type=transaction.transaction_type,
+                quantity=transaction.quantity,
+                price=transaction.price,
+                total_amount=transaction.total_amount,
+                created_at=transaction.created_at
+            )
+            for transaction in transactions
+        ]
     
-    async def buy_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> Transaction:
+    async def buy_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> TransactionResponse:
         """Buy stocks - validate balance and create transaction"""
         total_cost = quantity * price
         current_balance = await self.portfolio_repository.get_user_balance(user_id)
@@ -132,9 +166,17 @@ class PortfolioUseCases:
             )
             await self.portfolio_repository.create_holding(holding)
         
-        return saved_transaction
+        return TransactionResponse(
+            id=saved_transaction.id,
+            symbol=saved_transaction.symbol,
+            transaction_type=saved_transaction.transaction_type,
+            quantity=saved_transaction.quantity,
+            price=saved_transaction.price,
+            total_amount=saved_transaction.total_amount,
+            created_at=saved_transaction.created_at
+        )
     
-    async def sell_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> Transaction:
+    async def sell_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> TransactionResponse:
         """Sell stocks - validate holdings and create transaction"""
         total_proceeds = quantity * price
         
@@ -175,7 +217,15 @@ class PortfolioUseCases:
             existing_holding.update_current_price(price)
             await self.portfolio_repository.update_holding(existing_holding)
         
-        return saved_transaction
+        return TransactionResponse(
+            id=saved_transaction.id,
+            symbol=saved_transaction.symbol,
+            transaction_type=saved_transaction.transaction_type,
+            quantity=saved_transaction.quantity,
+            price=saved_transaction.price,
+            total_amount=saved_transaction.total_amount,
+            created_at=saved_transaction.created_at
+        )
     
     async def update_holding_prices(self, user_id: uuid.UUID, price_updates: dict) -> bool:
         """Update current prices for user holdings"""
