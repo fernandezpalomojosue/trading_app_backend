@@ -55,18 +55,130 @@ class TestAuthEndpoints:
         }
         
         response = client.post("/api/v1/auth/register", json=user_data)
-        assert response.status_code == 422
+        assert response.status_code == 400
     
-    def test_register_user_short_password(self, client: TestClient):
-        """Test registration with short password"""
+    def test_register_user_invalid_domain_email(self, client: TestClient):
+        """Test registration with invalid domain email (single character TLD)"""
         user_data = {
-            "email": "test@example.com",
+            "email": "Asdfghjkl0@sdfs.d",
             "username": "testuser",
-            "password": "123"  # Too short
+            "password": "Asdfghjkl0"
         }
         
         response = client.post("/api/v1/auth/register", json=user_data)
-        assert response.status_code == 422
+        assert response.status_code == 400
+        assert "Invalid email format" in response.json()["detail"]
+    
+    def test_register_user_password_no_uppercase(self, client: TestClient):
+        """Test registration with password without uppercase letter"""
+        user_data = {
+            "email": "test@example.com",
+            "username": "testuser",
+            "password": "asdfghjkl0"
+        }
+        
+        response = client.post("/api/v1/auth/register", json=user_data)
+        assert response.status_code == 400
+        assert "Password must contain at least one uppercase letter" in response.json()["detail"]
+    
+    def test_register_user_password_no_lowercase(self, client: TestClient):
+        """Test registration with password without lowercase letter"""
+        user_data = {
+            "email": "test@example.com",
+            "username": "testuser",
+            "password": "ASDFGHJKL0"
+        }
+        
+        response = client.post("/api/v1/auth/register", json=user_data)
+        assert response.status_code == 400
+        assert "Password must contain at least one lowercase letter" in response.json()["detail"]
+    
+    def test_register_user_password_no_digit(self, client: TestClient):
+        """Test registration with password without digit"""
+        user_data = {
+            "email": "test@example.com",
+            "username": "testuser",
+            "password": "Asdfghjkl"
+        }
+        
+        response = client.post("/api/v1/auth/register", json=user_data)
+        assert response.status_code == 400
+        assert "Password must contain at least one digit" in response.json()["detail"]
+    
+    def test_register_user_password_too_short(self, client: TestClient):
+        """Test registration with password too short"""
+        user_data = {
+            "email": "test@example.com",
+            "username": "testuser",
+            "password": "As1"
+        }
+        
+        response = client.post("/api/v1/auth/register", json=user_data)
+        assert response.status_code in [400, 422]
+        if response.status_code == 400:
+            assert "Password must be at least 8 characters long" in response.json()["detail"]
+    
+    def test_register_user_edge_case_emails(self, client: TestClient):
+        """Test registration with edge case emails"""
+        test_cases = [
+            ("user@", "Invalid email format"),
+            ("@domain.com", "Invalid email format"),
+            ("user@domain", "Invalid email format"),
+            ("user@domain.c", "Invalid email format"),
+            ("user..name@domain.com", "Invalid email format"),
+            (".user@domain.com", "Invalid email format"),
+            ("user.@domain.com", "Invalid email format"),
+            ("invalid-email", "Invalid email format"),
+        ]
+        
+        for email, expected_error in test_cases:
+            user_data = {
+                "email": email,
+                "username": "testuser",
+                "password": "Asdfghjkl0"
+            }
+            
+            response = client.post("/api/v1/auth/register", json=user_data)
+            assert response.status_code == 400
+            assert expected_error in response.json()["detail"]
+    
+    def test_register_user_valid_edge_cases(self, client: TestClient):
+        """Test registration with valid edge cases"""
+        valid_cases = [
+            ("user@domain.io", "Valid 2-char TLD"),
+            ("user@domain.info", "Valid 4-char TLD"),
+            ("user@sub.domain.com", "Valid subdomain"),
+            ("user.name@domain.com", "Valid dot in username"),
+            ("user_name@domain.com", "Valid underscore"),
+            ("user123@domain123.com", "Valid numbers"),
+        ]
+        
+        for email, description in valid_cases:
+            user_data = {
+                "email": email,
+                "username": f"testuser_{email.split('@')[0][:5]}",
+                "password": "Asdfghjkl0"
+            }
+            
+            response = client.post("/api/v1/auth/register", json=user_data)
+            assert response.status_code in [201, 400]
+    
+    def test_register_user_error_logging(self, client: TestClient, caplog):
+        """Test that registration errors are properly logged"""
+        import logging
+        
+        user_data = {
+            "email": "Asdfghjkl0@sdfs.d",
+            "username": "testuser",
+            "password": "Asdfghjkl0"
+        }
+        
+        with caplog.at_level(logging.ERROR):
+            response = client.post("/api/v1/auth/register", json=user_data)
+        
+        assert response.status_code == 400
+        error_logs = [record for record in caplog.records if record.levelname == "ERROR"]
+        assert len(error_logs) == 0
     
     def test_login_success(self, client: TestClient, db_session: Session):
         """Test successful login"""

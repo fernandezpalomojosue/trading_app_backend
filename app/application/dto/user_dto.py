@@ -1,15 +1,15 @@
 # app/application/dto/user_dto.py
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 
 
 class UserRegistrationRequest(BaseModel):
     """DTO for user registration requests"""
-    email: EmailStr = Field(..., description="Email del usuario")
-    password: str = Field(..., min_length=8, max_length=100, description="Contraseña")
-    username: Optional[str] = Field(None, min_length=3, max_length=50, description="Nombre de usuario")
-    full_name: Optional[str] = Field(None, max_length=100, description="Nombre completo")
+    email: str = Field(..., description="User email")
+    password: str = Field(..., min_length=8, max_length=100, description="Password")
+    username: Optional[str] = Field(None, min_length=3, max_length=50, description="Username")
+    full_name: Optional[str] = Field(None, max_length=100, description="Full name")
 
 
 class UserResponse(BaseModel):
