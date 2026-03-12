@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
+from pydantic import ValidationError
 
 from app.db.base import get_session
 from app.application.dto.user_dto import UserRegistrationRequest, UserResponse, TokenResponse
@@ -38,7 +39,6 @@ async def register_user(
             full_name=user_data.full_name
         )
     except Exception as e:
-        # Importar BusinessError localmente para evitar import circular
         from app.domain.use_cases.user_use_cases import BusinessError
         
         if isinstance(e, BusinessError):
@@ -46,9 +46,25 @@ async def register_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
             )
+        elif isinstance(e, ValidationError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        elif "Invalid email format" in str(e) or "Password must" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
         else:
-            # Dejar que FastAPI maneje los errores de validación (deberían ser 422)
-            raise
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Unexpected error in register_user: {str(e)}", exc_info=True)
+            
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error during user registration"
+            )
 
 
 @router.post("/login", response_model=TokenResponse)

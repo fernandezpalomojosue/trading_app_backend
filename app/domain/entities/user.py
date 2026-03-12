@@ -90,9 +90,24 @@ class UserCredentials(BaseModel):
     
     @validator('email')
     def validate_email_format(cls, v):
+        # Basic email pattern check
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, v):
             raise ValueError("Invalid email format")
+        
+        # Additional edge case checks
+        if v.startswith('.') or v.endswith('.'):
+            raise ValueError("Invalid email format")
+        
+        if '..' in v.split('@')[0]:  # Double dot in username
+            raise ValueError("Invalid email format")
+        
+        if v.split('@')[0].endswith('.'):  # Username ends with dot
+            raise ValueError("Invalid email format")
+        
+        if len(v.split('@')[1].split('.')[-1]) < 2:  # TLD too short
+            raise ValueError("Invalid email format")
+        
         return v.lower()
     
     @validator('password')
