@@ -41,7 +41,6 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
-      workflows: write
 
     steps:
       - name: Checkout code
