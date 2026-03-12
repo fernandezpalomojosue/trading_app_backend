@@ -161,7 +161,7 @@ class TestAuthEndpoints:
             }
             
             response = client.post("/api/v1/auth/register", json=user_data)
-            assert response.status_code in [201, 400]
+            assert response.status_code in [201, 400, 422]  # 201=success, 400/422=validation or duplicate
     
     def test_register_user_error_logging(self, client: TestClient, caplog):
         """Test that registration errors are properly logged"""

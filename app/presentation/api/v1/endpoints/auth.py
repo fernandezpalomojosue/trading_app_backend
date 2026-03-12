@@ -47,9 +47,26 @@ async def register_user(
                 detail=str(e)
             )
         elif isinstance(e, ValidationError):
+            # Extract the original error message from Pydantic validation error
+            for error in e.errors():
+                if 'ctx' in error and 'error' in error['ctx']:
+                    # Extract the original error message from the context
+                    original_error = str(error['ctx']['error'])
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=original_error
+                    )
+                elif 'msg' in error:
+                    # Fallback to the message field
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=error['msg']
+                    )
+            
+            # If no specific error found, return generic validation error
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
+                detail="Validation error"
             )
         elif "Invalid email format" in str(e) or "Password must" in str(e):
             raise HTTPException(
