@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from unittest.mock import Mock
 
 from app.domain.entities.portfolio import PortfolioHolding, Transaction, TransactionType, Portfolio
-from app.application.dto.portfolio_dto import BuyStockRequest, SellStockRequest
+from app.application.dto.portfolio_dto import BuyStockRequest, SellStockRequest, PortfolioSummaryResponse, HoldingResponse, TransactionResponse
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 
 
@@ -158,6 +158,60 @@ def sample_sell_request():
         symbol="AAPL",
         quantity=5.0,
         price=155.0
+    )
+
+
+@pytest.fixture
+def sample_holding_response():
+    """Sample holding response DTO for testing"""
+    import uuid
+    
+    return HoldingResponse(
+        id=uuid.uuid4(),
+        symbol="AAPL",
+        quantity=10.0,
+        average_price=150.0,
+        current_price=155.0,
+        total_value=1550.0,
+        unrealized_pnl=50.0,
+        pnl_percentage=3.33,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+
+
+@pytest.fixture
+def sample_transaction_response():
+    """Sample transaction response DTO for testing"""
+    import uuid
+    
+    return TransactionResponse(
+        id=uuid.uuid4(),
+        symbol="AAPL",
+        transaction_type=TransactionType.BUY,
+        quantity=10.0,
+        price=150.0,
+        total_amount=1500.0,
+        created_at=datetime.now(timezone.utc)
+    )
+
+
+@pytest.fixture
+def sample_portfolio_summary_response():
+    """Sample portfolio summary response DTO for testing"""
+    import uuid
+    
+    user_id = uuid.uuid4()
+    
+    return PortfolioSummaryResponse(
+        user_id=user_id,
+        cash_balance=7500.0,
+        total_holdings_value=2525.0,
+        total_portfolio_value=10025.0,
+        total_unrealized_pnl=25.0,
+        unrealized_pnl_percentage=0.99,
+        holdings_count=2,
+        updated_at=datetime.now(timezone.utc)
     )
 
 
