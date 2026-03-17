@@ -64,7 +64,7 @@ class TestPortfolioEndpoints:
         
         response = client.post("/api/v1/portfolio/buy", json=buy_request, headers=auth_headers)
         
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
         
         # Verify transaction details
@@ -121,7 +121,7 @@ class TestPortfolioEndpoints:
         
         response = client.post("/api/v1/portfolio/sell", json=sell_request, headers=auth_headers)
         
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
         
         # Verify transaction details
@@ -193,7 +193,7 @@ class TestPortfolioEndpoints:
         }
         
         register_response = client.post("/api/v1/auth/register", json=register_data)
-        assert register_response.status_code in [201, 400]  # 400 if user already exists
+        assert register_response.status_code in [200, 400]  # 400 if user already exists
         
         # Login to get token
         login_data = {

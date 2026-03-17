@@ -74,7 +74,7 @@ async def get_transactions(
         )
 
 
-@router.post("/buy", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/buy", response_model=TransactionResponse)
 async def buy_stock(
     request: BuyStockRequest,
     current_user: UserEntity = Depends(get_current_user),
@@ -95,7 +95,7 @@ async def buy_stock(
         )
 
 
-@router.post("/sell", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/sell", response_model=TransactionResponse)
 async def sell_stock(
     request: SellStockRequest,
     current_user: UserEntity = Depends(get_current_user),
