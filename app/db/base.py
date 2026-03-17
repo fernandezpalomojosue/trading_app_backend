@@ -23,8 +23,30 @@ def get_session():
         yield session
 
 def create_db_and_tables():
-    """Crea todas las tablas definidas en los modelos SQLModel."""
+    """
+    Crea todas las tablas definidas en los modelos SQLModel.
+    Solo debe usarse en desarrollo/testing. En producción usar Alembic.
+    """
+    print("🔧 Creating tables in database (development/testing mode)...")
     
-    print("Creando tablas en la base de datos...")
-    SQLModel.metadata.create_all(engine)
-    print("¡Tablas creadas exitosamente!")
+    try:
+        # Check if tables already exist before creating
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        
+        print(f"📋 Existing tables: {existing_tables}")
+        
+        # create_all() is safe - it only creates tables that don't exist
+        SQLModel.metadata.create_all(engine)
+        
+        # Verify tables were created
+        new_tables = [t for t in inspector.get_table_names() if t not in existing_tables]
+        if new_tables:
+            print(f"✅ Created new tables: {new_tables}")
+        else:
+            print("✅ All tables already exist - no changes made")
+            
+    except Exception as e:
+        print(f"❌ Error creating tables: {e}")
+        raise
