@@ -1,17 +1,20 @@
 """
 Test script to verify Redis cache functionality
 """
+import pytest
+import pytest_asyncio
 import asyncio
 import sys
 import os
 
-# Add the project root to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add to project root to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
 
 
+@pytest.mark.asyncio
 async def test_redis_cache():
     """Test Redis cache functionality"""
     print("🧪 Testing Redis cache...")
@@ -45,6 +48,7 @@ async def test_redis_cache():
         return False
 
 
+@pytest.mark.asyncio
 async def test_memory_cache():
     """Test memory cache for comparison"""
     print("🧪 Testing memory cache...")

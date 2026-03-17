@@ -1,6 +1,7 @@
-# tests/unit/test_portfolio_use_cases.py
+# tests/unit/use_cases/test_portfolio_use_cases.py
 """Unit tests for portfolio use cases"""
 import pytest
+import pytest_asyncio
 from uuid import uuid4
 from app.domain.use_cases.portfolio_use_cases import PortfolioUseCases
 from tests.fixtures.portfolio_fixtures import (
@@ -27,6 +28,7 @@ class TestPortfolioUseCases:
         """Portfolio use cases fixture"""
         return PortfolioUseCases(mock_portfolio_repository)
     
+    @pytest.mark.asyncio
     async def test_get_portfolio_summary_empty(self, portfolio_use_cases):
         """Test getting portfolio summary for user with no holdings"""
         user_id = uuid4()
@@ -43,6 +45,7 @@ class TestPortfolioUseCases:
         assert result.holdings_count == 0
         assert result.updated_at is not None
     
+    @pytest.mark.asyncio
     async def test_get_holdings_empty(self, portfolio_use_cases):
         """Test getting holdings for user with no holdings"""
         user_id = uuid4()
@@ -53,6 +56,7 @@ class TestPortfolioUseCases:
         assert isinstance(result, list)
         assert len(result) == 0
     
+    @pytest.mark.asyncio
     async def test_get_transactions_empty(self, portfolio_use_cases):
         """Test getting transactions for user with no transactions"""
         user_id = uuid4()
@@ -63,6 +67,7 @@ class TestPortfolioUseCases:
         assert isinstance(result, list)
         assert len(result) == 0
     
+    @pytest.mark.asyncio
     async def test_buy_stock_success(self, portfolio_use_cases, mock_portfolio_repository):
         """Test successful stock purchase"""
         user_id = uuid4()
@@ -90,6 +95,7 @@ class TestPortfolioUseCases:
         new_balance = await mock_portfolio_repository.get_user_balance(user_id)
         assert new_balance == 500.0  # 2000 - 1500
     
+    @pytest.mark.asyncio
     async def test_buy_stock_insufficient_balance(self, portfolio_use_cases, mock_portfolio_repository):
         """Test stock purchase with insufficient balance"""
         user_id = uuid4()
@@ -106,6 +112,7 @@ class TestPortfolioUseCases:
         with pytest.raises(ValueError, match="Insufficient balance"):
             await portfolio_use_cases.buy_stock(user_id=user_id, request=request)  # Costs 1500 but only 1000 available
     
+    @pytest.mark.asyncio
     async def test_sell_stock_no_holdings(self, portfolio_use_cases):
         """Test selling stock with no holdings"""
         user_id = uuid4()
@@ -121,6 +128,7 @@ class TestPortfolioUseCases:
         with pytest.raises(ValueError, match="No holdings found for AAPL"):
             await portfolio_use_cases.sell_stock(user_id=user_id, request=request)
     
+    @pytest.mark.asyncio
     async def test_sell_stock_insufficient_holdings(self, portfolio_use_cases, mock_portfolio_repository):
         """Test selling more shares than owned"""
         user_id = uuid4()
