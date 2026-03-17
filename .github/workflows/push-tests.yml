@@ -29,17 +29,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.test.yml down -v
-
-  notify-render:
-    name: Notify Render Deploy
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/master'
-    
-    steps:
-      - name: Render Deploy Trigger
-        run: |
-          echo "🚀 Push to master detected - Render will auto-deploy"
-          echo "📊 Commit: ${{ github.sha }}"
-          echo "🔗 Repo: ${{ github.repository }}"
-          echo "✅ Tests passed - Deploy should start automatically"
