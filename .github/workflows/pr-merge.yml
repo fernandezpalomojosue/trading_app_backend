@@ -115,3 +115,4 @@ jobs:
               console.log('🚀 Push to master should be detected by Render');
             } catch (error) {
               console.error(`❌ Failed to merge PR #${number}:`, error.message);
+            }
