@@ -46,7 +46,7 @@ async def get_market_summary(
 
 @router.get("/{market_type}/assets", response_model=List[AssetResponse])
 async def get_assets_list(
-    market_type: Optional[MarketType] = Query(None, description="Filter by market type"),
+    market_type: MarketType,
     limit: int = Query(50, ge=1, le=100, description="Maximum number of assets to return"),
     offset: int = Query(0, ge=0, description="Number of assets to skip for pagination"),
     market_service: MarketUseCases = Depends(get_market_service),
