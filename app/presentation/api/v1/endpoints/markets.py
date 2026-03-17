@@ -35,18 +35,18 @@ def get_market_service() -> MarketUseCases:
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
-async def get_market_overview(
+async def get_market_summary(
     market_type: MarketType,
     market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
-    """Get market overview by type"""
-    return await market_service.get_market_overview(market_type)
+    """Get market summary by type"""
+    return await market_service.get_market_summary(market_type)
 
 
 @router.get("/{market_type}/assets", response_model=List[AssetResponse])
-async def list_assets(
-    market_type: MarketType,
+async def get_assets_list(
+    market_type: Optional[MarketType] = Query(None, description="Filter by market type"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of assets to return"),
     offset: int = Query(0, ge=0, description="Number of assets to skip for pagination"),
     market_service: MarketUseCases = Depends(get_market_service),
@@ -101,6 +101,12 @@ async def get_candlestick_data(
     market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):  
+    """Get candlestick data for charting"""
     return await market_service.get_candlestick_data(
-        symbol, timespan, multiplier, limit, start_date, end_date
+        symbol=symbol,
+        timespan=timespan,
+        multiplier=multiplier,
+        limit=limit,
+        start_date=start_date,
+        end_date=end_date
     )
