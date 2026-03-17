@@ -9,7 +9,9 @@ from app.domain.entities.user import UserEntity
 from app.application.dto.portfolio_dto import (
     PortfolioSummaryResponse,
     HoldingResponse,
-    TransactionResponse
+    TransactionResponse,
+    BuyStockRequest,
+    SellStockRequest
 )
 
 
@@ -118,9 +120,9 @@ class PortfolioUseCases:
             for transaction in transactions
         ]
     
-    async def buy_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> TransactionResponse:
+    async def buy_stock(self, user_id: uuid.UUID, request: BuyStockRequest) -> TransactionResponse:
         """Buy stocks - validate balance and create transaction"""
-        total_cost = quantity * price
+        total_cost = request.quantity * request.price
         current_balance = await self.portfolio_repository.get_user_balance(user_id)
         
         # Validate sufficient balance
@@ -130,10 +132,10 @@ class PortfolioUseCases:
         # Create transaction
         transaction = Transaction(
             user_id=user_id,
-            symbol=symbol,
+            symbol=request.symbol,
             transaction_type=TransactionType.BUY,
-            quantity=quantity,
-            price=price,
+            quantity=request.quantity,
+            price=request.price,
             total_amount=total_cost
         )
         
@@ -145,22 +147,22 @@ class PortfolioUseCases:
         saved_transaction = await self.portfolio_repository.create_transaction(transaction)
         
         # Update or create holding
-        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, symbol)
+        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, request.symbol)
         
         if existing_holding:
             # Update existing holding
-            existing_holding.add_shares(quantity, price)
-            existing_holding.update_current_price(price)
+            existing_holding.add_shares(request.quantity, request.price)
+            existing_holding.update_current_price(request.price)
             await self.portfolio_repository.update_holding(existing_holding)
         else:
             # Create new holding
             holding = PortfolioHolding(
                 user_id=user_id,
-                symbol=symbol,
-                quantity=quantity,
-                average_price=price,
-                current_price=price,
-                total_value=quantity * price,
+                symbol=request.symbol,
+                quantity=request.quantity,
+                average_price=request.price,
+                current_price=request.price,
+                total_value=request.quantity * request.price,
                 unrealized_pnl=0.0,
                 pnl_percentage=0.0
             )
@@ -176,25 +178,25 @@ class PortfolioUseCases:
             created_at=saved_transaction.created_at
         )
     
-    async def sell_stock(self, user_id: uuid.UUID, symbol: str, quantity: float, price: float) -> TransactionResponse:
+    async def sell_stock(self, user_id: uuid.UUID, request: SellStockRequest) -> TransactionResponse:
         """Sell stocks - validate holdings and create transaction"""
-        total_proceeds = quantity * price
+        total_proceeds = request.quantity * request.price
         
         # Check if user has sufficient holdings
-        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, symbol)
+        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, request.symbol)
         if not existing_holding:
-            raise ValueError(f"No holdings found for {symbol}")
+            raise ValueError(f"No holdings found for {request.symbol}")
         
-        if existing_holding.quantity < quantity:
-            raise ValueError(f"Insufficient holdings. Trying to sell: {quantity}, Available: {existing_holding.quantity}")
+        if existing_holding.quantity < request.quantity:
+            raise ValueError(f"Insufficient holdings. Trying to sell: {request.quantity}, Available: {existing_holding.quantity}")
         
         # Create transaction
         transaction = Transaction(
             user_id=user_id,
-            symbol=symbol,
+            symbol=request.symbol,
             transaction_type=TransactionType.SELL,
-            quantity=quantity,
-            price=price,
+            quantity=request.quantity,
+            price=request.price,
             total_amount=total_proceeds
         )
         
@@ -207,14 +209,14 @@ class PortfolioUseCases:
         saved_transaction = await self.portfolio_repository.create_transaction(transaction)
         
         # Update holding
-        existing_holding.remove_shares(quantity)
+        existing_holding.remove_shares(request.quantity)
         
         if existing_holding.quantity == 0:
             # Remove holding completely
             await self.portfolio_repository.delete_holding(existing_holding.id)
         else:
             # Update existing holding
-            existing_holding.update_current_price(price)
+            existing_holding.update_current_price(request.price)
             await self.portfolio_repository.update_holding(existing_holding)
         
         return TransactionResponse(

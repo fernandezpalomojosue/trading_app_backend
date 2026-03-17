@@ -68,12 +68,15 @@ class TestPortfolioUseCases:
         user_id = uuid4()
         mock_portfolio_repository.set_user_balance(2000.0)
         
-        result = await portfolio_use_cases.buy_stock(
-            user_id=user_id,
+        # Create request DTO
+        from app.application.dto.portfolio_dto import BuyStockRequest
+        request = BuyStockRequest(
             symbol="AAPL",
             quantity=10.0,
             price=150.0
         )
+        
+        result = await portfolio_use_cases.buy_stock(user_id=user_id, request=request)
         
         # Verify it returns TransactionResponse DTO
         assert result.symbol == "AAPL"
@@ -92,25 +95,31 @@ class TestPortfolioUseCases:
         user_id = uuid4()
         mock_portfolio_repository.set_user_balance(1000.0)  # Less than needed
         
+        # Create request DTO
+        from app.application.dto.portfolio_dto import BuyStockRequest
+        request = BuyStockRequest(
+            symbol="AAPL",
+            quantity=10.0,
+            price=150.0
+        )
+        
         with pytest.raises(ValueError, match="Insufficient balance"):
-            await portfolio_use_cases.buy_stock(
-                user_id=user_id,
-                symbol="AAPL",
-                quantity=10.0,
-                price=150.0
-            )  # Costs 1500 but only 1000 available
+            await portfolio_use_cases.buy_stock(user_id=user_id, request=request)  # Costs 1500 but only 1000 available
     
     async def test_sell_stock_no_holdings(self, portfolio_use_cases):
         """Test selling stock with no holdings"""
         user_id = uuid4()
         
+        # Create request DTO
+        from app.application.dto.portfolio_dto import SellStockRequest
+        request = SellStockRequest(
+            symbol="AAPL",
+            quantity=5.0,
+            price=155.0
+        )
+        
         with pytest.raises(ValueError, match="No holdings found for AAPL"):
-            await portfolio_use_cases.sell_stock(
-                user_id=user_id,
-                symbol="AAPL",
-                quantity=5.0,
-                price=155.0
-            )
+            await portfolio_use_cases.sell_stock(user_id=user_id, request=request)
     
     async def test_sell_stock_insufficient_holdings(self, portfolio_use_cases, mock_portfolio_repository):
         """Test selling more shares than owned"""
@@ -132,9 +141,11 @@ class TestPortfolioUseCases:
         await mock_portfolio_repository.create_holding(holding)
         
         with pytest.raises(ValueError, match="Insufficient holdings"):
-            await portfolio_use_cases.sell_stock(
-                user_id=user_id,
+            # Create request DTO
+            from app.application.dto.portfolio_dto import SellStockRequest
+            request = SellStockRequest(
                 symbol="AAPL",
                 quantity=5.0,  # Trying to sell 5 but only have 3
                 price=155.0
             )
+            await portfolio_use_cases.sell_stock(user_id=user_id, request=request)
