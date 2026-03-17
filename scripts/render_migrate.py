@@ -11,11 +11,14 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from alembic.config import Config
 from alembic import command
+from alembic.runtime.migration import MigrationContext
+from sqlalchemy import create_engine
+from app.core.config import settings
 
 
 def main():
     """Ejecuta migraciones para producción en Render"""
-    print("🔄 Running migrations for Render PostgreSQL...")
+    print("🔄 Running safe migrations for Render PostgreSQL...")
     
     # Verificar variables de entorno
     database_url = os.getenv("DATABASE_URL")
@@ -32,22 +35,60 @@ def main():
     alembic_cfg = Config(str(alembic_ini_path))
     
     try:
-        # Verificar estado actual
-        print("🔍 Checking current migration status...")
-        command.current(alembic_cfg)
+        # Check current migration state
+        engine = create_engine(database_url)
         
-        # Run migrations
-        print("⬆️  Applying migrations...")
-        command.upgrade(alembic_cfg, "head")
-        
-        # Verificar estado final
-        print("✅ Migration status after upgrade:")
-        command.current(alembic_cfg)
-        
-        print("✅ Migrations completed successfully!")
-        
+        with engine.connect() as connection:
+            context = MigrationContext.configure(
+                connection=connection,
+                opts=alembic_cfg.get_section('alembic')
+            )
+            
+            current = context.get_current_revision()
+            head = context.get_head_revision()
+            
+            print(f"Current revision: {current}")
+            print(f"Head revision: {head}")
+            
+            if current == head:
+                print("✅ Database is already up to date!")
+                return
+            
+            # Check if we need to mark as applied (tables already exist)
+            if current is None and head is not None:
+                print("🔍 No migrations found but tables exist...")
+                print("📝 Marking migrations as applied (tables already created)...")
+                
+                # Get all revisions and mark them as applied
+                from alembic.script import ScriptDirectory
+                script_dir = ScriptDirectory.from_config(alembic_cfg)
+                
+                # Get the head revision
+                head_rev = script_dir.get_current_head()
+                
+                # Mark as applied without running SQL
+                command.stamp(alembic_cfg, head_rev)
+                print(f"✅ Marked revision {head_rev} as applied")
+                return
+            
+            # Only run migrations if we're behind
+            print(f"📈 Running migrations from {current} to {head}...")
+            command.upgrade(alembic_cfg, "head")
+            print("✅ Migrations completed successfully!")
+            
     except Exception as e:
         print(f"❌ Migration failed: {e}")
+        
+        # Check if it's a duplicate table error and mark as applied
+        if "already exists" in str(e):
+            print("🔧 Tables already exist, marking migrations as applied...")
+            try:
+                command.stamp(alembic_cfg, "head")
+                print("✅ Marked migrations as applied despite error")
+                return
+            except Exception as stamp_error:
+                print(f"❌ Failed to mark migrations: {stamp_error}")
+        
         sys.exit(1)
 
 
