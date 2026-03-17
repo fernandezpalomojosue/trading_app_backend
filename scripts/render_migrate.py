@@ -39,13 +39,38 @@ def main():
         # Get current and head revisions
         try:
             current = command.current(alembic_cfg, verbose=False)
-        except Exception:
+        except Exception as e:
+            print(f"⚠️  Error getting current revision: {e}")
             current = None
             
         head = script_dir.get_current_head()
         
         print(f"Current revision: {current}")
         print(f"Head revision: {head}")
+        
+        # Check if alembic_version table exists
+        try:
+            from sqlalchemy import create_engine, inspect, text
+            temp_engine = create_engine(database_url)
+            inspector = inspect(temp_engine)
+            tables = inspector.get_table_names()
+            print(f"📋 Existing tables: {tables}")
+            
+            if 'alembic_version' not in tables:
+                print("⚠️  alembic_version table not found - tables were created outside Alembic")
+                print("📝 Marking migrations as applied (tables already created)...")
+                command.stamp(alembic_cfg, head)
+                print(f"✅ Marked revision {head} as applied")
+                return
+            else:
+                # Check what version is actually recorded
+                with temp_engine.connect() as conn:
+                    result = conn.execute(text("SELECT version_num FROM alembic_version"))
+                    recorded_version = result.scalar()
+                    print(f"📝 Recorded alembic version: {recorded_version}")
+                    
+        except Exception as table_error:
+            print(f"⚠️  Error checking tables: {table_error}")
         
         if current == head:
             print("✅ Database is already up to date!")
