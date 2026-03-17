@@ -1,10 +1,9 @@
-name: CI
+name: PR Auto-Merge
 
 on:
   pull_request:
     branches: [master]
-  push:
-    branches: [master, fix, feature]
+    types: [opened, synchronize, reopened]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -12,7 +11,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Run tests
+    name: Run Tests on PR
 
     steps:
       - name: Checkout code
@@ -54,7 +53,7 @@ jobs:
         with:
           script: |
             const { owner, repo, number } = context.issue;
-
+            
             console.log(`Processing PR #${number} in ${owner}/${repo}`);
 
             const pr = await github.rest.pulls.get({
