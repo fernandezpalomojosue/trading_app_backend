@@ -5,7 +5,6 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from app.domain.entities.portfolio import PortfolioHolding, Transaction, TransactionType, Portfolio
-from app.domain.entities.user import UserEntity
 from app.application.dto.portfolio_dto import (
     PortfolioSummaryResponse,
     HoldingResponse,
@@ -13,6 +12,7 @@ from app.application.dto.portfolio_dto import (
     BuyStockRequest,
     SellStockRequest
 )
+from app.application.services.portfolio_service import PortfolioService
 
 
 class PortfolioRepository(ABC):
@@ -55,7 +55,7 @@ class PortfolioRepository(ABC):
         pass
 
 
-class PortfolioUseCases:
+class PortfolioUseCases(PortfolioService):
     """Portfolio business logic use cases"""
     
     def __init__(self, portfolio_repository: PortfolioRepository):
