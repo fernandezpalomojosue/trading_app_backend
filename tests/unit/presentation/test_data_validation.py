@@ -3,6 +3,7 @@ Unit tests for data validation and normalization logic
 Tests focus on business rules for data integrity and transformation
 """
 import pytest
+import pytest_asyncio
 from datetime import datetime, timezone
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.domain.entities.market import MarketType
@@ -10,6 +11,7 @@ from app.application.dto.market_dto import AssetResponse
 from tests.fixtures.market_fixtures import MockMarketRepository, MockMarketDataCache
 
 
+@pytest.mark.asyncio
 class TestDataValidationAndNormalization:
     """Test data validation and normalization business rules"""
     
