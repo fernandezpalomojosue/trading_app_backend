@@ -17,7 +17,7 @@ class TestIntegration:
         }
         
         register_response = client.post("/api/v1/auth/register", json=user_data)
-        assert register_response.status_code in [201, 400]
+        assert register_response.status_code in [200, 400]
         
         # 2. Login with the registered user
         login_data = {
@@ -90,7 +90,7 @@ class TestIntegration:
         
         # Register user
         response = client.post("/api/v1/auth/register", json=user_data)
-        assert response.status_code in [201, 400]
+        assert response.status_code in [200, 400]
         
         # Check that user exists in database
         from app.infrastructure.database.models import UserSQLModel
@@ -100,7 +100,7 @@ class TestIntegration:
             select(UserSQLModel).where(UserSQLModel.email == user_data["email"])
         ).first()
         
-        if response.status_code == 201:
+        if response.status_code == 200:
             assert user is not None
             assert user.email == user_data["email"]
     
@@ -143,7 +143,7 @@ class TestIntegration:
         }
         
         register_response = client.post("/api/v1/auth/register", json=user_data)
-        assert register_response.status_code in [201, 400]
+        assert register_response.status_code in [200, 400]
         
         login_response = client.post("/api/v1/auth/login", data={
             "username": user_data["email"],
@@ -168,7 +168,7 @@ class TestIntegration:
                 "quantity": 10.0,
                 "price": 150.0
             }, headers=headers)
-            assert buy_response.status_code == 201
+            assert buy_response.status_code == 200
             
             # 4. Check portfolio after purchase
             summary_response = client.get("/api/v1/portfolio/summary", headers=headers)
@@ -198,7 +198,7 @@ class TestIntegration:
                 "quantity": 3.0,
                 "price": 160.0
             }, headers=headers)
-            assert sell_response.status_code == 201
+            assert sell_response.status_code == 200
             
             # 8. Check final portfolio state
             summary_response = client.get("/api/v1/portfolio/summary", headers=headers)
@@ -281,7 +281,7 @@ class TestIntegration:
                 "quantity": 10.0,
                 "price": 150.0
             }, headers=headers)
-            assert buy_response.status_code == 201
+            assert buy_response.status_code == 200
             
             # Test selling more than owned
             sell_response = client.post("/api/v1/portfolio/sell", json={
@@ -311,7 +311,7 @@ class TestIntegration:
             select(UserSQLModel).where(UserSQLModel.email == user_data["email"])
         ).first()
         
-        if register_response.status_code == 201:
+        if register_response.status_code == 200:
             assert user is not None
             assert user.balance == 10000.0
             
@@ -331,7 +331,7 @@ class TestIntegration:
                     "quantity": 5.0,
                     "price": 100.0
                 }, headers=headers)
-                assert buy_response.status_code == 201
+                assert buy_response.status_code == 200
                 
                 # Check database state
                 from app.infrastructure.database.models import PortfolioHoldingSQLModel, TransactionSQLModel

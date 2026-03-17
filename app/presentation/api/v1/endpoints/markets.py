@@ -17,7 +17,7 @@ from app.infrastructure.security.auth_dependencies import get_current_user_depen
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
 
-def get_market_service() -> MarketService:
+def get_market_service() -> MarketUseCases:
     settings = get_settings()
     
     # Choose cache implementation based on configuration
@@ -31,14 +31,13 @@ def get_market_service() -> MarketService:
         cache_service = MemoryMarketCache()
     
     market_repository = PolygonMarketClient()
-    market_use_cases = MarketUseCases(market_repository, cache_service)
-    return MarketService(market_use_cases)
+    return MarketUseCases(market_repository, cache_service)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
 async def get_market_overview(
     market_type: MarketType,
-    market_service: MarketService = Depends(get_market_service),
+    market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
     """Get market overview by type"""
@@ -50,7 +49,7 @@ async def list_assets(
     market_type: MarketType,
     limit: int = Query(50, ge=1, le=100, description="Maximum number of assets to return"),
     offset: int = Query(0, ge=0, description="Number of assets to skip for pagination"),
-    market_service: MarketService = Depends(get_market_service),
+    market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
     """List assets from raw market data"""
@@ -65,7 +64,7 @@ async def list_assets(
 @router.get("/assets/{symbol}", response_model=AssetResponse)
 async def get_asset_details(
     symbol: str,
-    market_service: MarketService = Depends(get_market_service),
+    market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
     """Get asset details by symbol"""
@@ -81,7 +80,7 @@ async def search_assets(
     q: str = Query(..., min_length=2, description="Search query"),
     market_type: Optional[MarketType] = Query(None, description="Filter by market type"),
     limit: int = Query(20, ge=1, le=50, description="Maximum number of results"),
-    market_service: MarketService = Depends(get_market_service),
+    market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):
     """Search for assets by query"""
@@ -99,7 +98,7 @@ async def get_candlestick_data(
     limit: int = Query(100, ge=1, le=5000, description="Number of candlesticks to return"),
     start_date: str = Query(None, description="Start date in YYYY-MM-DD format"),
     end_date: str = Query(None, description="End date in YYYY-MM-DD format (default: last trading date)"),
-    market_service: MarketService = Depends(get_market_service),
+    market_service: MarketUseCases = Depends(get_market_service),
     current_user = Depends(get_current_user_dependency)
 ):  
     return await market_service.get_candlestick_data(

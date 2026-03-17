@@ -147,12 +147,12 @@ class PortfolioUseCases(PortfolioService):
         saved_transaction = await self.portfolio_repository.create_transaction(transaction)
         
         # Update or create holding
-        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, symbol)
+        existing_holding = await self.portfolio_repository.get_holding_by_symbol(user_id, request.symbol)
         
         if existing_holding:
             # Update existing holding
-            existing_holding.add_shares(quantity, price)
-            existing_holding.update_current_price(price)
+            existing_holding.add_shares(request.quantity, request.price)
+            existing_holding.update_current_price(request.price)
             await self.portfolio_repository.update_holding(existing_holding)
         else:
             # Create new holding
