@@ -1,28 +1,36 @@
 # app/application/services/market_service.py
 from typing import List, Optional, Dict, Any
+from abc import ABC, abstractmethod
 
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache, MarketUseCases
+from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse
 
 
-class MarketService:
-    """Application service for market operations"""
+class MarketService(ABC):
+    """Application interface for market operations"""
     
-    def __init__(self, market_use_cases: MarketUseCases):
-        self.market_use_cases = market_use_cases
-    
+    @abstractmethod
     async def get_market_overview(self, market_type: MarketType) -> MarketOverviewResponse:
-        return await self.market_use_cases.get_market_summary(market_type)
+        """Get market overview for specific market type"""
+        pass
     
+    @abstractmethod
     async def search_assets(self, query: str, market_type: Optional[MarketType] = None) -> List[AssetResponse]:
-        return await self.market_use_cases.search_assets(query, market_type)
+        """Search for assets by query and market type"""
+        pass
     
+    @abstractmethod
     async def get_asset_details(self, symbol: str) -> Optional[AssetResponse]:
-        return await self.market_use_cases.get_asset_details(symbol)
+        """Get detailed information for a specific asset"""
+        pass
     
+    @abstractmethod
     async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[AssetResponse]:
-        return await self.market_use_cases.get_assets_list(market_type, limit, offset)
+        """Get paginated list of assets for a market type"""
+        pass
     
+    @abstractmethod
     async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> CandleStickDataResponse:
-        return await self.market_use_cases.get_candlestick_data(symbol, timespan, multiplier, limit, start_date, end_date)
+        """Get candlestick data for a specific asset"""
+        pass

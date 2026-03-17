@@ -6,8 +6,8 @@ from pydantic import ValidationError
 
 from app.db.base import get_session
 from app.application.dto.user_dto import UserRegistrationRequest, UserResponse, TokenResponse
-from app.application.services.user_service import UserService
-from app.domain.use_cases.user_use_cases import UserUseCases, UserRepository
+from app.domain.use_cases.user_use_cases import UserUseCases, BusinessError
+from app.domain.entities.user import UserCredentials
 from app.infrastructure.database.repositories import SQLUserRepository
 from app.infrastructure.security.password_service import PasslibPasswordService
 from app.infrastructure.security.token_service import JWTTokenService
@@ -16,78 +16,47 @@ from app.infrastructure.security.auth_dependencies import get_current_user_depen
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-def get_user_service(db: Session = Depends(get_session)) -> UserService:
-    """Dependency to get user service"""
+def get_user_service(db: Session = Depends(get_session)) -> UserUseCases:
+    """Dependency to get user service (use cases implementation)"""
     user_repository = SQLUserRepository(db)
     password_service = PasslibPasswordService()
     token_service = JWTTokenService()
-    user_use_cases = UserUseCases(user_repository, password_service, token_service)
-    return UserService(user_use_cases)
+    return UserUseCases(user_repository, password_service, token_service)
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserResponse)
 async def register_user(
     user_data: UserRegistrationRequest,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserUseCases = Depends(get_user_service)
 ):
     """Register a new user"""
     try:
-        return await user_service.register_user(
+        credentials = UserCredentials(
             email=user_data.email,
-            password=user_data.password,
+            password=user_data.password
+        )
+        return await user_service.register_user(
+            credentials=credentials,
             username=user_data.username,
             full_name=user_data.full_name
         )
-    except Exception as e:
-        from app.domain.use_cases.user_use_cases import BusinessError
-        
-        if isinstance(e, BusinessError):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        elif isinstance(e, ValidationError):
-            # Extract the original error message from Pydantic validation error
-            for error in e.errors():
-                if 'ctx' in error and 'error' in error['ctx']:
-                    # Extract the original error message from the context
-                    original_error = str(error['ctx']['error'])
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=original_error
-                    )
-                elif 'msg' in error:
-                    # Fallback to the message field
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=error['msg']
-                    )
-            
-            # If no specific error found, return generic validation error
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Validation error"
-            )
-        elif "Invalid email format" in str(e) or "Password must" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
-        else:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Unexpected error in register_user: {str(e)}", exc_info=True)
-            
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error during user registration"
-            )
+    except BusinessError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        # Pydantic validation errors from UserCredentials
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e)
+        )
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserUseCases = Depends(get_user_service)
 ):
     """Login and return access token"""
     token = await user_service.authenticate_user(form_data.username, form_data.password)
@@ -97,20 +66,13 @@ async def login(
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     return TokenResponse(access_token=token, token_type="bearer")
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user(
     current_user = Depends(get_current_user_dependency),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserUseCases = Depends(get_user_service)
 ):
     """Get current user profile"""
-    user_response = await user_service.get_user_profile_response(current_user.id)
-    if not user_response:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user_response
+    return await user_service.get_user_profile_response(current_user.id)
