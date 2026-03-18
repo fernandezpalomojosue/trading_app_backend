@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from app.db.base import get_session
 from app.application.dto.user_dto import UserRegistrationRequest, UserResponse, TokenResponse
 from app.application.services.user_service import UserService
+from app.domain.use_cases.user_use_cases import BusinessError
 from app.domain.entities.user import UserCredentials
 from app.infrastructure.database.repositories import SQLUserRepository
 from app.infrastructure.security.password_service import PasslibPasswordService

@@ -5,6 +5,7 @@ Tests focus on business rules for data integrity and transformation
 import pytest
 import pytest_asyncio
 from datetime import datetime, timezone
+from app.application.services.market_service import MarketService
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.domain.entities.market import MarketType
 from app.application.dto.market_dto import AssetResponse

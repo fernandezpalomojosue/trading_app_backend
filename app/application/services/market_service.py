@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
 
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache
+from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse
 
 

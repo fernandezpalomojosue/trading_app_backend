@@ -5,6 +5,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.application.dto.user_dto import UserResponse
+from app.application.services.user_service import UserService
 from app.domain.entities.user import UserEntity, UserCredentials
 
 
@@ -69,7 +70,7 @@ class TokenService(ABC):
         pass
 
 
-class UserUseCases:
+class UserUseCases(UserService):
     """User business logic use cases"""
     
     def __init__(
@@ -169,3 +170,7 @@ class UserUseCases:
             user.subtract_balance(amount)
         
         return await self.user_repository.update_user(user)
+    
+    async def update_balance(self, user_id: UUID, amount: float, is_addition: bool) -> UserEntity:
+        """Update user balance (interface implementation)"""
+        return await self.update_user_balance(user_id, amount, is_addition)

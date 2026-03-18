@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import datetime, timezone
 
+from app.application.services.portfolio_service import PortfolioService
 from app.domain.entities.portfolio import PortfolioHolding, Transaction, TransactionType, Portfolio
 from app.application.dto.portfolio_dto import (
     PortfolioSummaryResponse,
@@ -12,7 +13,6 @@ from app.application.dto.portfolio_dto import (
     BuyStockRequest,
     SellStockRequest
 )
-from app.application.services.portfolio_service import PortfolioService
 
 
 class PortfolioRepository(ABC):

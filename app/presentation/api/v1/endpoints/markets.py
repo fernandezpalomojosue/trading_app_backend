@@ -7,7 +7,8 @@ from app.application.dto.market_dto import (
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
-from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache
+from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.cache.redis_cache import RedisMarketCache
