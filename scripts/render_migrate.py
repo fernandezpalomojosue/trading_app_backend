@@ -78,13 +78,49 @@ def main():
         
         # Check if we need to mark as applied (tables already exist)
         if current is None or current == "None":
-            print("🔍 No migrations found but tables exist...")
-            print("📝 Marking migrations as applied (tables already created)...")
+            print("🔍 No current migration found...")
             
-            # Mark as applied without running SQL
-            command.stamp(alembic_cfg, head)
-            print(f"✅ Marked revision {head} as applied")
-            return
+            # CRITICAL: Verify tables actually exist and have data before stamping
+            try:
+                with temp_engine.connect() as conn:
+                    # Check if essential tables exist
+                    tables_check = conn.execute(text("""
+                        SELECT COUNT(*) FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name IN ('users', 'portfolio_holdings', 'transactions')
+                    """))
+                    essential_tables = tables_check.scalar()
+                    
+                    if essential_tables == 0:
+                        print("❌ CRITICAL: No essential tables found - running full migration...")
+                        command.upgrade(alembic_cfg, "head")
+                        print("✅ Full migration completed!")
+                        return
+                    
+                    # Check if users table has data
+                    users_check = conn.execute(text("SELECT COUNT(*) FROM users"))
+                    users_count = users_check.scalar()
+                    
+                    print(f"📊 Found {essential_tables} essential tables")
+                    print(f"👥 Users table has {users_count} records")
+                    
+                    if users_count > 0:
+                        print("⚠️  WARNING: Tables exist with data - this might be a production database!")
+                        print("🔒 SAFETY: Not stamping automatically to prevent data loss")
+                        print("💡 Please run 'alembic stamp head' manually if you're sure this is correct")
+                        return
+                    else:
+                        print("📝 Tables exist but are empty - marking migrations as applied...")
+                        command.stamp(alembic_cfg, head)
+                        print(f"✅ Marked revision {head} as applied")
+                        return
+                        
+            except Exception as check_error:
+                print(f"❌ Error checking tables: {check_error}")
+                print("🔄 Falling back to safe migration...")
+                command.upgrade(alembic_cfg, "head")
+                print("✅ Safe migration completed!")
+                return
         
         # Only run migrations if we're behind
         print(f"📈 Running migrations from {current} to {head}...")
@@ -94,18 +130,33 @@ def main():
     except Exception as e:
         print(f"❌ Migration failed: {e}")
         
-        # Check if it's a duplicate table error and mark as applied
+        # Check if it's a duplicate table error and investigate first
         if "already exists" in str(e):
-            print("🔧 Tables already exist, marking migrations as applied...")
+            print("🔧 Tables already exist error - investigating before marking as applied...")
             try:
-                from alembic.script import ScriptDirectory
-                script_dir = ScriptDirectory.from_config(alembic_cfg)
-                head = script_dir.get_current_head()
-                command.stamp(alembic_cfg, head)
-                print("✅ Marked migrations as applied despite error")
-                return
-            except Exception as stamp_error:
-                print(f"❌ Failed to mark migrations: {stamp_error}")
+                with temp_engine.connect() as conn:
+                    # Check if users table has data
+                    users_check = conn.execute(text("SELECT COUNT(*) FROM users"))
+                    users_count = users_check.scalar()
+                    
+                    if users_count > 0:
+                        print(f"⚠️  WARNING: Found {users_count} users in database!")
+                        print("🔒 SAFETY: This appears to be a production database with data")
+                        print("💡 Manual intervention required - not marking migrations automatically")
+                        print("📝 Please run: alembic stamp head")
+                        return
+                    else:
+                        print("📝 Tables exist but are empty - safe to mark as applied...")
+                        from alembic.script import ScriptDirectory
+                        script_dir = ScriptDirectory.from_config(alembic_cfg)
+                        head = script_dir.get_current_head()
+                        command.stamp(alembic_cfg, head)
+                        print("✅ Marked migrations as applied safely")
+                        return
+                        
+            except Exception as check_error:
+                print(f"❌ Error checking database state: {check_error}")
+                print("🔄 Manual intervention required")
         
         sys.exit(1)
 

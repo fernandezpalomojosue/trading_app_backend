@@ -40,7 +40,7 @@ async def get_market_summary(
     current_user = Depends(get_current_user_dependency)
 ):
     """Get market summary by type"""
-    return await market_service.get_market_summary(market_type)
+    return await market_service.get_market_overview(market_type)
 
 
 @router.get("/{market_type}/assets", response_model=List[AssetResponse])
