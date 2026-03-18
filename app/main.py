@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     print(f"Starting app in {settings.ENVIRONMENT} mode...")
     
     # Only create tables automatically in development and testing
-    if settings.ENVIRONMENT in ["development", "testing", "dev"]:
+    if settings.ENVIRONMENT in ["development", "testing"]:
         print("Creating tables automatically (development/testing mode)...")
         create_db_and_tables()
     else:

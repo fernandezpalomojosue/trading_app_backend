@@ -10,11 +10,27 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    environment:
+      ENVIRONMENT: development
+      ECHO_SQL: "true"
+    volumes:
+      - ./app:/app/app
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
 
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: leo
+      POSTGRES_PASSWORD: trading_app_2024
+      POSTGRES_DB: trading_app
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
