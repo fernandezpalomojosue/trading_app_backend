@@ -7,7 +7,7 @@ import aiohttp
 from fastapi import HTTPException
 
 from app.domain.entities.market import Asset, MarketSummary, MarketType
-from app.domain.use_cases.market_use_cases import MarketRepository
+from app.domain.repositories.market_repository import MarketRepository
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import settings
 
@@ -198,3 +198,53 @@ class PolygonMarketClient(MarketRepository):
             "indices": MarketType.INDICES
         }
         return market_mapping.get(polygon_market.lower(), MarketType.STOCKS)
+    
+    async def get_market_summary(self, market_type: str) -> Optional[Dict[str, Any]]:
+        """Get market summary data"""
+        # For now, return a basic structure - this would need real implementation
+        return {
+            "symbol": f"{market_type.upper()}_MARKET",
+            "open": 0.0,
+            "high": 0.0,
+            "low": 0.0,
+            "close": 0.0,
+            "volume": 0,
+            "change": 0.0,
+            "change_percent": 0.0
+        }
+    
+    async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search for assets by query"""
+        # Use the existing search_assets_raw method
+        market_type_enum = None
+        if market_type:
+            market_type_enum = MarketType(market_type.lower())
+        return await self.search_assets_raw(query, market_type_enum)
+    
+    async def get_multiple_assets_data(self, symbols: List[str]) -> List[Dict[str, Any]]:
+        """Get data for multiple assets"""
+        results = []
+        for symbol in symbols:
+            data = await self.get_asset_raw_data(symbol)
+            if data:
+                results.append(data)
+        return results
+    
+    async def get_candlestick_data(
+        self, 
+        symbol: str, 
+        timespan: str, 
+        multiplier: int, 
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Get candlestick data for charting"""
+        # Use the existing fetch_candlestick_data method
+        from_date = start_date or "2024-01-01"
+        to_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        
+        data = await self.fetch_candlestick_data(symbol, multiplier, timespan, from_date, to_date, limit)
+        if data and "results" in data:
+            return data["results"]
+        return []

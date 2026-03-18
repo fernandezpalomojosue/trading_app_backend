@@ -4,9 +4,9 @@ Provides reusable test data and mock implementations
 """
 import pytest
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.use_cases.market_use_cases import MarketRepository, MarketDataCache
+from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
 
 
 class MockMarketRepository(MarketRepository):
@@ -55,6 +55,49 @@ class MockMarketRepository(MarketRepository):
     async def fetch_ticker_details(self, symbol: str):
         self._record_call('fetch_ticker_details', symbol=symbol)
         return self.data.get(f'ticker_{symbol}')
+    
+    async def get_market_summary(self, market_type: str) -> Optional[Dict[str, Any]]:
+        """Get market summary data"""
+        self._record_call('get_market_summary', market_type=market_type)
+        return self.data.get(f'market_summary_{market_type}')
+    
+    async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search for assets by query"""
+        self._record_call('search_assets', query=query, market_type=market_type)
+        results = self.data.get(f'search_{query}', [])
+        
+        # Filter by market_type if provided
+        if market_type is not None:
+            filtered_results = []
+            for result in results:
+                if result.get('market_type') == market_type:
+                    filtered_results.append(result)
+            return filtered_results
+        
+        return results
+    
+    async def get_multiple_assets_data(self, symbols: List[str]) -> List[Dict[str, Any]]:
+        """Get data for multiple assets"""
+        self._record_call('get_multiple_assets_data', symbols=symbols)
+        results = []
+        for symbol in symbols:
+            data = self.data.get(f'asset_{symbol}')
+            if data:
+                results.append(data)
+        return results
+    
+    async def get_candlestick_data(
+        self, 
+        symbol: str, 
+        timespan: str, 
+        multiplier: int, 
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Get candlestick data for charting"""
+        self._record_call('get_candlestick_data', symbol=symbol, timespan=timespan, multiplier=multiplier, limit=limit, start_date=start_date, end_date=end_date)
+        return self.data.get(f'candles_{symbol}', [])
     
     def _record_call(self, method: str, **kwargs):
         """Record method calls for testing"""
