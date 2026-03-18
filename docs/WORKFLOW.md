@@ -5,20 +5,20 @@
 ### **Current Architecture**
 
 ```
-Pull Request → CI Workflow → Auto-Merge → Deploy Workflow → Render
+Pull Request → CI Workflow → Auto-Merge (PAT) → Push Event → Deploy Workflow → Render
 ```
 
-### **Why `workflow_run` instead of `push`?**
+### **Why PAT instead of workflow_run?**
 
 **The Problem:**
-- GitHub Actions using `GITHUB_TOKEN` cannot trigger other workflows
-- This prevents infinite loops and recursive execution
-- Auto-merge happens with `GITHUB_TOKEN` → push workflow never triggered
+- Render needs to detect a real `push` event to trigger auto-deploy
+- `workflow_run` doesn't create a push event
+- `GITHUB_TOKEN` cannot trigger other workflows
 
 **The Solution:**
-- Use `workflow_run` trigger to detect when CI completes
-- Only runs if CI was successful (`conclusion == 'success'`)
-- Clean separation of concerns
+- Use Personal Access Token (PAT) with `repo` and `workflow` permissions
+- PAT creates real push event that triggers deploy workflow
+- Render detects push and starts deployment
 
 ---
 
@@ -34,21 +34,19 @@ on:
 
 **Purpose:**
 - Run tests on pull requests
-- Auto-merge if tests pass
-- Trigger deployment workflow
+- Auto-merge if tests pass using PAT
+- Create real push event
 
 ### **2. `.github/workflows/master-push.yml` (Deploy)**
 ```yaml
 name: Deploy to Production
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
     branches: [master]
 ```
 
 **Purpose:**
-- Trigger after successful CI
+- Trigger on real push to master
 - Log deployment information
 - Signal Render to auto-deploy
 

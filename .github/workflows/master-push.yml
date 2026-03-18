@@ -1,10 +1,7 @@
 name: Deploy to Production
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  push:
     branches: [master]
 
 env:
@@ -14,22 +11,21 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     
     steps:
       - name: Log deployment info
         run: |
-          echo "🚀 DEPLOYMENT TRIGGERED BY SUCCESSFUL CI!"
-          echo "📊 Workflow: ${{ github.event.workflow_run.name }}"
+          echo "🚀 PUSH TO MASTER DETECTED!"
+          echo "📊 Commit: ${{ github.sha }}"
           echo "🔗 Repository: ${{ github.repository }}"
           echo "👤 Actor: ${{ github.actor }}"
           echo "📅 Timestamp: $(date)"
           echo ""
-          echo "✅ CI completed successfully - triggering deployment..."
-          echo "🔍 This should trigger Render auto-deploy"
+          echo "✅ Push triggered by PAT merge - triggering deployment..."
+          echo "🔍 Render should detect this push and auto-deploy"
           echo "📋 If deploy doesn't start, check:"
           echo "   1. Render Auto-Deploy is configured correctly"
           echo "   2. Branch is set to 'master' in Render"
-          echo "   3. Render webhook is active"
+          echo "   3. PAT has repo and workflow permissions"
 
   
