@@ -1,6 +1,5 @@
 # app/domain/use_cases/market_use_cases.py
-from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
@@ -57,7 +56,7 @@ class MarketUseCases(MarketService):
         )
         
         # Cache the result
-        await self.cache_service.set(cache_key, response.dict(), ttl=300)
+        await self.cache_service.set(cache_key, response.model_dump(), ttl=300)
         
         return response
     
@@ -76,20 +75,23 @@ class MarketUseCases(MarketService):
         # Convert to AssetResponse
         results = []
         for item in raw_results:
-            asset = Asset(
+            asset_response = AssetResponse(
+                id=item.get("id", f"asset_{item.get('symbol', '')}"),
                 symbol=item.get("symbol", ""),
                 name=item.get("name", ""),
-                market_type=MarketType(item.get("market_type", "stocks")),
-                current_price=item.get("current_price", 0.0),
-                change=item.get("change", 0.0),
-                change_percent=item.get("change_percent", 0.0),
-                volume=item.get("volume", 0),
-                market_cap=item.get("market_cap", 0.0)
+                market=MarketType(item.get("market", "stocks")),
+                currency=item.get("currency", "USD"),
+                active=item.get("active", True),
+                price=item.get("current_price"),
+                change=item.get("change"),
+                change_percent=item.get("change_percent"),
+                volume=item.get("volume"),
+                details={}
             )
-            results.append(AssetResponse.from_entity(asset))
+            results.append(asset_response)
         
         # Cache results
-        await self.cache_service.set(cache_key, [r.dict() for r in results], ttl=600)
+        await self.cache_service.set(cache_key, [r.model_dump() for r in results], ttl=600)
         
         return results
     
@@ -107,23 +109,23 @@ class MarketUseCases(MarketService):
         if not raw_data:
             return None
         
-        # Create Asset entity
-        asset = Asset(
+        # Create AssetResponse directly
+        response = AssetResponse(
+            id=raw_data.get("id", f"asset_{symbol}"),
             symbol=raw_data.get("symbol", symbol),
             name=raw_data.get("name", ""),
-            market_type=MarketType(raw_data.get("market_type", "stocks")),
-            current_price=raw_data.get("current_price", 0.0),
-            change=raw_data.get("change", 0.0),
-            change_percent=raw_data.get("change_percent", 0.0),
-            volume=raw_data.get("volume", 0),
-            market_cap=raw_data.get("market_cap", 0.0)
+            market=MarketType(raw_data.get("market", "stocks")),
+            currency=raw_data.get("currency", "USD"),
+            active=raw_data.get("active", True),
+            price=raw_data.get("current_price"),
+            change=raw_data.get("change"),
+            change_percent=raw_data.get("change_percent"),
+            volume=raw_data.get("volume"),
+            details={}
         )
         
-        # Create response
-        response = AssetResponse.from_entity(asset)
-        
         # Cache result
-        await self.cache_service.set(cache_key, response.dict(), ttl=300)
+        await self.cache_service.set(cache_key, response.model_dump(), ttl=300)
         
         return response
     
@@ -141,7 +143,7 @@ class MarketUseCases(MarketService):
         results = []
         
         # Cache result
-        await self.cache_service.set(cache_key, [r.dict() for r in results], ttl=600)
+        await self.cache_service.set(cache_key, [r.model_dump() for r in results], ttl=600)
         
         return results
     
@@ -198,6 +200,6 @@ class MarketUseCases(MarketService):
         )
         
         # Cache result
-        await self.cache_service.set(cache_key, response.dict(), ttl=300)
+        await self.cache_service.set(cache_key, response.model_dump(), ttl=300)
         
         return response
