@@ -1,5 +1,5 @@
 # app/domain/use_cases/market_use_cases.py
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
