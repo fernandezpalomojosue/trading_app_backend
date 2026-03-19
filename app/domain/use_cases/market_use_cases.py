@@ -151,9 +151,12 @@ class MarketUseCases(MarketService):
         
 
         raw_data = await self.market_repository.fetch_raw_market_data(market_type.value)
-
+        
+        # Get the results array from the raw data
+        results = raw_data.get("results", [])
+        
         assets = []
-        for item in raw_data:
+        for item in results:
             asset_response = AssetResponse(
                 id=item.get("id", f"asset_{item.get('symbol', '')}"),
                 symbol=item.get("symbol", ""),
