@@ -268,8 +268,8 @@ class MarketUseCases(MarketService):
             return CandleStickDataResponse(**cached_data)
         
         # Fetch from repository
-        raw_data = await self.market_repository.get_candlestick_data(
-            symbol, timespan, multiplier, limit, start_date, end_date
+        raw_data = await self.market_repository.fetch_candlestick_data(
+            symbol, multiplier, timespan, start_date, end_date, limit
         )
         
         # Convert to CandleStick entities
