@@ -11,8 +11,8 @@ class MarketRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_asset_raw_data(self, symbol: str) -> Optional[Dict[str, Any]]:
-        """Get raw market data for a specific asset"""
+    async def fetch_ticker_details(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Get ticker details for a specific asset"""
         pass
     
     @abstractmethod
