@@ -120,7 +120,7 @@ class MarketUseCases(MarketService):
             last_trading_day = get_last_trading_day()
             print(f"DEBUG: Last trading day: {last_trading_day}")
             
-            ohlcv_data = await self.market_repository.get_candlestick_data(
+            ohlcv_data = await self.market_repository.fetch_candlestick_data(
                 symbol, 1, "day", last_trading_day, last_trading_day, 1
             )
             print(f"DEBUG: OHLCV data: {ohlcv_data}")
