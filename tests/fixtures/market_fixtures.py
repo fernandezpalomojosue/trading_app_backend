@@ -40,38 +40,8 @@ class MockMarketRepository(MarketRepository):
         """Fetch raw market data - returns list of assets with basic info"""
         self._record_call('fetch_raw_market_data', date=date)
         
-        # Return mock data with assets list in Polygon format
-        mock_assets = [
-            {
-                "T": "AAPL",
-                "c": 105.0,
-                "o": 100.0,
-                "h": 110.0,
-                "l": 95.0,
-                "v": 1000000
-            },
-            {
-                "T": "GOOGL",
-                "c": 190.0,
-                "o": 200.0,
-                "h": 205.0,
-                "l": 185.0,
-                "v": 800000
-            },
-            {
-                "T": "MSFT",
-                "c": 160.0,
-                "o": 150.0,
-                "h": 165.0,
-                "l": 140.0,
-                "v": 1200000
-            }
-        ]
-        
-        return {
-            "results": mock_assets,
-            "status": "OK"
-        }
+        # Use configured data or return empty structure
+        return self.data.get(f'market_{date}', {"results": [], "status": "OK"})
     
     async def fetch_symbol_data(self, symbol: str, date: str):
         self._record_call('fetch_symbol_data', symbol=symbol, date=date)
