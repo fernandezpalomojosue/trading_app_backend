@@ -12,18 +12,8 @@ class MarketRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_market_summary(self, market_type: str) -> Optional[Dict[str, Any]]:
-        """Get market summary data"""
-        pass
-    
-    @abstractmethod
     async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Search for assets by query"""
-        pass
-    
-    @abstractmethod
-    async def get_multiple_assets_data(self, symbols: List[str]) -> List[Dict[str, Any]]:
-        """Get data for multiple assets"""
         pass
     
     @abstractmethod

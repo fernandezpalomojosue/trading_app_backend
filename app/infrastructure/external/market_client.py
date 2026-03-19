@@ -199,20 +199,6 @@ class PolygonMarketClient(MarketRepository):
         }
         return market_mapping.get(polygon_market.lower(), MarketType.STOCKS)
     
-    async def get_market_summary(self, market_type: str) -> Optional[Dict[str, Any]]:
-        """Get market summary data"""
-        # For now, return a basic structure - this would need real implementation
-        return {
-            "symbol": f"{market_type.upper()}_MARKET",
-            "open": 0.0,
-            "high": 0.0,
-            "low": 0.0,
-            "close": 0.0,
-            "volume": 0,
-            "change": 0.0,
-            "change_percent": 0.0
-        }
-    
     async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Search for assets by query"""
         # Use the existing search_assets_raw method
@@ -220,15 +206,6 @@ class PolygonMarketClient(MarketRepository):
         if market_type:
             market_type_enum = MarketType(market_type.lower())
         return await self.search_assets_raw(query, market_type_enum)
-    
-    async def get_multiple_assets_data(self, symbols: List[str]) -> List[Dict[str, Any]]:
-        """Get data for multiple assets"""
-        results = []
-        for symbol in symbols:
-            data = await self.get_asset_raw_data(symbol)
-            if data:
-                results.append(data)
-        return results
     
     async def get_candlestick_data(
         self, 
@@ -248,3 +225,8 @@ class PolygonMarketClient(MarketRepository):
         if data and "results" in data:
             return data["results"]
         return []
+
+    
+    
+    
+    

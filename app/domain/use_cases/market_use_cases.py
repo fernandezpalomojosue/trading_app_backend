@@ -30,29 +30,40 @@ class MarketUseCases(MarketService):
             return MarketOverviewResponse(**cached_data)
         
         # Fetch from repository
-        raw_data = await self.market_repository.get_market_summary(market_type.value)
+        last_trading_date = datetime.now().strftime("%Y-%m-%d")
+        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_date)
         if not raw_data:
             raise ValueError(f"No market data available for {market_type.value}")
         
-        # Process the data
-        market_summary = MarketSummary(
-            symbol=raw_data.get("symbol", ""),
-            open=raw_data.get("open", 0.0),
-            high=raw_data.get("high", 0.0),
-            low=raw_data.get("low", 0.0),
-            close=raw_data.get("close", 0.0),
-            volume=raw_data.get("volume", 0),
-            change=raw_data.get("change", 0.0),
-            change_percent=raw_data.get("change_percent", 0.0)
-        )
+        sorted_data = raw_data.get("results", [])
+        sorted_data.sort(key=lambda x: x.get("v", 0), reverse=True)
+        filtered_data = sorted_data[:500]
+        
+        # Convert raw data to MarketSummary objects for data processor
+        market_summaries = []
+        for asset_data in filtered_data:
+            market_summary = MarketSummary(
+                symbol=asset_data.get("T", ""),
+                open=asset_data.get("o", 0.0),
+                high=asset_data.get("h", 0.0),
+                low=asset_data.get("l", 0.0),
+                close=asset_data.get("c", 0.0),
+                volume=asset_data.get("v", 0),
+                change=0.0,  # Calculate if needed
+                change_percent=0.0,  # Calculate if needed
+                timestamp=datetime.now()
+            )
+            market_summaries.append(market_summary)
         
         # Create response
         response = MarketOverviewResponse(
-            market_type=market_type,
-            summary=market_summary,
-            top_gainers=self.data_processor.get_top_gainers([market_summary]),
-            top_losers=self.data_processor.get_top_losers([market_summary]),
-            most_active=self.data_processor.get_most_active([market_summary])
+            market=market_type,
+            total_assets=len(filtered_data),
+            status="active",
+            last_updated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            top_gainers=self.data_processor.get_top_gainers(market_summaries),
+            top_losers=self.data_processor.get_top_losers(market_summaries),
+            most_active=self.data_processor.get_most_active(market_summaries)
         )
         
         # Cache the result
