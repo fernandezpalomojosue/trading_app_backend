@@ -113,16 +113,28 @@ class PolygonMarketClient(MarketRepository):
         except Exception:
             return []
     
-    async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
+    async def fetch_candlestick_data(
+        self, 
+        symbol: str, 
+        timespan: str, 
+        multiplier: int, 
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Fetch candlestick data using Massive API Custom Bars endpoint - INFRASTRUCTURE ONLY"""
         try:
-            # Use Massive API Custom Bars endpoint
+            # Use default dates if not provided
+            from_date = start_date or "2024-01-01"
+            to_date = end_date or datetime.now().strftime("%Y-%m-%d")
+            
+            # Use Massive API Custom Bars endpoint (timespan is full word: day, hour, minute, etc.)
             data = await self._make_request(
                 f"/v2/aggs/ticker/{symbol.upper()}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
                 {"adjusted": "true", "sort": "asc", "limit": str(limit)}
             )
             
-            return data if data.get("status") == "OK" else None
+            return data.get("results", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching candlestick data: {str(e)}")
     

@@ -186,28 +186,23 @@ class MarketUseCases(MarketService):
             id=raw_data.get("ticker", f"asset_{raw_data.get('ticker', '')}"),
             symbol=raw_data.get("ticker", ""),
             name=raw_data.get("name", ""),
-            description=raw_data.get("description", ""),
             market=MarketType(raw_data.get("market", "stocks")),
             currency=raw_data.get("currency_name", "USD"),
-            current_price=raw_data.get("price"),
+            price=raw_data.get("price"),
             change=raw_data.get("change", 0.0),
             change_percent=raw_data.get("change_percent", 0.0),
             volume=raw_data.get("volume", 0),
-            market_cap=raw_data.get("market_cap"),
-            primary_exchange=raw_data.get("primary_exchange"),
-            homepage_url=raw_data.get("homepage_url"),
-            total_employees=raw_data.get("total_employees"),
-            locale=raw_data.get("locale"),
-            asset_type=raw_data.get("type"),
-            cik=raw_data.get("cik"),
-            sic_code=raw_data.get("sic_code"),
-            sic_description=raw_data.get("sic_description"),
             active=raw_data.get("active", True),
-            list_date=raw_data.get("list_date"),
-            open_price=raw_data.get("open"),
-            high_price=raw_data.get("high"),
-            low_price=raw_data.get("low"),
-            vwap=raw_data.get("vwap")
+            details={
+                "description": raw_data.get("description", ""),
+                "market_cap": raw_data.get("market_cap"),
+                "primary_exchange": raw_data.get("primary_exchange"),
+                "homepage_url": raw_data.get("homepage_url"),
+                "open": raw_data.get("open"),
+                "high": raw_data.get("high"),
+                "low": raw_data.get("low"),
+                "vwap": raw_data.get("vwap")
+            }
         )
     
     async def get_assets_list(self, market_type: MarketType, limit: int = 50, offset: int = 0) -> List[AssetResponse]:
@@ -267,21 +262,26 @@ class MarketUseCases(MarketService):
         if cached_data:
             return CandleStickDataResponse(**cached_data)
         
-        # Fetch from repository
+        # Fetch from repository (correct parameter order)
         raw_data = await self.market_repository.fetch_candlestick_data(
-            symbol, multiplier, timespan, start_date, end_date, limit
+            symbol, timespan, multiplier, limit, start_date, end_date
         )
         
-        # Convert to CandleStick entities
+        # Convert to CandleStick entities (Polygon API uses t, o, h, l, c, v)
         candlesticks = []
         for item in raw_data:
+            # Polygon API fields: t=timestamp, o=open, h=high, l=low, c=close, v=volume
+            timestamp_ms = item.get("t", 0)
+            from datetime import datetime
+            timestamp = datetime.fromtimestamp(timestamp_ms / 1000) if timestamp_ms else datetime.now()
+            
             candle = CandleStick(
-                timestamp=datetime.fromisoformat(item.get("timestamp", "")),
-                open=item.get("open", 0.0),
-                high=item.get("high", 0.0),
-                low=item.get("low", 0.0),
-                close=item.get("close", 0.0),
-                volume=item.get("volume", 0)
+                timestamp=timestamp,
+                open=item.get("o", 0.0),
+                high=item.get("h", 0.0),
+                low=item.get("l", 0.0),
+                close=item.get("c", 0.0),
+                volume=item.get("v", 0)
             )
             candlesticks.append(candle)
         
