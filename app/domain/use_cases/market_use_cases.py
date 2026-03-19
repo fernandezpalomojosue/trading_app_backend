@@ -6,7 +6,7 @@ from app.domain.repositories.market_repository import MarketRepository, MarketDa
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
-
+from app.utils.date_utils import get_last_trading_day
 
 class MarketUseCases(MarketService):
     """Market business logic use cases"""
@@ -30,7 +30,7 @@ class MarketUseCases(MarketService):
             return MarketOverviewResponse(**cached_data)
         
         # Fetch from repository
-        last_trading_date = datetime.now().strftime("%Y-%m-%d")
+        last_trading_date = get_last_trading_day()
         raw_data = await self.market_repository.fetch_raw_market_data(last_trading_date)
         if not raw_data:
             raise ValueError(f"No market data available for {market_type.value}")
