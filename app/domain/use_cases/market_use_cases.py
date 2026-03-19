@@ -171,7 +171,7 @@ class MarketUseCases(MarketService):
                 details={}
             )
             assets.append(asset_response)
-    
+        print(f"Assets: {assets}")
         return assets
         
     async def get_candlestick_data(

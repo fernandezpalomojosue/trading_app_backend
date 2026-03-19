@@ -5,6 +5,10 @@ from typing import List, Optional, Dict, Any
 
 class MarketRepository(ABC):
     """Abstract interface for market data repository"""
+    @absstractmethod
+    async def fetch_raw_market_data(self) -> Dict[str, Any]:
+        """Fetch raw market data"""
+        pass
     
     @abstractmethod
     async def get_asset_raw_data(self, symbol: str) -> Optional[Dict[str, Any]]:
