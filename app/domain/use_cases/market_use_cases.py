@@ -149,8 +149,11 @@ class MarketUseCases(MarketService):
         if cached_data:
             return [AssetResponse(**item) for item in cached_data]
         
-
-        raw_data = await self.market_repository.fetch_raw_market_data(market_type.value)
+        # Get the last trading day
+        from app.utils.date_utils import get_last_trading_day
+        last_trading_day = get_last_trading_day()
+        
+        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
         
         # Get the results array from the raw data
         results = raw_data.get("results", [])
