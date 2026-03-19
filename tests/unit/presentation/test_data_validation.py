@@ -72,11 +72,14 @@ class TestDataValidationAndNormalization:
     
     async def test_validation_empty_results_handling(self, market_use_cases):
         """Should handle empty API results gracefully"""
+        # Clear cache to ensure clean state
+        await market_use_cases.cache_service.clear_pattern("assets_list_")
+        
         # Test empty results array
         mock_data = {"results": []}
         market_use_cases.market_repository.data['market_2024-01-15'] = mock_data
         
-        # Mock the date utils to return our test date
+        # Mock date utils to return our test date
         import app.utils.date_utils
         original_get_last_trading_day = app.utils.date_utils.get_last_trading_day
         app.utils.date_utils.get_last_trading_day = lambda: '2024-01-15'
