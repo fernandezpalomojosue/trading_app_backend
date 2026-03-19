@@ -49,8 +49,8 @@ class MarketUseCases(MarketService):
                 low=asset_data.get("l", 0.0),
                 close=asset_data.get("c", 0.0),
                 volume=asset_data.get("v", 0),
-                change=0.0,  # Calculate if needed
-                change_percent=0.0,  # Calculate if needed
+                change=asset_data.get("c", 0.0) - asset_data.get("o", 0.0),  
+                change_percent=(asset_data.get("c", 0.0) - asset_data.get("o", 0.0)) / asset_data.get("o", 0.0) * 100,
                 timestamp=datetime.now()
             )
             market_summaries.append(market_summary)
