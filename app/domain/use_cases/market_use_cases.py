@@ -165,15 +165,15 @@ class MarketUseCases(MarketService):
         for item in paginated_results:
             asset_response = AssetResponse(
                 id=item.get("id", f"asset_{item.get('symbol', '')}"),
-                symbol=item.get("symbol", ""),
+                symbol=item.get("T", ""),
                 name=item.get("name", ""),
                 market=MarketType(item.get("market", "stocks")),
                 currency=item.get("currency", "USD"),
                 active=item.get("active", True),
                 price=item.get("current_price"),
-                change=item.get("change"),
-                change_percent=item.get("change_percent"),
-                volume=item.get("volume"),
+                change=item.get("c", 0.0) - item.get("o", 0.0),  
+                change_percent=(item.get("c", 0.0) - item.get("o", 0.0)) / item.get("o", 0.0) * 100,
+                volume=item.get("v"),
                 details={}
             )
             assets.append(asset_response)
