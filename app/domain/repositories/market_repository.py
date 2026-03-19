@@ -21,7 +21,7 @@ class MarketRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_candlestick_data(
+    async def fetch_candlestick_data(
         self, 
         symbol: str, 
         timespan: str, 

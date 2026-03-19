@@ -113,29 +113,6 @@ class PolygonMarketClient(MarketRepository):
         except Exception:
             return []
     
-    async def fetch_symbol_data(self, symbol: str, date: str) -> Optional[Dict[str, Any]]:
-        """Fetch OHLC data for a specific symbol using Massive API - INFRASTRUCTURE ONLY"""
-        try:
-            # Convert date to timestamp if needed
-            if date.count('-') == 2:  # YYYY-MM-DD format
-                from datetime import datetime
-                dt = datetime.strptime(date, "%Y-%m-%d")
-                from_timestamp = int(dt.timestamp() * 1000)
-                to_timestamp = from_timestamp + (24 * 60 * 60 * 1000)  # Add 1 day
-            else:
-                from_timestamp = int(date)
-                to_timestamp = from_timestamp + (24 * 60 * 60 * 1000)
-            
-            # Use Massive API Custom Bars endpoint
-            data = await self._make_request(
-                f"/v2/aggs/ticker/{symbol.upper()}/range/1/day/{from_timestamp}/{to_timestamp}",
-                {"adjusted": "true", "sort": "asc", "limit": "1"}
-            )
-            
-            return data if data.get("status") == "OK" else None
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error fetching symbol data: {str(e)}")
-    
     async def fetch_candlestick_data(self, symbol: str, multiplier: int, timespan: str, from_date: str, to_date: str, limit: int = 100) -> Optional[Dict[str, Any]]:
         """Fetch candlestick data using Massive API Custom Bars endpoint - INFRASTRUCTURE ONLY"""
         try:
@@ -206,25 +183,6 @@ class PolygonMarketClient(MarketRepository):
         if market_type:
             market_type_enum = MarketType(market_type.lower())
         return await self.search_assets_raw(query, market_type_enum)
-    
-    async def get_candlestick_data(
-        self, 
-        symbol: str, 
-        timespan: str, 
-        multiplier: int, 
-        limit: int,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """Get candlestick data for charting"""
-        # Use the existing fetch_candlestick_data method
-        from_date = start_date or "2024-01-01"
-        to_date = end_date or datetime.now().strftime("%Y-%m-%d")
-        
-        data = await self.fetch_candlestick_data(symbol, multiplier, timespan, from_date, to_date, limit)
-        if data and "results" in data:
-            return data["results"]
-        return []
 
     
     
