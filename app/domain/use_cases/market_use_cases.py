@@ -149,15 +149,28 @@ class MarketUseCases(MarketService):
         if cached_data:
             return [AssetResponse(**item) for item in cached_data]
         
-        # For now, return empty list - this would need to be implemented in the repository
-        # based on the specific market data provider API
-        results = []
-        
-        # Cache result
-        await self.cache_service.set(cache_key, [r.model_dump() for r in results], ttl=600)
-        
-        return results
+
+        raw_data = await self.market_repository.fetch_raw_market_data(market_type.value)
+
+        assets = []
+        for item in raw_data:
+            asset_response = AssetResponse(
+                id=item.get("id", f"asset_{item.get('symbol', '')}"),
+                symbol=item.get("symbol", ""),
+                name=item.get("name", ""),
+                market=MarketType(item.get("market", "stocks")),
+                currency=item.get("currency", "USD"),
+                active=item.get("active", True),
+                price=item.get("current_price"),
+                change=item.get("change"),
+                change_percent=item.get("change_percent"),
+                volume=item.get("volume"),
+                details={}
+            )
+            assets.append(asset_response)
     
+        return assets
+        
     async def get_candlestick_data(
         self, 
         symbol: str, 
