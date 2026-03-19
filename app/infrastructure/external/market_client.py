@@ -198,6 +198,33 @@ class PolygonMarketClient(MarketRepository):
             "indices": MarketType.INDICES
         }
         return market_mapping.get(polygon_market.lower(), MarketType.STOCKS)
+    
+    async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Search for assets by query"""
+        # Use the existing search_assets_raw method
+        market_type_enum = None
+        if market_type:
+            market_type_enum = MarketType(market_type.lower())
+        return await self.search_assets_raw(query, market_type_enum)
+    
+    async def get_candlestick_data(
+        self, 
+        symbol: str, 
+        timespan: str, 
+        multiplier: int, 
+        limit: int,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Get candlestick data for charting"""
+        # Use the existing fetch_candlestick_data method
+        from_date = start_date or "2024-01-01"
+        to_date = end_date or datetime.now().strftime("%Y-%m-%d")
+        
+        data = await self.fetch_candlestick_data(symbol, multiplier, timespan, from_date, to_date, limit)
+        if data and "results" in data:
+            return data["results"]
+        return []
 
     
     
