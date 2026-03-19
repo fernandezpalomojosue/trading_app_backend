@@ -158,8 +158,11 @@ class MarketUseCases(MarketService):
         # Get the results array from the raw data
         results = raw_data.get("results", [])
         
+        # Apply pagination
+        paginated_results = results[offset:offset + limit]
+        
         assets = []
-        for item in results:
+        for item in paginated_results:
             asset_response = AssetResponse(
                 id=item.get("id", f"asset_{item.get('symbol', '')}"),
                 symbol=item.get("symbol", ""),
