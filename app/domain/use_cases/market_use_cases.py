@@ -274,15 +274,24 @@ class MarketUseCases(MarketService):
         """Get candlestick data for charting"""
         cache_key = f"candles_{symbol}_{timespan}_{multiplier}_{limit}_{start_date}_{end_date}"
         
+        print(f"DEBUG use_case: symbol={symbol}, timespan={timespan}, multiplier={multiplier}, limit={limit}, start={start_date}, end={end_date}")
+        
         # Try cache first
         cached_data = await self.cache_service.get(cache_key)
         if cached_data:
+            print(f"DEBUG use_case: cache hit")
             return CandleStickDataResponse(**cached_data)
+        
+        print(f"DEBUG use_case: cache miss, fetching from repository")
         
         # Fetch from repository (correct parameter order)
         raw_data = await self.market_repository.fetch_candlestick_data(
             symbol, timespan, multiplier, limit, start_date, end_date
         )
+        
+        print(f"DEBUG use_case: raw_data type={type(raw_data)}, len={len(raw_data) if isinstance(raw_data, list) else 'N/A'}")
+        if raw_data:
+            print(f"DEBUG use_case: first item={raw_data[0] if isinstance(raw_data, list) and len(raw_data) > 0 else raw_data}")
         
         # Convert API response directly to DTO format (t, o, h, l, c, v)
         results = []
@@ -295,6 +304,8 @@ class MarketUseCases(MarketService):
                 c=item.get("c", 0.0),
                 v=item.get("v", 0)
             ))
+        
+        print(f"DEBUG use_case: converted {len(results)} candles")
         
         # Create response - DTO expects 'results' field
         response = CandleStickDataResponse(results=results)
