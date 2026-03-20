@@ -101,7 +101,9 @@ async def get_candlestick_data(
     current_user = Depends(get_current_user_dependency)
 ):  
     """Get candlestick data for charting"""
-    return await market_service.get_candlestick_data(
+    print(f"DEBUG endpoint: symbol={symbol}, timespan={timespan}, multiplier={multiplier}, limit={limit}, start={start_date}, end={end_date}")
+    
+    result = await market_service.get_candlestick_data(
         symbol=symbol,
         timespan=timespan,
         multiplier=multiplier,
@@ -109,3 +111,6 @@ async def get_candlestick_data(
         start_date=start_date,
         end_date=end_date
     )
+    
+    print(f"DEBUG endpoint: response results count={len(result.results)}")
+    return result
