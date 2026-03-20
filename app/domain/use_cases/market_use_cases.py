@@ -186,11 +186,27 @@ class MarketUseCases(MarketService):
                 **combined_data
             }) if combined_data else None
             
-            # 5. Cache if found
+            # 5. Convert to DTO for API response
             if asset:
-                await self.cache_service.set(cache_key, asset, ttl=60)
+                asset_response = AssetResponse(
+                    id=asset.id,
+                    symbol=asset.symbol,
+                    name=asset.name,
+                    market=asset.market,
+                    currency=asset.currency,
+                    active=asset.active,
+                    price=asset.price,
+                    change=asset.change,
+                    change_percent=asset.change_percent,
+                    volume=asset.volume,
+                    details=asset.details
+                )
+                
+                # 6. Cache and return
+                await self.cache_service.set(cache_key, asset_response.model_dump(), ttl=60)
+                return asset_response
             
-            return asset
+            return None
             
         except Exception as e:
             # Log error but don't crash
