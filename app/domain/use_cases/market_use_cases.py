@@ -302,7 +302,7 @@ class MarketUseCases(MarketService):
                 h=item.get("h", 0.0),
                 l=item.get("l", 0.0),
                 c=item.get("c", 0.0),
-                v=item.get("v", 0)
+                v=int(item.get("v", 0))  # Convert float volume to int
             ))
         
         print(f"DEBUG use_case: converted {len(results)} candles")
