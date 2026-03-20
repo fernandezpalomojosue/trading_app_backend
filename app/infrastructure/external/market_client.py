@@ -124,9 +124,11 @@ class PolygonMarketClient(MarketRepository):
     ) -> List[Dict[str, Any]]:
         """Fetch candlestick data using Massive API Custom Bars endpoint - INFRASTRUCTURE ONLY"""
         try:
-            # Use default dates if not provided
+            # Use provided dates or defaults
             from_date = start_date or "2024-01-01"
-            to_date = end_date or datetime.now().strftime("%Y-%m-%d")
+            to_date = end_date or await self.get_last_trading_date()
+            
+            print(f"DEBUG client: symbol={symbol}, timespan={timespan}, multiplier={multiplier}, from={from_date}, to={to_date}, limit={limit}")
             
             # Use Massive API Custom Bars endpoint (timespan is full word: day, hour, minute, etc.)
             data = await self._make_request(
@@ -134,8 +136,11 @@ class PolygonMarketClient(MarketRepository):
                 {"adjusted": "true", "sort": "asc", "limit": str(limit)}
             )
             
+            print(f"DEBUG client: API status={data.get('status')}, results_count={len(data.get('results', []))}")
+            
             return data.get("results", []) if data.get("status") == "OK" else []
         except Exception as e:
+            print(f"ERROR client fetch_candlestick_data: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Error fetching candlestick data: {str(e)}")
     
     async def get_last_trading_date(self) -> str:
