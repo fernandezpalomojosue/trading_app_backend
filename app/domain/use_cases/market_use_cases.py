@@ -151,9 +151,9 @@ class MarketUseCases(MarketService):
             # 3. Combine both data sources
             combined_data = {}
             
-            # Add OHLCV data (market_data)
-            if ohlcv_data and ohlcv_data.get("results"):
-                latest_data = ohlcv_data["results"][0]  # Get the most recent day
+            # Add OHLCV data (market_data) - fetch_candlestick_data returns a list directly
+            if ohlcv_data and len(ohlcv_data) > 0:
+                latest_data = ohlcv_data[0]  # Get the most recent day
                 combined_data.update({
                     "price": latest_data.get("c"),
                     "change": latest_data.get("c", 0) - latest_data.get("o", 0),
