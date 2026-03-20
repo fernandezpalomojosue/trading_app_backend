@@ -239,11 +239,9 @@ class MarketUseCases(MarketService):
         
         # Sort by volume and apply limit
         raw_data = self._sort_by_volume(raw_data, limit=500)
-        # Get the results array from the raw data
-        results = raw_data.get("results", [])
         
         # Apply pagination
-        paginated_results = results[offset:offset + limit]
+        paginated_results = raw_data[offset:offset + limit]
         
         assets = []
         for item in paginated_results:
