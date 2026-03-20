@@ -140,7 +140,7 @@ class MarketUseCases(MarketService):
             print(f"DEBUG: Last trading day: {last_trading_day}")
             
             ohlcv_data = await self.market_repository.fetch_candlestick_data(
-                symbol, 1, "day", last_trading_day, last_trading_day, 1
+                symbol, "day", 1, 1, last_trading_day, last_trading_day
             )
             print(f"DEBUG: OHLCV data: {ohlcv_data}")
             
@@ -284,40 +284,20 @@ class MarketUseCases(MarketService):
             symbol, timespan, multiplier, limit, start_date, end_date
         )
         
-        # Convert to CandleStick entities (Polygon API uses t, o, h, l, c, v)
-        candlesticks = []
+        # Convert API response directly to DTO format (t, o, h, l, c, v)
+        results = []
         for item in raw_data:
-            # Polygon API fields: t=timestamp, o=open, h=high, l=low, c=close, v=volume
-            timestamp_ms = item.get("t", 0)
-            from datetime import datetime
-            timestamp = datetime.fromtimestamp(timestamp_ms / 1000) if timestamp_ms else datetime.now()
-            
-            candle = CandleStick(
-                timestamp=timestamp,
-                open=item.get("o", 0.0),
-                high=item.get("h", 0.0),
-                low=item.get("l", 0.0),
-                close=item.get("c", 0.0),
-                volume=item.get("v", 0)
-            )
-            candlesticks.append(candle)
+            results.append(CandleData(
+                t=item.get("t", 0),
+                o=item.get("o", 0.0),
+                h=item.get("h", 0.0),
+                l=item.get("l", 0.0),
+                c=item.get("c", 0.0),
+                v=item.get("v", 0)
+            ))
         
-        # Create response
-        response = CandleStickDataResponse(
-            symbol=symbol,
-            timespan=timespan,
-            multiplier=multiplier,
-            candlesticks=[
-                CandleData(
-                    timestamp=c.timestamp.isoformat(),
-                    open=c.open,
-                    high=c.high,
-                    low=c.low,
-                    close=c.close,
-                    volume=c.volume
-                ) for c in candlesticks
-            ]
-        )
+        # Create response - DTO expects 'results' field
+        response = CandleStickDataResponse(results=results)
         
         # Cache result
         await self.cache_service.set(cache_key, response.model_dump(), ttl=300)
