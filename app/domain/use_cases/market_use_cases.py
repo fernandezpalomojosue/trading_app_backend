@@ -20,6 +20,27 @@ class MarketUseCases(MarketService):
         self.cache_service = cache_service
         self.data_processor = MarketDataProcessor()
     
+    def _sort_by_volume(self, raw_data: Dict[str, Any], limit: int = 100) -> List[Dict[str, Any]]:
+        """Sort raw market data by volume descending and apply limit
+        
+        Args:
+            raw_data: Dictionary with 'results' key containing list of assets
+            limit: Maximum number of results to return
+            
+        Returns:
+            List of asset dictionaries sorted by volume (highest first)
+        """
+        results = raw_data.get("results", [])
+        
+        # Sort by volume (v) descending - handle missing/None values
+        sorted_results = sorted(
+            results, 
+            key=lambda x: x.get("v") or 0, 
+            reverse=True
+        )
+        
+        return sorted_results[:limit]
+    
     async def get_market_overview(self, market_type: MarketType) -> MarketOverviewResponse:
         """Get market overview for specific market type"""
         cache_key = f"market_overview_{market_type.value}"
@@ -35,9 +56,7 @@ class MarketUseCases(MarketService):
         if not raw_data:
             raise ValueError(f"No market data available for {market_type.value}")
         
-        sorted_data = raw_data.get("results", [])
-        sorted_data.sort(key=lambda x: x.get("v", 0), reverse=True)
-        filtered_data = sorted_data[:500]
+        filtered_data = self._sort_by_volume(raw_data, limit=500)
         
         # Convert raw data to MarketSummary objects for data processor
         market_summaries = []
@@ -222,6 +241,9 @@ class MarketUseCases(MarketService):
         
         # Get the results array from the raw data
         results = raw_data.get("results", [])
+        
+        # Sort by volume and apply limit
+        results = self._sort_by_volume({"results": results}, limit=500)
         
         # Apply pagination
         paginated_results = results[offset:offset + limit]
