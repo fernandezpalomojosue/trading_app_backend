@@ -233,17 +233,14 @@ class MarketUseCases(MarketService):
         if cached_data:
             return [AssetResponse(**item) for item in cached_data]
         
-        # Get the last trading day
-        from app.utils.date_utils import get_last_trading_day
-        last_trading_day = get_last_trading_day()
+        last_trading_date = get_last_trading_day()
         
-        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_day)
-        
-        # Get the results array from the raw data
-        results = raw_data.get("results", [])
+        raw_data = await self.market_repository.fetch_raw_market_data(last_trading_date)
         
         # Sort by volume and apply limit
-        results = self._sort_by_volume({"results": results}, limit=500)
+        raw_data = self._sort_by_volume(raw_data, limit=500)
+        # Get the results array from the raw data
+        results = raw_data.get("results", [])
         
         # Apply pagination
         paginated_results = results[offset:offset + limit]
