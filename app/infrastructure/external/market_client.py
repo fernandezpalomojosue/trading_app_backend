@@ -212,7 +212,7 @@ class PolygonMarketClient(MarketRepository):
                 }
             )
             
-            return data.get("results", []) if data.get("status") == "OK" else []
+            return data.get("results", {}).get("values", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching EMA data: {str(e)}")
 
@@ -241,7 +241,7 @@ class PolygonMarketClient(MarketRepository):
                 }
             )
             
-            return data.get("results", []) if data.get("status") == "OK" else []
+            return data.get("results", {}).get("values", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching SMA data: {str(e)}")
 
@@ -270,7 +270,7 @@ class PolygonMarketClient(MarketRepository):
                 }
             )
             
-            return data.get("results", []) if data.get("status") == "OK" else []
+            return data.get("results", {}).get("values", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching RSI data: {str(e)}")
 
@@ -303,6 +303,6 @@ class PolygonMarketClient(MarketRepository):
                 }
             )
             
-            return data.get("results", []) if data.get("status") == "OK" else []
+            return data.get("results", {}).get("values", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching MACD data: {str(e)}")
