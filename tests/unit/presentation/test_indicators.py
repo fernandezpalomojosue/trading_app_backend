@@ -145,14 +145,16 @@ class TestIndicatorsEndpoints:
     def test_indicators_invalid_window_parameter(self, client):
         """Indicators should validate window parameter"""
         # Window should be between 1 and 200
-        response = client.get("/api/v1/indicators/AAPL/ema?window=0")
+        headers = self.create_test_user(client, "test2@example.com")
+        response = client.get("/api/v1/indicators/AAPL/ema?window=0", headers=headers)
         
         assert response.status_code == 422  # Validation error
     
     def test_indicators_invalid_timespan_parameter(self, client):
         """Indicators should validate timespan parameter"""
         # Test with invalid timespan
-        response = client.get("/api/v1/indicators/AAPL/ema?timespan=invalid")
+        headers = self.create_test_user(client, "test3@example.com")
+        response = client.get("/api/v1/indicators/AAPL/ema?timespan=invalid", headers=headers)
         
         # Should either work (accept any string) or return validation error
         assert response.status_code in [200, 422]
