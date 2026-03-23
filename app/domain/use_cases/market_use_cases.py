@@ -137,16 +137,13 @@ class MarketUseCases(MarketService):
         try:
             # 1. Get OHLCV data from last trading day using aggregates endpoint
             last_trading_day = get_last_trading_day()
-            print(f"DEBUG: Last trading day: {last_trading_day}")
             
             ohlcv_data = await self.market_repository.fetch_candlestick_data(
                 symbol, "day", 1, 1, last_trading_day, last_trading_day
             )
-            print(f"DEBUG: OHLCV data: {ohlcv_data}")
             
             # 2. Get company information from reference endpoint
             ticker_info = await self.market_repository.fetch_ticker_details(symbol)
-            print(f"DEBUG: Ticker info: {ticker_info}")
             
             # 3. Combine both data sources
             combined_data = {}
@@ -177,8 +174,6 @@ class MarketUseCases(MarketService):
                     "currency_name": company_data.get("currency_name"),
                     "active": company_data.get("active", True)
                 })
-            
-            print(f"DEBUG: Combined data: {combined_data}")
             
             # 4. Convert to entity
             asset = self._convert_raw_to_asset({
@@ -275,7 +270,6 @@ class MarketUseCases(MarketService):
                 details={}
             )
             assets.append(asset_response)
-        print(f"Assets: {assets}")
         return assets
         
     async def get_candlestick_data(
@@ -290,24 +284,15 @@ class MarketUseCases(MarketService):
         """Get candlestick data for charting"""
         cache_key = f"candles_{symbol}_{timespan}_{multiplier}_{limit}_{start_date}_{end_date}"
         
-        print(f"DEBUG use_case: symbol={symbol}, timespan={timespan}, multiplier={multiplier}, limit={limit}, start={start_date}, end={end_date}")
-        
         # Try cache first
         cached_data = await self.cache_service.get(cache_key)
         if cached_data:
-            print(f"DEBUG use_case: cache hit")
             return CandleStickDataResponse(**cached_data)
-        
-        print(f"DEBUG use_case: cache miss, fetching from repository")
         
         # Fetch from repository (correct parameter order)
         raw_data = await self.market_repository.fetch_candlestick_data(
             symbol, timespan, multiplier, limit, start_date, end_date
         )
-        
-        print(f"DEBUG use_case: raw_data type={type(raw_data)}, len={len(raw_data) if isinstance(raw_data, list) else 'N/A'}")
-        if raw_data:
-            print(f"DEBUG use_case: first item={raw_data[0] if isinstance(raw_data, list) and len(raw_data) > 0 else raw_data}")
         
         # Convert API response directly to DTO format (t, o, h, l, c, v)
         results = []
@@ -320,8 +305,6 @@ class MarketUseCases(MarketService):
                 c=item.get("c", 0.0),
                 v=int(item.get("v", 0))  # Convert float volume to int
             ))
-        
-        print(f"DEBUG use_case: converted {len(results)} candles")
         
         # Create response - DTO expects 'results' field
         response = CandleStickDataResponse(results=results)
