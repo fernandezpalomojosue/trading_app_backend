@@ -128,15 +128,11 @@ class PolygonMarketClient(MarketRepository):
             from_date = start_date or "2024-01-01"
             to_date = end_date or await self.get_last_trading_date()
             
-            print(f"DEBUG client: symbol={symbol}, timespan={timespan}, multiplier={multiplier}, from={from_date}, to={to_date}, limit={limit}")
-            
             # Use Massive API Custom Bars endpoint (timespan is full word: day, hour, minute, etc.)
             data = await self._make_request(
                 f"/v2/aggs/ticker/{symbol.upper()}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
                 {"adjusted": "true", "sort": "asc", "limit": str(limit)}
             )
-            
-            print(f"DEBUG client: API status={data.get('status')}, results_count={len(data.get('results', []))}")
             
             return data.get("results", []) if data.get("status") == "OK" else []
         except Exception as e:
@@ -183,16 +179,6 @@ class PolygonMarketClient(MarketRepository):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching ticker details: {str(e)}")
     
-    def _map_polygon_market(self, polygon_market: str) -> MarketType:
-        """Map Polygon market to our MarketType enum"""
-        market_mapping = {
-            "stocks": MarketType.STOCKS,
-            "crypto": MarketType.CRYPTO,
-            "fx": MarketType.FX,
-            "indices": MarketType.INDICES
-        }
-        return market_mapping.get(polygon_market.lower(), MarketType.STOCKS)
-    
     async def search_assets(self, query: str, market_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Search for assets by query"""
         # Use the existing search_assets_raw method
@@ -201,7 +187,122 @@ class PolygonMarketClient(MarketRepository):
             market_type_enum = MarketType(market_type.lower())
         return await self.search_assets_raw(query, market_type_enum)
 
-    
-    
-    
-    
+    async def fetch_ema(
+        self,
+        symbol: str,
+        window: int,
+        timespan: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch EMA (Exponential Moving Average) indicator data"""
+        try:
+            from_date = start_date or "2024-01-01"
+            to_date = end_date or await self.get_last_trading_date()
+            
+            data = await self._make_request(
+                f"/v1/indicators/ema/{symbol.upper()}",
+                {
+                    "window": str(window),
+                    "timespan": timespan,
+                    "from": from_date,
+                    "to": to_date,
+                    "limit": str(limit)
+                }
+            )
+            
+            return data.get("results", []) if data.get("status") == "OK" else []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching EMA data: {str(e)}")
+
+    async def fetch_sma(
+        self,
+        symbol: str,
+        window: int,
+        timespan: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch SMA (Simple Moving Average) indicator data"""
+        try:
+            from_date = start_date or "2024-01-01"
+            to_date = end_date or await self.get_last_trading_date()
+            
+            data = await self._make_request(
+                f"/v1/indicators/sma/{symbol.upper()}",
+                {
+                    "window": str(window),
+                    "timespan": timespan,
+                    "from": from_date,
+                    "to": to_date,
+                    "limit": str(limit)
+                }
+            )
+            
+            return data.get("results", []) if data.get("status") == "OK" else []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching SMA data: {str(e)}")
+
+    async def fetch_rsi(
+        self,
+        symbol: str,
+        window: int,
+        timespan: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch RSI (Relative Strength Index) indicator data"""
+        try:
+            from_date = start_date or "2024-01-01"
+            to_date = end_date or await self.get_last_trading_date()
+            
+            data = await self._make_request(
+                f"/v1/indicators/rsi/{symbol.upper()}",
+                {
+                    "window": str(window),
+                    "timespan": timespan,
+                    "from": from_date,
+                    "to": to_date,
+                    "limit": str(limit)
+                }
+            )
+            
+            return data.get("results", []) if data.get("status") == "OK" else []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching RSI data: {str(e)}")
+
+    async def fetch_macd(
+        self,
+        symbol: str,
+        fast: int,
+        slow: int,
+        signal: int,
+        timespan: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch MACD (Moving Average Convergence Divergence) indicator data"""
+        try:
+            from_date = start_date or "2024-01-01"
+            to_date = end_date or await self.get_last_trading_date()
+            
+            data = await self._make_request(
+                f"/v1/indicators/macd/{symbol.upper()}",
+                {
+                    "fast": str(fast),
+                    "slow": str(slow),
+                    "signal": str(signal),
+                    "timespan": timespan,
+                    "from": from_date,
+                    "to": to_date,
+                    "limit": str(limit)
+                }
+            )
+            
+            return data.get("results", []) if data.get("status") == "OK" else []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching MACD data: {str(e)}")
