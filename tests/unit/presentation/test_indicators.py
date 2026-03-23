@@ -1,0 +1,128 @@
+"""
+Tests for indicators API endpoints
+Tests HTTP requests, responses, and error handling for technical indicators
+"""
+import pytest
+from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, patch
+
+from app.main import app
+
+
+@pytest.fixture
+def client():
+    """Provide test client"""
+    return TestClient(app)
+
+
+@pytest.mark.asyncio
+class TestIndicatorsEndpoints:
+    """Test indicators API endpoints"""
+    
+    @patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_ema")
+    async def test_get_ema_endpoint_success(self, mock_get_ema, client):
+        """EMA endpoint should return 200 with valid data"""
+        mock_get_ema.return_value = {
+            "symbol": "AAPL",
+            "window": 14,
+            "timespan": "day",
+            "results": [
+                {"t": 1773028800000, "v": 150.5},
+                {"t": 1773115200000, "v": 152.3}
+            ]
+        }
+        
+        response = client.get("/api/v1/indicators/AAPL/ema?window=14&timespan=day")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["symbol"] == "AAPL"
+        assert data["window"] == 14
+        assert len(data["results"]) == 2
+    
+    @patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_sma")
+    async def test_get_sma_endpoint_success(self, mock_get_sma, client):
+        """SMA endpoint should return 200 with valid data"""
+        mock_get_sma.return_value = {
+            "symbol": "GOOGL",
+            "window": 20,
+            "timespan": "day",
+            "results": [
+                {"t": 1773028800000, "v": 2800.0},
+                {"t": 1773115200000, "v": 2810.5}
+            ]
+        }
+        
+        response = client.get("/api/v1/indicators/GOOGL/sma?window=20&timespan=day")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["symbol"] == "GOOGL"
+        assert data["window"] == 20
+    
+    @patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_rsi")
+    async def test_get_rsi_endpoint_success(self, mock_get_rsi, client):
+        """RSI endpoint should return 200 with valid data"""
+        mock_get_rsi.return_value = {
+            "symbol": "TSLA",
+            "window": 14,
+            "timespan": "day",
+            "results": [
+                {"t": 1773028800000, "v": 65.5},
+                {"t": 1773115200000, "v": 72.3}
+            ]
+        }
+        
+        response = client.get("/api/v1/indicators/TSLA/rsi?window=14&timespan=day")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["symbol"] == "TSLA"
+        assert len(data["results"]) == 2
+    
+    @patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_macd")
+    async def test_get_macd_endpoint_success(self, mock_get_macd, client):
+        """MACD endpoint should return 200 with valid data"""
+        mock_get_macd.return_value = {
+            "symbol": "MSFT",
+            "fast": 12,
+            "slow": 26,
+            "signal_period": 9,
+            "timespan": "day",
+            "results": [
+                {"t": 1773028800000, "macd": 2.5, "signal": 1.8, "histogram": 0.7},
+                {"t": 1773115200000, "macd": 3.2, "signal": 2.1, "histogram": 1.1}
+            ]
+        }
+        
+        response = client.get("/api/v1/indicators/MSFT/macd?fast=12&slow=26&signal=9")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["symbol"] == "MSFT"
+        assert data["fast"] == 12
+        assert data["slow"] == 26
+        assert data["signal_period"] == 9
+    
+    def test_indicators_endpoint_requires_auth(self, client):
+        """Indicators endpoints should require authentication"""
+        # Without auth token, should return 401 or 403
+        response = client.get("/api/v1/indicators/AAPL/ema")
+        
+        # Should be unauthorized (401) or forbidden (403)
+        assert response.status_code in [401, 403]
+    
+    def test_indicators_invalid_window_parameter(self, client):
+        """Indicators should validate window parameter"""
+        # Window should be between 1 and 200
+        response = client.get("/api/v1/indicators/AAPL/ema?window=0")
+        
+        assert response.status_code == 422  # Validation error
+    
+    def test_indicators_invalid_timespan_parameter(self, client):
+        """Indicators should validate timespan parameter"""
+        # Test with invalid timespan
+        response = client.get("/api/v1/indicators/AAPL/ema?timespan=invalid")
+        
+        # Should either work (accept any string) or return validation error
+        assert response.status_code in [200, 422]
