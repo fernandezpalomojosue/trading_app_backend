@@ -16,7 +16,7 @@ from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
-router = APIRouter()
+router = APIRouter(prefix="/indicators", tags=["indicators"])
 
 
 def get_indicators_service() -> IndicatorsService:
