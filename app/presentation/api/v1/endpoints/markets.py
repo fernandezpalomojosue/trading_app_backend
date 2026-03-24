@@ -72,7 +72,7 @@ async def get_asset_details(
     current_user = Depends(get_current_user_dependency)
 ):
     """Get asset details by symbol"""
-    asset = await market_service.get_asset_details(symbol)
+    asset = await market_service.get_asset_details(current_user, symbol)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
     
