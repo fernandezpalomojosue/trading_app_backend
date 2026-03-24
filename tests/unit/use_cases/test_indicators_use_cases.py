@@ -37,7 +37,7 @@ class TestIndicatorsUseCases:
         assert result.window == 14
         assert result.timespan == "day"
         assert len(result.results) == 3
-        assert result.results[0].timespan == 1773028800000
+        assert result.results[0].timestamp == 1773028800000
         assert result.results[0].value == 150.5
     
     async def test_get_sma_returns_correct_data(self, indicators_use_cases):
