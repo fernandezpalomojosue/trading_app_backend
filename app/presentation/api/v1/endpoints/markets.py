@@ -14,7 +14,7 @@ from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
-from app.domain.repositories.portfolio_repository import PortfolioRepository
+from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
