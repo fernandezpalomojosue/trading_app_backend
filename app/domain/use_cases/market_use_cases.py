@@ -10,6 +10,7 @@ from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleS
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
 from app.utils.date_utils import get_last_trading_day
 import uuid
+from app.domain.entities.user import UserEntity
 
 class MarketUseCases(MarketService):
     """Market business logic use cases"""
@@ -130,7 +131,7 @@ class MarketUseCases(MarketService):
         
         return results
     
-    async def get_asset_details(self, current_user_id: uuid.UUID, symbol: str) -> Optional[Asset]:
+    async def get_asset_details(self, current_user: UserEntity, symbol: str) -> Optional[Asset]:
         """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
@@ -157,10 +158,10 @@ class MarketUseCases(MarketService):
             if ohlcv_data and len(ohlcv_data) > 0:
                 latest_data = ohlcv_data[0]  # Get the most recent day
 
-                is_holding = await self.portfolio_repository.is_a_holding(current_user_id, symbol)
+                is_holding = await self.portfolio_repository.is_a_holding(current_user.id, symbol)
                 
                 if is_holding:
-                    holding = await self.portfolio_repository.get_holding_by_symbol(current_user_id, symbol)
+                    holding = await self.portfolio_repository.get_holding_by_symbol(current_user.id, symbol)
                     holding.current_price = latest_data.get("c")
                     holding.total_value = holding.quantity * holding.current_price
                     holding.unrealized_pnl = holding.total_value - (holding.quantity * holding.average_price)

@@ -1,9 +1,8 @@
 # app/application/services/market_service.py
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from abc import ABC, abstractmethod
-
-from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.entities.user import UserEntity
+from app.domain.entities.market import MarketType
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse
 
 
@@ -21,7 +20,7 @@ class MarketService(ABC):
         pass
     
     @abstractmethod
-    async def get_asset_details(self, current_user, symbol: str) -> Optional[AssetResponse]:
+    async def get_asset_details(self, current_user: UserEntity, symbol: str) -> Optional[AssetResponse]:
         """Get detailed information for a specific asset"""
         pass
     
