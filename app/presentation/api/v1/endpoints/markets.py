@@ -14,6 +14,7 @@ from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
+from app.domain.repositories.portfolio_repository import PortfolioRepository
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
@@ -29,8 +30,9 @@ def get_market_service() -> MarketService:
         cache = MemoryMarketCache()
     
     # Create repository and use cases
-    repository = PolygonMarketClient()
-    return MarketUseCases(repository, cache)
+    market_repository = PolygonMarketClient()
+    portfolio_repository = PortfolioRepository()
+    return MarketUseCases(market_repository, cache, portfolio_repository)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
