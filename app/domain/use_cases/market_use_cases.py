@@ -129,7 +129,7 @@ class MarketUseCases(MarketService):
         
         return results
     
-    async def get_asset_details(self, symbol: str) -> Optional[Asset]:
+    async def get_asset_details(self, current_user_id: str, symbol: str) -> Optional[Asset]:
         """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
@@ -156,10 +156,10 @@ class MarketUseCases(MarketService):
             if ohlcv_data and len(ohlcv_data) > 0:
                 latest_data = ohlcv_data[0]  # Get the most recent day
 
-                is_holding = await self.portfolio_repository.is_a_holding(symbol)
+                is_holding = await self.portfolio_repository.is_a_holding(current_user_id, symbol)
                 
                 if is_holding:
-                    holding = await self.portfolio_repository.get_holding_by_symbol(symbol)
+                    holding = await self.portfolio_repository.get_holding_by_symbol(current_user_id, symbol)
                     holding.current_price = latest_data.get("c")
                     holding.total_value = holding.quantity * holding.current_price
                     holding.unrealized_pnl = holding.total_value - (holding.quantity * holding.average_price)

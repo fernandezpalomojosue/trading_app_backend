@@ -39,7 +39,7 @@ class PortfolioRepository(ABC):
         pass
 
     @abstractmethod
-    async def is_a_holding(self, symbol: str) -> bool:
+    async def is_a_holding(self, user_id: uuid.UUID, symbol: str) -> bool:
         pass
     
     @abstractmethod
