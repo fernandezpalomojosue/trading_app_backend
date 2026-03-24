@@ -62,6 +62,17 @@ class MockPortfolioRepository(PortfolioRepository):
                 holdings = self.data[user_key]
                 self.data[user_key] = [h for h in holdings if h.id != holding_id]
         return True
+
+    async def is_a_holding(self, symbol):
+        self._record_call('is_a_holding', symbol=symbol)
+        # Check if any holding has this symbol
+        for user_key in list(self.data.keys()):
+            if user_key.startswith('holdings_'):
+                holdings = self.data[user_key]
+                for holding in holdings:
+                    if holding.symbol == symbol:
+                        return True
+        return False
     
     async def create_transaction(self, transaction):
         self._record_call('create_transaction', transaction=transaction)
