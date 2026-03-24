@@ -34,7 +34,7 @@ def get_indicators_service() -> IndicatorsService:
     return IndicatorsUseCases(client, cache)
 
 
-@router.get("/{symbol}")
+@router.get("/{symbol}", response_model=dict)
 async def get_indicators(
     symbol: str,
     window: int = Query(14, ge=1, le=200),
