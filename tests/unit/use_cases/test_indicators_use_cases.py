@@ -37,8 +37,8 @@ class TestIndicatorsUseCases:
         assert result.window == 14
         assert result.timespan == "day"
         assert len(result.results) == 3
-        assert result.results[0].t == 1773028800000
-        assert result.results[0].v == 150.5
+        assert result.results[0].timespan == 1773028800000
+        assert result.results[0].value == 150.5
     
     async def test_get_sma_returns_correct_data(self, indicators_use_cases):
         """SMA data should be returned with correct structure"""
@@ -53,7 +53,7 @@ class TestIndicatorsUseCases:
         assert result.window == 20
         assert result.timespan == "day"
         assert len(result.results) == 3
-        assert result.results[0].v == 148.0
+        assert result.results[0].value == 148.0
     
     async def test_get_rsi_returns_correct_data(self, indicators_use_cases):
         """RSI data should be returned with correct structure"""
@@ -68,8 +68,8 @@ class TestIndicatorsUseCases:
         assert result.window == 14
         assert len(result.results) == 3
         # RSI values should be between 0 and 100
-        assert 0 <= result.results[0].v <= 100
-        assert result.results[0].v == 65.5
+        assert 0 <= result.results[0].value <= 100
+        assert result.results[0].value == 65.5
     
     async def test_get_macd_returns_correct_data(self, indicators_use_cases):
         """MACD data should be returned with correct structure"""
@@ -87,7 +87,7 @@ class TestIndicatorsUseCases:
         assert result.slow == 26
         assert result.signal_period == 9
         assert len(result.results) == 3
-        assert result.results[0].macd == 2.5
+        assert result.results[0].value == 2.5
         assert result.results[0].signal == 1.8
         assert result.results[0].histogram == 0.7
     
