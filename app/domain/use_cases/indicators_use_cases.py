@@ -170,7 +170,7 @@ class IndicatorsUseCases(IndicatorsService):
         results = [
             MACDDataPoint(
                 t=item.get("timestamp", 0),
-                macd=item.get("value", 0.0),
+                macd=item.get("macd", 0.0),
                 signal=item.get("signal", 0.0),
                 histogram=item.get("histogram", 0.0)
             )
