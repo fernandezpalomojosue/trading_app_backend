@@ -16,7 +16,7 @@ from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
-router = APIRouter(prefix="/indicators", tags=["indicators"])
+router = APIRouter()
 
 
 def get_indicators_service() -> IndicatorsService:
@@ -34,7 +34,7 @@ def get_indicators_service() -> IndicatorsService:
     return IndicatorsUseCases(client, cache)
 
 
-@router.get("/{symbol}/indicators", response_model=EMAResponse)
+@router.get("/{symbol}", response_model=list[dict])
 async def get_indicators(
     symbol: str,
     window: int = Query(14, ge=1, le=200, description="EMA window period"),
@@ -49,5 +49,5 @@ async def get_indicators(
     current_user = Depends(get_current_user_dependency)
     ):
     df = await indicators_service.get_indicators(symbol, window, fast, slow, signal, timespan, start_date, end_date, limit)
-    return df.tail(50).to_dict()
+    return df["results"][-50:]
 
