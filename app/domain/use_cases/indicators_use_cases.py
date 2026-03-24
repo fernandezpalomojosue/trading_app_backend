@@ -46,7 +46,7 @@ class IndicatorsUseCases(IndicatorsService):
         
         # Transform to DTO
         results = [
-            EMADataPoint(t=item.get("t", 0), v=item.get("v", 0.0))
+            EMADataPoint(t=item.get("timestamp", 0), v=item.get("value", 0.0))
             for item in raw_data
         ]
         
@@ -86,7 +86,7 @@ class IndicatorsUseCases(IndicatorsService):
         
         # Transform to DTO
         results = [
-            SMADataPoint(t=item.get("t", 0), v=item.get("v", 0.0))
+            SMADataPoint(t=item.get("timestamp", 0), v=item.get("value", 0.0))
             for item in raw_data
         ]
         
@@ -126,7 +126,7 @@ class IndicatorsUseCases(IndicatorsService):
         
         # Transform to DTO
         results = [
-            RSIDataPoint(t=item.get("t", 0), v=item.get("v", 0.0))
+            RSIDataPoint(t=item.get("timestamp", 0), v=item.get("value", 0.0))
             for item in raw_data
         ]
         
@@ -169,8 +169,8 @@ class IndicatorsUseCases(IndicatorsService):
         # Transform to DTO
         results = [
             MACDDataPoint(
-                t=item.get("t", 0),
-                macd=item.get("macd", 0.0),
+                t=item.get("timestamp", 0),
+                macd=item.get("value", 0.0),
                 signal=item.get("signal", 0.0),
                 histogram=item.get("histogram", 0.0)
             )
