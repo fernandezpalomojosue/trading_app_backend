@@ -24,9 +24,9 @@ class MockIndicatorsClient:
     ) -> List[Dict[str, Any]]:
         """Mock EMA data fetch"""
         return self.ema_data or [
-            {"t": 1773028800000, "v": 150.5},
-            {"t": 1773115200000, "v": 152.3},
-            {"t": 1773201600000, "v": 151.8}
+            {"timestamp": 1773028800000, "value": 150.5},
+            {"timestamp": 1773115200000, "value": 152.3},
+            {"timestamp": 1773201600000, "value": 151.8}
         ]
     
     async def fetch_sma(
@@ -40,9 +40,9 @@ class MockIndicatorsClient:
     ) -> List[Dict[str, Any]]:
         """Mock SMA data fetch"""
         return self.sma_data or [
-            {"t": 1773028800000, "v": 148.0},
-            {"t": 1773115200000, "v": 149.5},
-            {"t": 1773201600000, "v": 150.2}
+            {"timestamp": 1773028800000, "value": 148.0},
+            {"timestamp": 1773115200000, "value": 149.5},
+            {"timestamp": 1773201600000, "value": 150.2}
         ]
     
     async def fetch_rsi(
@@ -56,9 +56,9 @@ class MockIndicatorsClient:
     ) -> List[Dict[str, Any]]:
         """Mock RSI data fetch"""
         return self.rsi_data or [
-            {"t": 1773028800000, "v": 65.5},
-            {"t": 1773115200000, "v": 72.3},
-            {"t": 1773201600000, "v": 58.8}
+            {"timestamp": 1773028800000, "value": 65.5},
+            {"timestamp": 1773115200000, "value": 72.3},
+            {"timestamp": 1773201600000, "value": 58.8}
         ]
     
     async def fetch_macd(
@@ -74,9 +74,9 @@ class MockIndicatorsClient:
     ) -> List[Dict[str, Any]]:
         """Mock MACD data fetch"""
         return self.macd_data or [
-            {"t": 1773028800000, "macd": 2.5, "signal": 1.8, "histogram": 0.7},
-            {"t": 1773115200000, "macd": 3.2, "signal": 2.1, "histogram": 1.1},
-            {"t": 1773201600000, "macd": 1.8, "signal": 1.9, "histogram": -0.1}
+            {"timestamp": 1773028800000, "value": 2.5, "signal": 1.8, "histogram": 0.7},
+            {"timestamp": 1773115200000, "value": 3.2, "signal": 2.1, "histogram": 1.1},
+            {"timestamp": 1773201600000, "value": 1.8, "signal": 1.9, "histogram": -0.1}
         ]
 
 

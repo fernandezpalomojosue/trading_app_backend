@@ -22,8 +22,8 @@ class TestIndicatorsEndpoints:
             window=14,
             timespan="day",
             results=[
-                EMADataPoint(t=1773028800000, v=150.5),
-                EMADataPoint(t=1773115200000, v=152.3)
+                EMADataPoint(timestamp=1773028800000, value=150.5),
+                EMADataPoint(timestamp=1773115200000, value=152.3)
             ]
         )
         
@@ -46,8 +46,8 @@ class TestIndicatorsEndpoints:
             window=20,
             timespan="day",
             results=[
-                SMADataPoint(t=1773028800000, v=2800.0),
-                SMADataPoint(t=1773115200000, v=2810.5)
+                SMADataPoint(timestamp=1773028800000, value=2800.0),
+                SMADataPoint(timestamp=1773115200000, value=2810.5)
             ]
         )
         
@@ -69,8 +69,8 @@ class TestIndicatorsEndpoints:
             window=14,
             timespan="day",
             results=[
-                RSIDataPoint(t=1773028800000, v=65.5),
-                RSIDataPoint(t=1773115200000, v=72.3)
+                RSIDataPoint(timestamp=1773028800000, value=65.5),
+                RSIDataPoint(timestamp=1773115200000, value=72.3)
             ]
         )
         
@@ -94,8 +94,8 @@ class TestIndicatorsEndpoints:
             signal_period=9,
             timespan="day",
             results=[
-                MACDDataPoint(t=1773028800000, macd=2.5, signal=1.8, histogram=0.7),
-                MACDDataPoint(t=1773115200000, macd=3.2, signal=2.1, histogram=1.1)
+                MACDDataPoint(timestamp=1773028800000, value=2.5, signal=1.8, histogram=0.7),
+                MACDDataPoint(timestamp=1773115200000, value=3.2, signal=2.1, histogram=1.1)
             ]
         )
         

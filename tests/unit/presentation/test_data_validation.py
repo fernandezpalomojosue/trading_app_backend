@@ -5,6 +5,7 @@ Tests business rules for data validation, normalization, and error handling
 import pytest
 from app.domain.entities.market import MarketType
 from tests.fixtures.market_fixtures import MockMarketRepository, MockMarketDataCache
+from tests.fixtures.portfolio_fixtures import MockPortfolioRepository
 
 
 @pytest.mark.asyncio
@@ -18,11 +19,15 @@ class TestDataValidationAndNormalization:
     @pytest.fixture
     def mock_repository(self):
         return MockMarketRepository()
+
+    @pytest.fixture
+    def mock_portfolio_repository(self):
+        return MockPortfolioRepository()
     
     @pytest.fixture
-    def market_use_cases(self, mock_repository, mock_cache):
+    def market_use_cases(self, mock_repository, mock_cache, mock_portfolio_repository):
         from app.domain.use_cases.market_use_cases import MarketUseCases
-        return MarketUseCases(mock_repository, mock_cache)
+        return MarketUseCases(mock_repository, mock_cache, mock_portfolio_repository)
     
     async def test_validation_query_minimum_length(self, market_use_cases):
         """Search query should have minimum length of 2 characters"""

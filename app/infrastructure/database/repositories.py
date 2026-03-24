@@ -231,6 +231,12 @@ class SQLPortfolioRepository(PortfolioRepository):
             return True
         
         return False
+
+    async def is_a_holding(self, symbol: str) ->bool:
+        statement = select(PortfolioHoldingSQLModel).where(PortfolioHoldingSQLModel.symbol == symbol)
+        holding_model = self.session.exec(statement).first()
+        
+        return holding_model is not None
     
     async def create_transaction(self, transaction: Transaction) -> Transaction:
         """Create a new transaction"""

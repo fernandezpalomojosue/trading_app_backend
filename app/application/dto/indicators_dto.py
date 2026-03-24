@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 class EMADataPoint(BaseModel):
     """Individual EMA data point"""
-    t: int  # Timestamp in milliseconds
-    v: float  # EMA value
+    timestamp: int  # Timestamp in milliseconds
+    value: float  # EMA value
 
 
 class EMAResponse(BaseModel):
@@ -19,8 +19,8 @@ class EMAResponse(BaseModel):
 
 class SMADataPoint(BaseModel):
     """Individual SMA data point"""
-    t: int  # Timestamp in milliseconds
-    v: float  # SMA value
+    timestamp: int  # Timestamp in milliseconds
+    value: float  # SMA value
 
 
 class SMAResponse(BaseModel):
@@ -33,8 +33,8 @@ class SMAResponse(BaseModel):
 
 class RSIDataPoint(BaseModel):
     """Individual RSI data point"""
-    t: int  # Timestamp in milliseconds
-    v: float  # RSI value (0-100)
+    timestamp: int  # Timestamp in milliseconds
+    value: float  # RSI value (0-100)
 
 
 class RSIResponse(BaseModel):
@@ -47,8 +47,8 @@ class RSIResponse(BaseModel):
 
 class MACDDataPoint(BaseModel):
     """Individual MACD data point"""
-    t: int  # Timestamp in milliseconds
-    macd: float  # MACD line value
+    timestamp: int  # Timestamp in milliseconds
+    value: float  # MACD line value
     signal: float  # Signal line value
     histogram: float  # Histogram value (macd - signal)
 
