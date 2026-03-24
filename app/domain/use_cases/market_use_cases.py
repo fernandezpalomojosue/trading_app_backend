@@ -1,9 +1,11 @@
 # app/domain/use_cases/market_use_cases.py
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
 from app.application.services.market_service import MarketService
+from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
 from app.utils.date_utils import get_last_trading_day
@@ -14,11 +16,13 @@ class MarketUseCases(MarketService):
     def __init__(
         self,
         market_repository: MarketRepository,
-        cache_service: MarketDataCache
+        cache_service: MarketDataCache,
+        portfolio_repository: PortfolioRepository
     ):
         self.market_repository = market_repository
         self.cache_service = cache_service
         self.data_processor = MarketDataProcessor()
+        self.portfolio_repository = portfolio_repository
     
     def _sort_by_volume(self, raw_data: Dict[str, Any], limit: int = 100) -> List[Dict[str, Any]]:
         """Sort raw market data by volume descending and apply limit
@@ -151,6 +155,18 @@ class MarketUseCases(MarketService):
             # Add OHLCV data (market_data) - fetch_candlestick_data returns a list directly
             if ohlcv_data and len(ohlcv_data) > 0:
                 latest_data = ohlcv_data[0]  # Get the most recent day
+
+                is_holding = await self.portfolio_repository.is_a_holding(symbol)
+                
+                if is_holding:
+                    holding = await self.portfolio_repository.get_holding_by_symbol(symbol)
+                    holding.current_price = latest_data.get("c")
+                    holding.total_value = holding.quantity * holding.current_price
+                    holding.unrealized_pnl = holding.total_value - (holding.quantity * holding.average_price)
+                    holding.pnl_percentage = (holding.unrealized_pnl / (holding.quantity * holding.average_price) * 100) if (holding.quantity * holding.average_price) > 0 else 0.0
+
+                    await self.portfolio_repository.update_holding(holding)
+
                 combined_data.update({
                     "price": latest_data.get("c"),
                     "change": latest_data.get("c", 0) - latest_data.get("o", 0),

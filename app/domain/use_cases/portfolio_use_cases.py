@@ -37,6 +37,10 @@ class PortfolioRepository(ABC):
     @abstractmethod
     async def update_holding(self, holding: PortfolioHolding) -> PortfolioHolding:
         pass
+
+    @abstractmethod
+    async def is_a_holding(self, symbol: str) -> bool:
+        pass
     
     @abstractmethod
     async def delete_holding(self, holding_id: uuid.UUID) -> bool:
