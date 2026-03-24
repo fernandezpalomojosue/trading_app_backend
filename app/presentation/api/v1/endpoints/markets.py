@@ -17,6 +17,7 @@ from app.infrastructure.security.auth_dependencies import get_current_user_depen
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.infrastructure.database.repositories import SQLPortfolioRepository
 from app.db.base import get_session 
+from sqlmodel import Session
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
