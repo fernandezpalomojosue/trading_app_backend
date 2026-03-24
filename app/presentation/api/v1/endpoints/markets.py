@@ -30,9 +30,10 @@ def get_market_service() -> MarketService:
     else:
         cache = MemoryMarketCache()
     
+    session = SessionLocal()
     # Create repository and use cases
     market_repository = PolygonMarketClient()
-    portfolio_repository = SQLPortfolioRepository()
+    portfolio_repository = SQLPortfolioRepository(session)
     return MarketUseCases(market_repository, cache, portfolio_repository)
 
 
