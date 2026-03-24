@@ -21,7 +21,7 @@ class MarketService(ABC):
         pass
     
     @abstractmethod
-    async def get_asset_details(self, symbol: str) -> Optional[AssetResponse]:
+    async def get_asset_details(self, current_user, symbol: str) -> Optional[AssetResponse]:
         """Get detailed information for a specific asset"""
         pass
     

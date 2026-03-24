@@ -9,6 +9,7 @@ from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
 from app.utils.date_utils import get_last_trading_day
+import uuid
 
 class MarketUseCases(MarketService):
     """Market business logic use cases"""
@@ -129,7 +130,7 @@ class MarketUseCases(MarketService):
         
         return results
     
-    async def get_asset_details(self, current_user_id: str, symbol: str) -> Optional[Asset]:
+    async def get_asset_details(self, current_user_id: uuid.UUID, symbol: str) -> Optional[Asset]:
         """Get detailed asset information combining market data and ticker details - DOMAIN ORCHESTRATION"""
         cache_key = f"asset_details_{symbol}"
     
