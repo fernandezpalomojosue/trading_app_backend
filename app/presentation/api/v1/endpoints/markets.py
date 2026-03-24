@@ -16,11 +16,12 @@ from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.infrastructure.database.repositories import SQLPortfolioRepository
+from app.db.base import get_session 
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
 
-def get_market_service() -> MarketService:
+def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     """Get market service instance (use cases implementation)"""
     settings = get_settings()
     
@@ -30,10 +31,9 @@ def get_market_service() -> MarketService:
     else:
         cache = MemoryMarketCache()
     
-    session = SessionLocal()
     # Create repository and use cases
     market_repository = PolygonMarketClient()
-    portfolio_repository = SQLPortfolioRepository(session)
+    portfolio_repository = SQLPortfolioRepository(db)
     return MarketUseCases(market_repository, cache, portfolio_repository)
 
 
