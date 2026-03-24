@@ -34,20 +34,39 @@ def get_indicators_service() -> IndicatorsService:
     return IndicatorsUseCases(client, cache)
 
 
-@router.get("/{symbol}", response_model=list[dict])
+@router.get("/{symbol}")
 async def get_indicators(
     symbol: str,
-    window: int = Query(14, ge=1, le=200, description="EMA window period"),
-    fast: int = Query(12, ge=1, le=200, description="MACD fast period"),
-    slow: int = Query(26, ge=1, le=200, description="MACD slow period"),
-    signal: int = Query(9, ge=1, le=200, description="MACD signal period"),
-    timespan: str = Query("day", description="Timespan: minute, hour, day, week, month"),
-    start_date: Optional[str] = Query(None, description="Start date in YYYY-MM-DD format"),
-    end_date: Optional[str] = Query(None, description="End date in YYYY-MM-DD format"),
-    limit: int = Query(100, ge=1, le=5000, description="Number of data points to return"),
+    window: int = Query(14, ge=1, le=200),
+    fast: int = Query(12, ge=1, le=200),
+    slow: int = Query(26, ge=1, le=200),
+    signal: int = Query(9, ge=1, le=200),
+    timespan: str = Query("day"),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=5000),
     indicators_service: IndicatorsService = Depends(get_indicators_service),
     current_user = Depends(get_current_user_dependency)
-    ):
-    df = await indicators_service.get_indicators(symbol, window, fast, slow, signal, timespan, start_date, end_date, limit)
-    return df["results"][-50:]
+):
+    # Validación
+    if fast >= slow:
+        raise HTTPException(status_code=400, detail="fast must be less than slow")
+
+    data = await indicators_service.get_indicators(
+        symbol,
+        window,
+        fast,
+        slow,
+        signal,
+        timespan,
+        start_date,
+        end_date,
+        limit
+    )
+
+    # limitar resultados
+    if "results" in data:
+        data["results"] = data["results"][-limit:]
+
+    return data
 
