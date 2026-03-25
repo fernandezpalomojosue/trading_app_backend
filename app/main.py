@@ -7,24 +7,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import create_db_and_tables, engine
 from app.presentation.api.v1.endpoints.routers import api_router
+from sqlalchemy import inspect
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Ciclo de vida de la aplicación.
-    - Startup: crea tablas solo en desarrollo/testing (no en producción)
+    - Startup: crea tablas si no existen (verificación automática)
     - Shutdown: cierra conexiones
     """
     print(f"Starting app in {settings.ENVIRONMENT} mode...")
     
-    # Only create tables automatically in development and testing
-    if settings.ENVIRONMENT in ["development", "testing"]:
-        print("Creating tables automatically (development/testing mode)...")
+    # Check if tables exist, create if missing
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
+    required_tables = ['users', 'portfolio_holdings', 'transactions']
+    
+    missing_tables = [table for table in required_tables if table not in existing_tables]
+    
+    if missing_tables:
+        print(f"Missing tables detected: {missing_tables}")
+        print("Creating tables...")
         create_db_and_tables()
+        print("Tables created successfully!")
     else:
-        print("Production mode detected - skipping automatic table creation")
-        print("Please run migrations: alembic upgrade head")
+        print(f"All required tables exist: {required_tables}")
     
     yield
     print("Shutting down app...")
