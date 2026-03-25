@@ -1,8 +1,12 @@
 from typing import Optional
 import pandas as pd
 import ta
+import logging
+from datetime import datetime
 from app.application.services.indicators_service import IndicatorsService
 from app.infrastructure.external.market_client import PolygonMarketClient
+
+logger = logging.getLogger(__name__)
 
 
 class IndicatorsUseCases(IndicatorsService):
@@ -44,6 +48,15 @@ class IndicatorsUseCases(IndicatorsService):
 
         df = pd.DataFrame(raw_data)
         df = df.sort_values("t")
+        
+        # Log date range for debugging
+        if len(df) > 0:
+            first_ts = df["t"].iloc[0]
+            last_ts = df["t"].iloc[-1]
+            first_date = datetime.fromtimestamp(first_ts / 1000).strftime('%Y-%m-%d')
+            last_date = datetime.fromtimestamp(last_ts / 1000).strftime('%Y-%m-%d')
+            logger.info(f"Indicators for {symbol}: requested from {start_date} to {end_date}, got {len(df)} records from {first_date} to {last_date}")
+        
         df["close"] = df["c"]
 
         # Validación mínima
