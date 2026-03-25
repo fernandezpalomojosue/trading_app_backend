@@ -28,7 +28,7 @@ class IndicatorsUseCases(IndicatorsService):
         limit: int = 100
     ) -> dict:
 
-        cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}_{limit}"
+        cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}"
 
         cached = await self.cache.get(cache_key)
         if cached:
@@ -40,7 +40,7 @@ class IndicatorsUseCases(IndicatorsService):
             multiplier=1,
             start_date=start_date,
             end_date=end_date,
-            limit=limit
+            limit=5000  # Fetch max for caching, endpoint will slice
         )
 
         if not raw_data:
