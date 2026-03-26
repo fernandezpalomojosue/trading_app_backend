@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 from app.application.services.indicators_service import IndicatorsService
+from app.application.services.signal_engine_service import SignalEngineService
 from app.infrastructure.external.market_client import PolygonMarketClient
 
 logger = logging.getLogger(__name__)
@@ -12,9 +13,10 @@ logger = logging.getLogger(__name__)
 
 class IndicatorsUseCases(IndicatorsService):
 
-    def __init__(self, market_client: PolygonMarketClient, cache_service):
+    def __init__(self, market_client: PolygonMarketClient, cache_service, signal_engine: Optional[SignalEngineService] = None):
         self.market_client = market_client
         self.cache = cache_service
+        self.signal_engine = signal_engine or SignalEngineService()
 
     async def get_indicators(
         self,
@@ -85,10 +87,28 @@ class IndicatorsUseCases(IndicatorsService):
 
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
 
+        # Prepare data for signal calculation
+        signal_data = df[["rsi", "macd", "signal", "ema", "c"]].to_dict(orient="records")
+        
+        # Calculate trading signals
+        signals = self.signal_engine.calculate_signals(signal_data)
+        
         results = df[[
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
-
+        
+        # Add signals to results
+        for i, signal in enumerate(signals):
+            if i < len(results):
+                results[i]["order_signal"] = signal
+        
+        # Replace NaN with None for JSON serialization
+        import math
+        for record in results:
+            for key, value in record.items():
+                if isinstance(value, float) and math.isnan(value):
+                    record[key] = None
+        
         response = CombinedIndicatorsResponse(
             symbol=symbol,
             results=results
