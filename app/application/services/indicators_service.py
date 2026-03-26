@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from app.application.dto.indicators_dto import (
-    MACDResponse
+    CombinedIndicatorsResponse
 )
 
 
@@ -22,6 +22,6 @@ class IndicatorsService(ABC):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 100
-    ) -> dict:
+    ) -> CombinedIndicatorsResponse:
         """Get all technical indicators for a symbol"""
         pass
