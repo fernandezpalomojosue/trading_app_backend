@@ -9,7 +9,7 @@ from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 class TestIndicatorsEndpoint:
     """Integration tests for indicators endpoint with DTO"""
 
-    def test_endpoint_returns_valid_dto_structure(self, client: TestClient, auth_headers):
+    def test_endpoint_returns_valid_dto_structure(self, client: TestClient, authenticated_user):
         """Should return response matching CombinedIndicatorsResponse structure"""
         # Mock the indicators service to avoid external API calls
         mock_response = CombinedIndicatorsResponse(
@@ -35,7 +35,7 @@ class TestIndicatorsEndpoint:
             
             response = client.get(
                 "/api/v1/indicators/AAPL?window=14&fast=12&slow=26&signal=9&timespan=day",
-                headers=auth_headers
+                headers=authenticated_user["headers"]
             )
             
             assert response.status_code == 200
@@ -63,18 +63,18 @@ class TestIndicatorsEndpoint:
         # Should fail without auth (401 or 403)
         assert response.status_code in [401, 403]
 
-    def test_endpoint_validates_parameters(self, client: TestClient, auth_headers):
+    def test_endpoint_validates_parameters(self, client: TestClient, authenticated_user):
         """Should validate indicator parameters"""
         # Test fast >= slow validation
         response = client.get(
             "/api/v1/indicators/AAPL?fast=30&slow=20",  # fast > slow
-            headers=auth_headers
+            headers=authenticated_user["headers"]
         )
         
         assert response.status_code == 400
         assert "fast" in response.json().get("detail", "").lower()
 
-    def test_endpoint_handles_empty_results(self, client: TestClient, auth_headers):
+    def test_endpoint_handles_empty_results(self, client: TestClient, authenticated_user):
         """Should handle empty results gracefully"""
         mock_response = CombinedIndicatorsResponse(
             symbol="AAPL",
@@ -88,7 +88,7 @@ class TestIndicatorsEndpoint:
             
             response = client.get(
                 "/api/v1/indicators/AAPL",
-                headers=auth_headers
+                headers=authenticated_user["headers"]
             )
             
             assert response.status_code == 200
@@ -96,7 +96,7 @@ class TestIndicatorsEndpoint:
             assert data["symbol"] == "AAPL"
             assert data["results"] == []
 
-    def test_endpoint_respects_limit_parameter(self, client: TestClient, auth_headers):
+    def test_endpoint_respects_limit_parameter(self, client: TestClient, authenticated_user):
         """Should respect the limit parameter"""
         # Create 10 mock results
         mock_results = [
@@ -125,7 +125,7 @@ class TestIndicatorsEndpoint:
             
             response = client.get(
                 "/api/v1/indicators/AAPL?limit=5",
-                headers=auth_headers
+                headers=authenticated_user["headers"]
             )
             
             assert response.status_code == 200
@@ -133,7 +133,7 @@ class TestIndicatorsEndpoint:
             # The endpoint should slice the results based on limit
             assert len(data["results"]) <= 5
 
-    def test_endpoint_response_matches_dto_schema(self, client: TestClient, auth_headers):
+    def test_endpoint_response_matches_dto_schema(self, client: TestClient, authenticated_user):
         """Should return data that validates against CombinedIndicatorsResponse"""
         mock_response = CombinedIndicatorsResponse(
             symbol="MSFT",
@@ -158,7 +158,7 @@ class TestIndicatorsEndpoint:
             
             response = client.get(
                 "/api/v1/indicators/MSFT",
-                headers=auth_headers
+                headers=authenticated_user["headers"]
             )
             
             assert response.status_code == 200
