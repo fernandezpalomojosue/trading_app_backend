@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 from app.application.services.indicators_service import IndicatorsService
-from app.application.services.signal_engine_service import SignalEngineService
+from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 
 logger = logging.getLogger(__name__)
@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 class IndicatorsUseCases(IndicatorsService):
 
-    def __init__(self, market_client: PolygonMarketClient, cache_service, signal_engine: Optional[SignalEngineService] = None):
+    def __init__(self, market_client: PolygonMarketClient, cache_service, signal_engine: Optional[SignalEngineUseCases] = None):
         self.market_client = market_client
         self.cache = cache_service
-        self.signal_engine = signal_engine or SignalEngineService()
+        self.signal_engine = signal_engine or SignalEngineUseCases()
 
     async def get_indicators(
         self,

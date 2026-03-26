@@ -6,7 +6,7 @@ import pandas as pd
 
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
-from app.application.services.signal_engine_service import SignalEngineService
+from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 
 
 @pytest.fixture
