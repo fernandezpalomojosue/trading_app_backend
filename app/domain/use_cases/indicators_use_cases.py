@@ -88,7 +88,7 @@ class IndicatorsUseCases(IndicatorsService):
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
 
         # Prepare data for signal calculation
-        signal_data = df[["rsi", "macd", "signal", "ema", "c"]].to_dict(orient="records")
+        signal_data = df[["rsi", "macd", "signal", "ema", "close"]].to_dict(orient="records")
         
         # Calculate trading signals (returns tuples of signal and reason)
         signal_results = self.signal_engine.calculate_signals(signal_data)
