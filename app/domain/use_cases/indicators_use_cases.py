@@ -41,7 +41,7 @@ class IndicatorsUseCases(IndicatorsService):
             multiplier=1,
             start_date=start_date,
             end_date=end_date,
-            limit=5000  # Fetch max for caching, endpoint will slice
+            limit=5000
         )
 
         if not raw_data:
@@ -83,7 +83,7 @@ class IndicatorsUseCases(IndicatorsService):
         df["signal"] = macd.macd_signal()
         df["histogram"] = macd.macd_diff()
 
-        df = df.dropna(subset=["ema", "sma", "rsi", "macd"])
+        df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
 
         results = df[[
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
