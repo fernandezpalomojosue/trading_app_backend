@@ -90,17 +90,18 @@ class IndicatorsUseCases(IndicatorsService):
         # Prepare data for signal calculation
         signal_data = df[["rsi", "macd", "signal", "ema", "c"]].to_dict(orient="records")
         
-        # Calculate trading signals
-        signals = self.signal_engine.calculate_signals(signal_data)
+        # Calculate trading signals (returns tuples of signal and reason)
+        signal_results = self.signal_engine.calculate_signals(signal_data)
         
         results = df[[
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
         
-        # Add signals to results
-        for i, signal in enumerate(signals):
+        # Add signals and reasons to results
+        for i, (signal, reason) in enumerate(signal_results):
             if i < len(results):
                 results[i]["order_signal"] = signal
+                results[i]["signal_reason"] = reason
         
         # Replace NaN with None for JSON serialization
         import math

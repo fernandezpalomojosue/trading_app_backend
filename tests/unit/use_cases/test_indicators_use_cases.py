@@ -109,6 +109,7 @@ class TestIndicatorsUseCasesDTO:
             assert "signal" in first_result
             assert "histogram" in first_result
             assert "order_signal" in first_result
+            assert "signal_reason" in first_result
 
     @pytest.mark.asyncio
     async def test_returns_dto_for_empty_data(self, indicators_use_cases, mock_market_client):
@@ -172,8 +173,8 @@ class TestIndicatorsUseCasesDTO:
             assert isinstance(point.histogram, float)
 
     @pytest.mark.asyncio
-    async def test_order_signal_is_populated(self, indicators_use_cases):
-        """Should have order_signal populated with buy/sell/hold values"""
+    async def test_order_signal_and_reason_are_populated(self, indicators_use_cases):
+        """Should have order_signal and signal_reason populated"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
             window=14,
@@ -185,3 +186,5 @@ class TestIndicatorsUseCasesDTO:
         
         for point in result.results:
             assert point.order_signal in ["buy", "sell", "hold"]
+            assert point.signal_reason is not None
+            assert len(point.signal_reason) > 0
