@@ -1,13 +1,13 @@
 # tests/unit/application/test_signal_engine_service.py
 import pytest
 import math
-from app.application.services.signal_engine_service import SignalEngineService
+from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 
 
 @pytest.fixture
 def signal_engine():
-    """Fixture providing SignalEngineService instance"""
-    return SignalEngineService()
+    """Fixture providing SignalEngineUseCases instance"""
+    return SignalEngineUseCases()
 
 
 class TestSignalEngineServiceBuySignals:
