@@ -24,8 +24,10 @@ class TestSignalEngineServiceBuySignals:
             "ema": 145.0, "c": 150.0
         }
         
-        result = signal_engine._calculate_single_signal(current_point, prev_point)
-        assert result == "buy"
+        signal, reason = signal_engine._calculate_single_signal(current_point, prev_point)
+        assert signal == "buy"
+        assert "BUY:" in reason
+        assert "RSI" in reason
 
 
 class TestSignalEngineServiceSellSignals:
@@ -42,8 +44,10 @@ class TestSignalEngineServiceSellSignals:
             "ema": 155.0, "c": 145.0
         }
         
-        result = signal_engine._calculate_single_signal(current_point, prev_point)
-        assert result == "sell"
+        signal, reason = signal_engine._calculate_single_signal(current_point, prev_point)
+        assert signal == "sell"
+        assert "SELL:" in reason
+        assert "RSI" in reason
 
 
 class TestSignalEngineServiceCalculateSignals:
@@ -54,7 +58,10 @@ class TestSignalEngineServiceCalculateSignals:
         data = [{"rsi": 25, "macd": 0.9, "signal": 0.8, "ema": 145.0, "c": 150.0}]
         
         results = signal_engine.calculate_signals(data)
-        assert results == ["hold"]
+        assert len(results) == 1
+        signal, reason = results[0]
+        assert signal == "hold"
+        assert "No previous data" in reason
 
     def test_multiple_points_with_buy_and_hold(self, signal_engine):
         """Should calculate signals for multiple data points"""
@@ -65,7 +72,10 @@ class TestSignalEngineServiceCalculateSignals:
         ]
         
         results = signal_engine.calculate_signals(data)
-        assert results == ["hold", "buy", "hold"]
+        assert len(results) == 3
+        assert results[0][0] == "hold"  # First point is always hold
+        assert results[1][0] == "buy"   # Second point meets buy conditions
+        assert results[2][0] == "hold"  # Third point is hold
 
     def test_empty_list_returns_empty(self, signal_engine):
         """Empty input should return empty list"""
@@ -81,13 +91,15 @@ class TestSignalEngineServiceEdgeCases:
         prev_point = {"rsi": 35, "macd": 0.5, "signal": 0.8, "ema": 145.0, "c": 150.0}
         current_point = {"rsi": None, "macd": 0.9, "signal": 0.8, "ema": 145.0, "c": 150.0}
         
-        result = signal_engine._calculate_single_signal(current_point, prev_point)
-        assert result == "hold"
+        signal, reason = signal_engine._calculate_single_signal(current_point, prev_point)
+        assert signal == "hold"
+        assert "Insufficient data" in reason
 
     def test_hold_when_any_value_is_nan(self, signal_engine):
         """Should return HOLD when any required value is NaN"""
         prev_point = {"rsi": 35, "macd": 0.5, "signal": 0.8, "ema": 145.0, "c": 150.0}
         current_point = {"rsi": 25, "macd": float('nan'), "signal": 0.8, "ema": 145.0, "c": 150.0}
         
-        result = signal_engine._calculate_single_signal(current_point, prev_point)
-        assert result == "hold"
+        signal, reason = signal_engine._calculate_single_signal(current_point, prev_point)
+        assert signal == "hold"
+        assert "Insufficient data" in reason
