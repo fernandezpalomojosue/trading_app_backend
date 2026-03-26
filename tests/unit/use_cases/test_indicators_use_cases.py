@@ -6,6 +6,7 @@ import pandas as pd
 
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
+from app.application.services.signal_engine_service import SignalEngineService
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def mock_cache():
 
 @pytest.fixture
 def indicators_use_cases(mock_market_client, mock_cache):
-    """Fixture for IndicatorsUseCases with mocked dependencies"""
+    """Fixture for IndicatorsUseCases with mocked dependencies including signal engine"""
     return IndicatorsUseCases(mock_market_client, mock_cache)
 
 
@@ -171,8 +172,8 @@ class TestIndicatorsUseCasesDTO:
             assert isinstance(point.histogram, float)
 
     @pytest.mark.asyncio
-    async def test_order_signal_is_none_by_default(self, indicators_use_cases):
-        """Should have order_signal as None when not set"""
+    async def test_order_signal_is_populated(self, indicators_use_cases):
+        """Should have order_signal populated with buy/sell/hold values"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
             window=14,
@@ -183,4 +184,4 @@ class TestIndicatorsUseCasesDTO:
         )
         
         for point in result.results:
-            assert point.order_signal is None
+            assert point.order_signal in ["buy", "sell", "hold"]
