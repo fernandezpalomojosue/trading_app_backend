@@ -1,63 +1,21 @@
 # app/application/dto/indicators_dto.py
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 
-class EMADataPoint(BaseModel):
-    """Individual EMA data point"""
-    timestamp: int  # Timestamp in milliseconds
-    value: float  # EMA value
-
-
-class EMAResponse(BaseModel):
-    """DTO for EMA indicator response"""
-    symbol: str
-    window: int
-    timespan: str
-    results: List[EMADataPoint]
-
-
-class SMADataPoint(BaseModel):
-    """Individual SMA data point"""
-    timestamp: int  # Timestamp in milliseconds
-    value: float  # SMA value
-
-
-class SMAResponse(BaseModel):
-    """DTO for SMA indicator response"""
-    symbol: str
-    window: int
-    timespan: str
-    results: List[SMADataPoint]
-
-
-class RSIDataPoint(BaseModel):
-    """Individual RSI data point"""
-    timestamp: int  # Timestamp in milliseconds
-    value: float  # RSI value (0-100)
-
-
-class RSIResponse(BaseModel):
-    """DTO for RSI indicator response"""
-    symbol: str
-    window: int
-    timespan: str
-    results: List[RSIDataPoint]
-
-
-class MACDDataPoint(BaseModel):
-    """Individual MACD data point"""
-    timestamp: int  # Timestamp in milliseconds
-    value: float  # MACD line value
+class CombinedIndicatorDataPoint(BaseModel):
+    """Combined data point with all technical indicators"""
+    t: int  # Timestamp in milliseconds
+    ema: float  # EMA value
+    sma: float  # SMA value
+    rsi: float  # RSI value (0-100)
+    macd: float  # MACD line value
     signal: float  # Signal line value
     histogram: float  # Histogram value (macd - signal)
+    order_signal: Optional[str] = None  # Future field for trading signals (buy/sell/hold)
 
 
-class MACDResponse(BaseModel):
-    """DTO for MACD indicator response"""
+class CombinedIndicatorsResponse(BaseModel):
+    """DTO for combined indicators response"""
     symbol: str
-    fast: int  # Fast EMA window
-    slow: int  # Slow EMA window
-    signal_period: int  # Signal EMA window
-    timespan: str
-    results: List[MACDDataPoint]
+    results: List[CombinedIndicatorDataPoint]

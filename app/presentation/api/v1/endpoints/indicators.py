@@ -3,10 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
 
 from app.application.dto.indicators_dto import (
-    EMAResponse,
-    SMAResponse,
-    RSIResponse,
-    MACDResponse
+    CombinedIndicatorsResponse
 )
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
@@ -34,7 +31,7 @@ def get_indicators_service() -> IndicatorsService:
     return IndicatorsUseCases(client, cache)
 
 
-@router.get("/{symbol}", response_model=dict)
+@router.get("/{symbol}", response_model=CombinedIndicatorsResponse)
 async def get_indicators(
     symbol: str,
     window: int = Query(14, ge=1, le=200),

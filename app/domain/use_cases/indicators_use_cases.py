@@ -3,6 +3,7 @@ import pandas as pd
 import ta
 import logging
 from datetime import datetime
+from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 from app.application.services.indicators_service import IndicatorsService
 from app.infrastructure.external.market_client import PolygonMarketClient
 
@@ -26,7 +27,7 @@ class IndicatorsUseCases(IndicatorsService):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 100
-    ) -> dict:
+    ) -> CombinedIndicatorsResponse:
 
         cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}"
 
@@ -44,7 +45,7 @@ class IndicatorsUseCases(IndicatorsService):
         )
 
         if not raw_data:
-            return {"symbol": symbol, "results": []}
+            return CombinedIndicatorsResponse(symbol=symbol, results=[])
 
         df = pd.DataFrame(raw_data)
         df = df.sort_values("t")
@@ -61,7 +62,7 @@ class IndicatorsUseCases(IndicatorsService):
 
         # Validación mínima
         if len(df) < max(window, slow):
-            return {"symbol": symbol, "results": []}
+            return CombinedIndicatorsResponse(symbol=symbol, results=[])
 
         # =====================
         # INDICADORES
@@ -88,11 +89,11 @@ class IndicatorsUseCases(IndicatorsService):
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
 
-        response = {
-            "symbol": symbol,
-            "results": results
-        }
+        response = CombinedIndicatorsResponse(
+            symbol=symbol,
+            results=results
+        )
 
-        await self.cache.set(cache_key, response, ttl=60)
+        await self.cache.set(cache_key, response.model_dump(), ttl=60)
 
         return response
