@@ -1,6 +1,9 @@
 # tests/integration/test_indicators_endpoint.py
 import pytest
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
+
+from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 
 
 class TestIndicatorsEndpoint:
