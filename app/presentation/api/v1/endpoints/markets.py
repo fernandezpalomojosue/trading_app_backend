@@ -160,9 +160,6 @@ async def get_favorite_stocks(
     """Get user's favorite stocks"""
     try:
         favorites = await market_service.get_user_favorite_stocks(current_user.id)
-        return FavoriteStockListResponse(
-            favorites=favorites,
-            total=len(favorites)
-        )
+        return favorites
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
