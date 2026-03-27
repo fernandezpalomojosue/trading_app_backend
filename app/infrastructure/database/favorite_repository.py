@@ -2,13 +2,14 @@
 from typing import List, Optional
 from uuid import UUID
 from sqlmodel import Session, select
+from abc import ABC, abstractmethod
 
 from app.domain.repositories.market_repository import MarketRepository
 from app.domain.entities.favorite_stock import FavoriteStockEntity
 from app.infrastructure.database.models import FavoriteStockSQLModel
 
 
-class SQLFavoriteStockRepository(MarketRepository):
+class SQLFavoriteStockRepository(ABC):
     
     def __init__(self, session: Session):
         self.session = session

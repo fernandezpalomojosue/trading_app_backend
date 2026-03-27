@@ -40,7 +40,7 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     market_repository = PolygonMarketClient()
     portfolio_repository = SQLPortfolioRepository(db)
     
-    class MarketRepository(MarketRepository):
+    class CompositeMarketRepository(MarketRepository):
         def __init__(self, base_repo: MarketRepository, favorite_repo: SQLFavoriteStockRepository):
             self.base_repo = base_repo
             self.favorite_repo = favorite_repo
@@ -75,8 +75,9 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
             return await self.favorite_repo.get_favorite_by_user_and_symbol(user_id, symbol)
     
     favorite_stock_repository = SQLFavoriteStockRepository(db)
+    composite_repository = CompositeMarketRepository(market_repository, favorite_stock_repository)
     
-    return MarketUseCases(market_repository, cache, portfolio_repository, favorite_stock_repository)
+    return MarketUseCases(composite_repository, cache, portfolio_repository)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
