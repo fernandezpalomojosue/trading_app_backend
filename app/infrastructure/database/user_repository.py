@@ -78,3 +78,21 @@ class SQLUserRepository(UserRepository):
         """Get user model with password (for authentication)"""
         statement = select(UserSQLModel).where(UserSQLModel.email == email)
         return self.session.exec(statement).first()
+    
+    async def delete_user(self, user_id: UUID) -> bool:
+        """Delete user from database"""
+        statement = select(UserSQLModel).where(UserSQLModel.id == user_id)
+        user_model = self.session.exec(statement).first()
+        
+        if user_model:
+            self.session.delete(user_model)
+            self.session.commit()
+            return True
+        
+        return False
+    
+    async def user_exists(self, email: str) -> bool:
+        """Check if user exists by email"""
+        statement = select(UserSQLModel).where(UserSQLModel.email == email)
+        user_model = self.session.exec(statement).first()
+        return user_model is not None
