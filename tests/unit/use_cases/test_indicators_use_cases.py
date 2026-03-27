@@ -6,6 +6,7 @@ import pandas as pd
 
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
+from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def mock_cache():
 
 @pytest.fixture
 def indicators_use_cases(mock_market_client, mock_cache):
-    """Fixture for IndicatorsUseCases with mocked dependencies"""
+    """Fixture for IndicatorsUseCases with mocked dependencies including signal engine"""
     return IndicatorsUseCases(mock_market_client, mock_cache)
 
 
@@ -108,6 +109,7 @@ class TestIndicatorsUseCasesDTO:
             assert "signal" in first_result
             assert "histogram" in first_result
             assert "order_signal" in first_result
+            assert "signal_reason" in first_result
 
     @pytest.mark.asyncio
     async def test_returns_dto_for_empty_data(self, indicators_use_cases, mock_market_client):
@@ -171,8 +173,8 @@ class TestIndicatorsUseCasesDTO:
             assert isinstance(point.histogram, float)
 
     @pytest.mark.asyncio
-    async def test_order_signal_is_none_by_default(self, indicators_use_cases):
-        """Should have order_signal as None when not set"""
+    async def test_order_signal_and_reason_are_populated(self, indicators_use_cases):
+        """Should have order_signal and signal_reason populated"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
             window=14,
@@ -183,4 +185,6 @@ class TestIndicatorsUseCasesDTO:
         )
         
         for point in result.results:
-            assert point.order_signal is None
+            assert point.order_signal in ["buy", "sell", "hold"]
+            assert point.signal_reason is not None
+            assert len(point.signal_reason) > 0

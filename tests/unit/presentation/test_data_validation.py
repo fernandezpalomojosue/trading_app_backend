@@ -8,6 +8,29 @@ from tests.fixtures.market_fixtures import MockMarketRepository, MockMarketDataC
 from tests.fixtures.portfolio_fixtures import MockPortfolioRepository
 
 
+@pytest.fixture
+def mock_favorite_repository():
+    """Mock favorite stock repository"""
+    class MockFavoriteStockRepository:
+        async def add_favorite(self, user_id, symbol):
+            from app.domain.entities.favorite_stock import FavoriteStockEntity
+            return FavoriteStockEntity(user_id=user_id, symbol=symbol.upper())
+        
+        async def remove_favorite(self, user_id, symbol):
+            return None
+        
+        async def get_user_favorites(self, user_id):
+            return []
+        
+        async def is_favorite(self, user_id, symbol):
+            return False
+        
+        async def get_favorite_by_user_and_symbol(self, user_id, symbol):
+            return None
+    
+    return MockFavoriteStockRepository()
+
+
 @pytest.mark.asyncio
 class TestDataValidationAndNormalization:
     """Test data validation and normalization business rules"""

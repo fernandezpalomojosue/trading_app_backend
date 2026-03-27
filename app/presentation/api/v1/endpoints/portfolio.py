@@ -15,7 +15,7 @@ from app.application.dto.portfolio_dto import (
 from app.core.security import get_current_user
 from app.domain.entities.user import UserEntity
 from app.db.base import get_session
-from app.infrastructure.database.repositories import SQLPortfolioRepository
+from app.infrastructure.database.portfolio_repository import SQLPortfolioRepository
 
 
 router = APIRouter()
@@ -24,7 +24,7 @@ router = APIRouter()
 # Dependency injection for PortfolioService
 def get_portfolio_service(db: Session = Depends(get_session)) -> PortfolioService:
     """Get portfolio service instance (use cases implementation)"""
-    from app.infrastructure.database.repositories import SQLPortfolioRepository
+    from app.infrastructure.database.portfolio_repository import SQLPortfolioRepository
     portfolio_repository = SQLPortfolioRepository(db)
     from app.domain.use_cases.portfolio_use_cases import PortfolioUseCases
     return PortfolioUseCases(portfolio_repository)

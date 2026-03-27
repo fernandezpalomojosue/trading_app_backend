@@ -1,9 +1,13 @@
 # app/application/services/market_service.py
 from typing import List, Optional
 from abc import ABC, abstractmethod
+from uuid import UUID
 from app.domain.entities.user import UserEntity
 from app.domain.entities.market import MarketType
-from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse
+from app.application.dto.market_dto import (
+    AssetResponse, MarketOverviewResponse, CandleStickDataResponse,
+    FavoriteStockResponse, FavoriteStockListResponse
+)
 
 
 class MarketService(ABC):
@@ -32,4 +36,19 @@ class MarketService(ABC):
     @abstractmethod
     async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> CandleStickDataResponse:
         """Get candlestick data for a specific asset"""
+        pass
+    
+    @abstractmethod
+    async def add_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
+        """Add a stock to user's favorites"""
+        pass
+    
+    @abstractmethod
+    async def remove_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
+        """Remove a stock from user's favorites"""
+        pass
+    
+    @abstractmethod
+    async def get_user_favorite_stocks(self, user_id: UUID) -> List[FavoriteStockResponse]:
+        """Get user's favorite stocks"""
         pass

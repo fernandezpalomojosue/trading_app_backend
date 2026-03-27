@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
 from app.application.services.indicators_service import IndicatorsService
+from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 
 logger = logging.getLogger(__name__)
@@ -12,9 +13,10 @@ logger = logging.getLogger(__name__)
 
 class IndicatorsUseCases(IndicatorsService):
 
-    def __init__(self, market_client: PolygonMarketClient, cache_service):
+    def __init__(self, market_client: PolygonMarketClient, cache_service, signal_engine: Optional[SignalEngineUseCases] = None):
         self.market_client = market_client
         self.cache = cache_service
+        self.signal_engine = signal_engine or SignalEngineUseCases()
 
     async def get_indicators(
         self,
@@ -85,10 +87,29 @@ class IndicatorsUseCases(IndicatorsService):
 
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
 
+        # Prepare data for signal calculation
+        signal_data = df[["rsi", "macd", "signal", "ema", "close"]].to_dict(orient="records")
+        
+        # Calculate trading signals (returns tuples of signal and reason)
+        signal_results = self.signal_engine.calculate_signals(signal_data)
+        
         results = df[[
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
-
+        
+        # Add signals and reasons to results
+        for i, (signal, reason) in enumerate(signal_results):
+            if i < len(results):
+                results[i]["order_signal"] = signal
+                results[i]["signal_reason"] = reason
+        
+        # Replace NaN with None for JSON serialization
+        import math
+        for record in results:
+            for key, value in record.items():
+                if isinstance(value, float) and math.isnan(value):
+                    record[key] = None
+        
         response = CombinedIndicatorsResponse(
             symbol=symbol,
             results=results

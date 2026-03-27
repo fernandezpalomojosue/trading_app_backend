@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.db.base import get_session
 from app.domain.entities.user import UserEntity
 from app.infrastructure.security.token_service import JWTTokenService
-from app.infrastructure.database.repositories import SQLUserRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 

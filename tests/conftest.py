@@ -34,7 +34,8 @@ def db_session(engine):
     """Create test database session"""
     with Session(engine) as session:
         # Clean up database before each test
-        from app.infrastructure.database.models import UserSQLModel, PortfolioHoldingSQLModel, TransactionSQLModel
+        from app.infrastructure.database.models import UserSQLModel, PortfolioHoldingSQLModel, TransactionSQLModel, FavoriteStockSQLModel
+        session.query(FavoriteStockSQLModel).delete()
         session.query(TransactionSQLModel).delete()
         session.query(PortfolioHoldingSQLModel).delete()
         session.query(UserSQLModel).delete()

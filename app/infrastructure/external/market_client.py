@@ -10,6 +10,8 @@ from app.domain.entities.market import Asset, MarketSummary, MarketType
 from app.domain.repositories.market_repository import MarketRepository
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import settings
+from app.domain.entities.favorite_stock import FavoriteStockEntity
+from uuid import UUID
 
 
 class RateLimiter:
@@ -306,3 +308,24 @@ class PolygonMarketClient(MarketRepository):
             return data.get("results", {}).get("values", []) if data.get("status") == "OK" else []
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching MACD data: {str(e)}")
+    
+    # Favorite Stock Methods (Not implemented for external API client)
+    async def add_favorite(self, user_id: UUID, symbol: str) -> FavoriteStockEntity:
+        """Add a stock to user's favorites - Not implemented for external API client"""
+        raise NotImplementedError("Favorite stock operations not supported in external API client")
+    
+    async def remove_favorite(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
+        """Remove a stock from user's favorites - Not implemented for external API client"""
+        raise NotImplementedError("Favorite stock operations not supported in external API client")
+    
+    async def get_user_favorites(self, user_id: UUID) -> List[FavoriteStockEntity]:
+        """Get all favorite stocks for a user - Not implemented for external API client"""
+        raise NotImplementedError("Favorite stock operations not supported in external API client")
+    
+    async def is_favorite(self, user_id: UUID, symbol: str) -> bool:
+        """Check if a stock is in user's favorites - Not implemented for external API client"""
+        raise NotImplementedError("Favorite stock operations not supported in external API client")
+    
+    async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
+        """Get specific favorite by user and symbol - Not implemented for external API client"""
+        raise NotImplementedError("Favorite stock operations not supported in external API client")

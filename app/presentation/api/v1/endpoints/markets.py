@@ -1,9 +1,11 @@
 # app/presentation/api/v1/endpoints/markets.py
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
+from uuid import UUID
 
 from app.application.dto.market_dto import (
-    MarketOverviewResponse, AssetResponse, CandleStickDataResponse
+    MarketOverviewResponse, AssetResponse, CandleStickDataResponse,
+    FavoriteStockResponse, FavoriteStockListResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
@@ -15,7 +17,9 @@ from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
-from app.infrastructure.database.repositories import SQLPortfolioRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
+from app.infrastructure.database.portfolio_repository import SQLPortfolioRepository
+from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 from app.db.base import get_session 
 from sqlmodel import Session
 
@@ -32,10 +36,48 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     else:
         cache = MemoryMarketCache()
     
-    # Create repository and use cases
+    # Create repositories
     market_repository = PolygonMarketClient()
     portfolio_repository = SQLPortfolioRepository(db)
-    return MarketUseCases(market_repository, cache, portfolio_repository)
+    
+    class CompositeMarketRepository(MarketRepository):
+        def __init__(self, base_repo: MarketRepository, favorite_repo: SQLFavoriteStockRepository):
+            self.base_repo = base_repo
+            self.favorite_repo = favorite_repo
+        
+        # Market data methods
+        async def fetch_raw_market_data(self):
+            return await self.base_repo.fetch_raw_market_data()
+        
+        async def fetch_ticker_details(self, symbol: str):
+            return await self.base_repo.fetch_ticker_details(symbol)
+        
+        async def search_assets(self, query: str, market_type: Optional[str] = None):
+            return await self.base_repo.search_assets(query, market_type)
+        
+        async def fetch_candlestick_data(self, symbol: str, timespan: str, multiplier: int, limit: int, start_date: Optional[str] = None, end_date: Optional[str] = None):
+            return await self.base_repo.fetch_candlestick_data(symbol, timespan, multiplier, limit, start_date, end_date)
+        
+        # Favorite stock methods
+        async def add_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.add_favorite(user_id, symbol)
+        
+        async def remove_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.remove_favorite(user_id, symbol)
+        
+        async def get_user_favorites(self, user_id: UUID):
+            return await self.favorite_repo.get_user_favorites(user_id)
+        
+        async def is_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.is_favorite(user_id, symbol)
+        
+        async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.get_favorite_by_user_and_symbol(user_id, symbol)
+    
+    favorite_stock_repository = SQLFavoriteStockRepository(db)
+    composite_repository = CompositeMarketRepository(market_repository, favorite_stock_repository)
+    
+    return MarketUseCases(composite_repository, cache, portfolio_repository)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
@@ -114,3 +156,47 @@ async def get_candlestick_data(
         start_date=start_date,
         end_date=end_date
     )
+
+
+@router.post("/favorites/{symbol}", response_model=FavoriteStockResponse)
+async def add_favorite_stock(
+    symbol: str,
+    market_service: MarketService = Depends(get_market_service),
+    current_user = Depends(get_current_user_dependency)
+):
+    """Add a stock to user's favorites"""
+    try:
+        favorite = await market_service.add_favorite_stock(current_user.id, symbol)
+        return favorite
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/favorites/{symbol}", response_model=FavoriteStockResponse)
+async def remove_favorite_stock(
+    symbol: str,
+    market_service: MarketService = Depends(get_market_service),
+    current_user = Depends(get_current_user_dependency)
+):
+    """Remove a stock from user's favorites"""
+    try:
+        favorite = await market_service.remove_favorite_stock(current_user.id, symbol)
+        return favorite
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/favorites", response_model=FavoriteStockListResponse)
+async def get_favorite_stocks(
+    market_service: MarketService = Depends(get_market_service),
+    current_user = Depends(get_current_user_dependency)
+):
+    """Get user's favorite stocks"""
+    try:
+        favorites = await market_service.get_user_favorite_stocks(current_user.id)
+        return FavoriteStockListResponse(
+            favorites=favorites,
+            total=len(favorites)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

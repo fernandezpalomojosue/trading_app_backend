@@ -5,8 +5,10 @@ Provides reusable test data and mock implementations
 import pytest
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
+from uuid import UUID
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.entities.favorite_stock import FavoriteStockEntity
 
 
 class MockMarketRepository(MarketRepository):
@@ -101,6 +103,32 @@ class MockMarketRepository(MarketRepository):
         """Get candlestick data for charting"""
         self._record_call('get_candlestick_data', symbol=symbol, timespan=timespan, multiplier=multiplier, limit=limit, start_date=start_date, end_date=end_date)
         return self.data.get(f'candles_{symbol}', [])
+    
+    # Favorite Stock Methods
+    async def add_favorite(self, user_id: UUID, symbol: str) -> FavoriteStockEntity:
+        """Add a stock to user's favorites"""
+        self._record_call('add_favorite', user_id=user_id, symbol=symbol)
+        return FavoriteStockEntity(user_id=user_id, symbol=symbol.upper())
+    
+    async def remove_favorite(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
+        """Remove a stock from user's favorites"""
+        self._record_call('remove_favorite', user_id=user_id, symbol=symbol)
+        return None
+    
+    async def get_user_favorites(self, user_id: UUID) -> List[FavoriteStockEntity]:
+        """Get all favorite stocks for a user"""
+        self._record_call('get_user_favorites', user_id=user_id)
+        return []
+    
+    async def is_favorite(self, user_id: UUID, symbol: str) -> bool:
+        """Check if a stock is in user's favorites"""
+        self._record_call('is_favorite', user_id=user_id, symbol=symbol)
+        return False
+    
+    async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
+        """Get specific favorite by user and symbol"""
+        self._record_call('get_favorite_by_user_and_symbol', user_id=user_id, symbol=symbol)
+        return None
     
     def _record_call(self, method: str, **kwargs):
         """Record method calls for testing"""
