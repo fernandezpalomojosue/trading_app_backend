@@ -75,7 +75,7 @@ class IndicatorsUseCases(IndicatorsService):
         df["sma"] = pta.sma(df["close"], length=window)
         df["rsi"] = pta.rsi(df["close"], length=window)
 
-        macd = ta.macd(df['close'], fast=fast, slow=slow, signal=signal)
+        macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
 
         df['macd'] = macd.iloc[:, 0]
         df['signal'] = macd.iloc[:, 1]
