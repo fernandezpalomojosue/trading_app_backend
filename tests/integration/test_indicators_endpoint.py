@@ -28,10 +28,8 @@ class TestIndicatorsEndpoint:
             ]
         )
         
-        with patch("app.presentation.api.v1.endpoints.indicators.get_indicators_service") as mock_service:
-            mock_instance = AsyncMock()
-            mock_instance.get_indicators = AsyncMock(return_value=mock_response)
-            mock_service.return_value = mock_instance
+        with patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_indicators") as mock_get_indicators:
+            mock_get_indicators.return_value = mock_response.model_dump()
             
             response = client.get(
                 "/api/v1/indicators/AAPL?window=14&fast=12&slow=26&signal=9&timespan=day",
@@ -81,10 +79,8 @@ class TestIndicatorsEndpoint:
             results=[]
         )
         
-        with patch("app.presentation.api.v1.endpoints.indicators.get_indicators_service") as mock_service:
-            mock_instance = AsyncMock()
-            mock_instance.get_indicators = AsyncMock(return_value=mock_response)
-            mock_service.return_value = mock_instance
+        with patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_indicators") as mock_get_indicators:
+            mock_get_indicators.return_value = mock_response.model_dump()
             
             response = client.get(
                 "/api/v1/indicators/AAPL",
@@ -118,10 +114,8 @@ class TestIndicatorsEndpoint:
             results=mock_results
         )
         
-        with patch("app.presentation.api.v1.endpoints.indicators.get_indicators_service") as mock_service:
-            mock_instance = AsyncMock()
-            mock_instance.get_indicators = AsyncMock(return_value=mock_response)
-            mock_service.return_value = mock_instance
+        with patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_indicators") as mock_get_indicators:
+            mock_get_indicators.return_value = mock_response.model_dump()
             
             response = client.get(
                 "/api/v1/indicators/AAPL?limit=5",
@@ -151,10 +145,8 @@ class TestIndicatorsEndpoint:
             ]
         )
         
-        with patch("app.presentation.api.v1.endpoints.indicators.get_indicators_service") as mock_service:
-            mock_instance = AsyncMock()
-            mock_instance.get_indicators = AsyncMock(return_value=mock_response)
-            mock_service.return_value = mock_instance
+        with patch("app.domain.use_cases.indicators_use_cases.IndicatorsUseCases.get_indicators") as mock_get_indicators:
+            mock_get_indicators.return_value = mock_response.model_dump()
             
             response = client.get(
                 "/api/v1/indicators/MSFT",
