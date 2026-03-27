@@ -339,7 +339,7 @@ class MarketUseCases(MarketService):
         """Add a stock to user's favorites"""
         try:
             # Use market repository to add favorite (will be implemented in repository)
-            favorite = await self.market_repository.add_favorite(user_id, symbol)
+            favorite = await self.favorite_repository.add_favorite(user_id, symbol)
             
             # Convert to DTO response
             return FavoriteStockResponse(
@@ -355,7 +355,7 @@ class MarketUseCases(MarketService):
         """Remove a stock from user's favorites"""
         try:
             # Use market repository to remove favorite
-            favorite = await self.market_repository.remove_favorite(user_id, symbol)
+            favorite = await self.favorite_repository.remove_favorite(user_id, symbol)
             
             if not favorite:
                 raise ValueError(f"Stock {symbol} not found in favorites")
@@ -374,7 +374,7 @@ class MarketUseCases(MarketService):
         """Get all favorite stocks for a user"""
         try:
             # Use market repository to get all favorites
-            favorites = await self.market_repository.get_user_favorites(user_id)
+            favorites = await self.favorite_repository.get_user_favorites(user_id)
             
             # Convert to DTO responses
             favorite_responses = []
