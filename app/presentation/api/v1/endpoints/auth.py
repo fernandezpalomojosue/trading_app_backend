@@ -9,7 +9,7 @@ from app.application.dto.user_dto import UserRegistrationRequest, UserResponse, 
 from app.application.services.user_service import UserService
 from app.domain.use_cases.user_use_cases import BusinessError
 from app.domain.entities.user import UserCredentials
-from app.infrastructure.database.repositories import SQLUserRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
 from app.infrastructure.security.password_service import PasslibPasswordService
 from app.infrastructure.security.token_service import JWTTokenService
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency

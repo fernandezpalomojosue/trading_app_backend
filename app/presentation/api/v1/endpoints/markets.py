@@ -1,6 +1,7 @@
 # app/presentation/api/v1/endpoints/markets.py
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
+from uuid import UUID
 
 from app.application.dto.market_dto import (
     MarketOverviewResponse, AssetResponse, CandleStickDataResponse,
@@ -16,8 +17,9 @@ from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
-from app.infrastructure.database.repositories import SQLPortfolioRepository, SQLFavoriteStockRepository
-from app.domain.repositories.favorite_stock_repository import FavoriteStockRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
+from app.infrastructure.database.portfolio_repository import SQLPortfolioRepository
+from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 from app.db.base import get_session 
 from sqlmodel import Session
 
@@ -37,6 +39,41 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     # Create repositories
     market_repository = PolygonMarketClient()
     portfolio_repository = SQLPortfolioRepository(db)
+    
+    class MarketRepository(MarketRepository):
+        def __init__(self, base_repo: MarketRepository, favorite_repo: SQLFavoriteStockRepository):
+            self.base_repo = base_repo
+            self.favorite_repo = favorite_repo
+        
+        # Market data methods
+        async def fetch_raw_market_data(self):
+            return await self.base_repo.fetch_raw_market_data()
+        
+        async def fetch_ticker_details(self, symbol: str):
+            return await self.base_repo.fetch_ticker_details(symbol)
+        
+        async def search_assets(self, query: str, market_type: Optional[str] = None):
+            return await self.base_repo.search_assets(query, market_type)
+        
+        async def fetch_candlestick_data(self, symbol: str, timespan: str, multiplier: int, limit: int, start_date: Optional[str] = None, end_date: Optional[str] = None):
+            return await self.base_repo.fetch_candlestick_data(symbol, timespan, multiplier, limit, start_date, end_date)
+        
+        # Favorite stock methods
+        async def add_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.add_favorite(user_id, symbol)
+        
+        async def remove_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.remove_favorite(user_id, symbol)
+        
+        async def get_user_favorites(self, user_id: UUID):
+            return await self.favorite_repo.get_user_favorites(user_id)
+        
+        async def is_favorite(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.is_favorite(user_id, symbol)
+        
+        async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str):
+            return await self.favorite_repo.get_favorite_by_user_and_symbol(user_id, symbol)
+    
     favorite_stock_repository = SQLFavoriteStockRepository(db)
     
     return MarketUseCases(market_repository, cache, portfolio_repository, favorite_stock_repository)
