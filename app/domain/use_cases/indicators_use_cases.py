@@ -1,6 +1,6 @@
 from typing import Optional
 import pandas as pd
-import ta
+#import ta
 import pandas_ta as pta
 import logging
 from datetime import datetime
