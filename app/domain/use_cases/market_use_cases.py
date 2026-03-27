@@ -1,15 +1,15 @@
 # app/domain/use_cases/market_use_cases.py
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from uuid import UUID
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
 from app.application.services.market_service import MarketService
 from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData
+from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, CandleData, FavoriteStockResponse, FavoriteStockListResponse
 from app.utils.date_utils import get_last_trading_day
-import uuid
 from app.domain.entities.user import UserEntity
 
 class MarketUseCases(MarketService):
@@ -331,3 +331,61 @@ class MarketUseCases(MarketService):
         await self.cache_service.set(cache_key, response.model_dump(), ttl=300)
         
         return response
+    
+    async def add_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
+        """Add a stock to user's favorites"""
+        try:
+            # Use market repository to add favorite (will be implemented in repository)
+            favorite = await self.market_repository.add_favorite(user_id, symbol)
+            
+            # Convert to DTO response
+            return FavoriteStockResponse(
+                id=str(favorite.id),
+                user_id=str(favorite.user_id),
+                symbol=favorite.symbol,
+                created_at=favorite.created_at.isoformat() if hasattr(favorite.created_at, 'isoformat') else str(favorite.created_at)
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to add favorite stock: {str(e)}")
+    
+    async def remove_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
+        """Remove a stock from user's favorites"""
+        try:
+            # Use market repository to remove favorite
+            favorite = await self.market_repository.remove_favorite(user_id, symbol)
+            
+            if not favorite:
+                raise ValueError(f"Stock {symbol} not found in favorites")
+            
+            # Convert to DTO response
+            return FavoriteStockResponse(
+                id=str(favorite.id),
+                user_id=str(favorite.user_id),
+                symbol=favorite.symbol,
+                created_at=favorite.created_at.isoformat() if hasattr(favorite.created_at, 'isoformat') else str(favorite.created_at)
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to remove favorite stock: {str(e)}")
+    
+    async def get_user_favorite_stocks(self, user_id: UUID) -> FavoriteStockListResponse:
+        """Get all favorite stocks for a user"""
+        try:
+            # Use market repository to get all favorites
+            favorites = await self.market_repository.get_user_favorites(user_id)
+            
+            # Convert to DTO responses
+            favorite_responses = []
+            for favorite in favorites:
+                favorite_responses.append(FavoriteStockResponse(
+                    id=str(favorite.id),
+                    user_id=str(favorite.user_id),
+                    symbol=favorite.symbol,
+                    created_at=favorite.created_at.isoformat() if hasattr(favorite.created_at, 'isoformat') else str(favorite.created_at)
+                ))
+            
+            return FavoriteStockListResponse(
+                favorites=favorite_responses,
+                total=len(favorite_responses)
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to get favorite stocks: {str(e)}")
