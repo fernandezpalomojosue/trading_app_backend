@@ -4,10 +4,7 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 from app.domain.entities.user import UserEntity
 from app.domain.entities.market import MarketType
-from app.application.dto.market_dto import (
-    AssetResponse, MarketOverviewResponse, CandleStickDataResponse,
-    FavoriteStockResponse, FavoriteStockListResponse
-)
+from app.application.dto.market_dto import AssetResponse, MarketOverviewResponse, CandleStickDataResponse, FavoriteStockResponse, FavoriteStockListResponse
 
 
 class MarketService(ABC):
@@ -49,6 +46,6 @@ class MarketService(ABC):
         pass
     
     @abstractmethod
-    async def get_user_favorite_stocks(self, user_id: UUID) -> List[FavoriteStockResponse]:
-        """Get user's favorite stocks"""
+    async def get_user_favorite_stocks(self, user_id: UUID) -> FavoriteStockListResponse:
+        """Get all favorite stocks for a user"""
         pass

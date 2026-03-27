@@ -2,6 +2,7 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
+from uuid import UUID
 
 from app.domain.entities.market import MarketType
 
@@ -95,3 +96,31 @@ class CandleData(BaseModel):
 class CandleStickDataResponse(BaseModel):
     """DTO for candlestick data response in frontend format"""
     results: List[CandleData]
+
+
+class FavoriteStockRequest(BaseModel):
+    """DTO for adding a stock to favorites"""
+    symbol: str = Field(..., min_length=1, max_length=10, description="Stock symbol (e.g., AAPL, GOOGL)")
+    
+    class Config:
+        from_attributes = True
+
+
+class FavoriteStockResponse(BaseModel):
+    """DTO for favorite stock response"""
+    id: str
+    user_id: str
+    symbol: str
+    created_at: str
+    
+    class Config:
+        from_attributes = True
+
+
+class FavoriteStockListResponse(BaseModel):
+    """DTO for list of favorite stocks"""
+    favorites: List[FavoriteStockResponse] = []
+    total: int = 0
+    
+    class Config:
+        from_attributes = True
