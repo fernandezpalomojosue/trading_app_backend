@@ -1,6 +1,7 @@
 from typing import Optional
 import pandas as pd
-import ta
+#import ta
+import pandas_ta as pta
 import logging
 from datetime import datetime
 from app.application.dto.indicators_dto import CombinedIndicatorsResponse
@@ -70,20 +71,15 @@ class IndicatorsUseCases(IndicatorsService):
         # INDICADORES
         # =====================
 
-        df["ema"] = ta.trend.EMAIndicator(df["close"], window=window).ema_indicator()
-        df["sma"] = ta.trend.SMAIndicator(df["close"], window=window).sma_indicator()
-        df["rsi"] = ta.momentum.RSIIndicator(df["close"], window=window).rsi()
+        df["ema"] = pta.ema(df["close"], length=window)
+        df["sma"] = pta.sma(df["close"], length=window)
+        df["rsi"] = pta.rsi(df["close"], length=window)
 
-        macd = ta.trend.MACD(
-            df["close"],
-            window_fast=fast,
-            window_slow=slow,
-            window_sign=signal
-        )
+        macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
 
-        df["macd"] = macd.macd()
-        df["signal"] = macd.macd_signal()
-        df["histogram"] = macd.macd_diff()
+        df['macd'] = macd.iloc[:, 0]
+        df['signal'] = macd.iloc[:, 1]
+        df['histogram'] = macd.iloc[:, 2]
 
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
 
