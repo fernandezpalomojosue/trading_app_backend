@@ -1,6 +1,7 @@
 # app/presentation/api/v1/endpoints/markets.py
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import List, Optional
+from uuid import UUID
 
 from app.application.dto.market_dto import (
     MarketOverviewResponse, AssetResponse, CandleStickDataResponse,
@@ -9,6 +10,7 @@ from app.application.dto.market_dto import (
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.repositories.favorite_repository import FavoriteRepository
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
@@ -16,7 +18,9 @@ from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
-from app.infrastructure.database.repositories import SQLPortfolioRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
+from app.infrastructure.database.portfolio_repository import SQLPortfolioRepository
+from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 from app.db.base import get_session 
 from sqlmodel import Session
 
@@ -33,10 +37,13 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     else:
         cache = MemoryMarketCache()
     
-    # Create repository and use cases
+    # Create repositories
     market_repository = PolygonMarketClient()
     portfolio_repository = SQLPortfolioRepository(db)
-    return MarketUseCases(market_repository, cache, portfolio_repository)
+    
+    favorite_stock_repository = SQLFavoriteStockRepository(db)
+    
+    return MarketUseCases(market_repository, cache, portfolio_repository, favorite_stock_repository)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)

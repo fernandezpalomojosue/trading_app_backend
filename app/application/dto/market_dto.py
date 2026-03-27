@@ -7,6 +7,34 @@ from uuid import UUID
 from app.domain.entities.market import MarketType
 
 
+class FavoriteStockRequest(BaseModel):
+    """DTO for adding a favorite stock"""
+    symbol: str = Field(..., min_length=1, max_length=10, description="Stock symbol (e.g., AAPL, GOOGL)")
+    
+    class Config:
+        from_attributes = True
+
+
+class FavoriteStockResponse(BaseModel):
+    """DTO for favorite stock responses"""
+    id: str
+    user_id: str
+    symbol: str
+    created_at: str
+    
+    class Config:
+        from_attributes = True
+
+
+class FavoriteStockListResponse(BaseModel):
+    """DTO for list of favorite stocks"""
+    favorites: List[FavoriteStockResponse] = []
+    total: int = 0
+    
+    class Config:
+        from_attributes = True
+
+
 class AssetResponse(BaseModel):
     """DTO for asset responses"""
     id: str

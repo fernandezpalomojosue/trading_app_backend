@@ -5,6 +5,7 @@ from uuid import UUID
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.repositories.favorite_repository import FavoriteRepository
 from app.application.services.market_service import MarketService
 from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
@@ -19,12 +20,14 @@ class MarketUseCases(MarketService):
         self,
         market_repository: MarketRepository,
         cache_service: MarketDataCache,
-        portfolio_repository: PortfolioRepository
+        portfolio_repository: PortfolioRepository,
+        favorite_repository: FavoriteRepository
     ):
         self.market_repository = market_repository
         self.cache_service = cache_service
         self.data_processor = MarketDataProcessor()
         self.portfolio_repository = portfolio_repository
+        self.favorite_repository = favorite_repository
     
     def _sort_by_volume(self, raw_data: Dict[str, Any], limit: int = 100) -> List[Dict[str, Any]]:
         """Sort raw market data by volume descending and apply limit

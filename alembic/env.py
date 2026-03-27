@@ -12,7 +12,7 @@ from app.core.config import settings
 from sqlmodel import SQLModel
 
 # Import all models to ensure they're registered
-from app.infrastructure.database.models import UserSQLModel, PortfolioHoldingSQLModel, TransactionSQLModel
+from app.infrastructure.database.models import UserSQLModel, PortfolioHoldingSQLModel, TransactionSQLModel, FavoriteStockSQLModel
 
 config = context.config
 

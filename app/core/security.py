@@ -10,7 +10,7 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.db.base import get_session
 from app.domain.entities.user import UserEntity
-from app.infrastructure.database.repositories import SQLUserRepository
+from app.infrastructure.database.user_repository import SQLUserRepository
 
 # Configuración
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
