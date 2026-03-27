@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.application.dto.market_dto import (
     MarketOverviewResponse, AssetResponse, CandleStickDataResponse,
-    FavoriteStockResponse, FavoriteStockListResponse
+    FavoriteStockRequest, FavoriteStockResponse, FavoriteStockListResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
