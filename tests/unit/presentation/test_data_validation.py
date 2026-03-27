@@ -48,9 +48,9 @@ class TestDataValidationAndNormalization:
         return MockPortfolioRepository()
     
     @pytest.fixture
-    def market_use_cases(self, mock_repository, mock_cache, mock_portfolio_repository):
+    def market_use_cases(self, mock_repository, mock_cache, mock_portfolio_repository, mock_favorite_repository):
         from app.domain.use_cases.market_use_cases import MarketUseCases
-        return MarketUseCases(mock_repository, mock_cache, mock_portfolio_repository)
+        return MarketUseCases(mock_repository, mock_cache, mock_portfolio_repository, mock_favorite_repository)
     
     async def test_validation_query_minimum_length(self, market_use_cases):
         """Search query should have minimum length of 2 characters"""
