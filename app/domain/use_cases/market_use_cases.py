@@ -4,6 +4,7 @@ from datetime import datetime
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.utils.market_utils import MarketDataProcessor
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.repositories.favorite_repository import FavoriteRepository
 from app.application.services.market_service import MarketService
 from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
@@ -22,12 +23,14 @@ class MarketUseCases(MarketService):
         self,
         market_repository: MarketRepository,
         cache_service: MarketDataCache,
-        portfolio_repository: PortfolioRepository
+        portfolio_repository: PortfolioRepository,
+        favorite_repository: FavoriteRepository
     ):
         self.market_repository = market_repository
         self.cache_service = cache_service
         self.data_processor = MarketDataProcessor()
         self.portfolio_repository = portfolio_repository
+        self.favorite_repository = favorite_repository
     
     def _sort_by_volume(self, raw_data: Dict[str, Any], limit: int = 100) -> List[Dict[str, Any]]:
         """Sort raw market data by volume descending and apply limit
@@ -338,7 +341,7 @@ class MarketUseCases(MarketService):
     async def add_favorite_stock(self, user_id: uuid.UUID, symbol: str) -> FavoriteStockResponse:
         """Add a stock to user's favorites"""
         try:
-            favorite_entity = await self.market_repository.add_favorite(user_id, symbol)
+            favorite_entity = await self.favorite_repository.add_favorite(user_id, symbol)
             return FavoriteStockResponse(
                 id=str(favorite_entity.id),
                 user_id=str(favorite_entity.user_id),
@@ -351,7 +354,7 @@ class MarketUseCases(MarketService):
     async def remove_favorite_stock(self, user_id: uuid.UUID, symbol: str) -> FavoriteStockResponse:
         """Remove a stock from user's favorites"""
         try:
-            favorite_entity = await self.market_repository.remove_favorite(user_id, symbol)
+            favorite_entity = await self.favorite_repository.remove_favorite(user_id, symbol)
             if favorite_entity:
                 return FavoriteStockResponse(
                     id=str(favorite_entity.id),
@@ -367,7 +370,7 @@ class MarketUseCases(MarketService):
     async def get_user_favorite_stocks(self, user_id: uuid.UUID) -> List[FavoriteStockResponse]:
         """Get user's favorite stocks"""
         try:
-            favorite_entities = await self.market_repository.get_user_favorites(user_id)
+            favorite_entities = await self.favorite_repository.get_user_favorites(user_id)
             
             return [
                 FavoriteStockResponse(

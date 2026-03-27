@@ -10,6 +10,7 @@ from app.application.dto.market_dto import (
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
 from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.domain.repositories.favorite_repository import FavoriteRepository
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
@@ -40,44 +41,9 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     market_repository = PolygonMarketClient()
     portfolio_repository = SQLPortfolioRepository(db)
     
-    class CompositeMarketRepository(MarketRepository):
-        def __init__(self, base_repo: MarketRepository, favorite_repo: SQLFavoriteStockRepository):
-            self.base_repo = base_repo
-            self.favorite_repo = favorite_repo
-        
-        # Market data methods
-        async def fetch_raw_market_data(self):
-            return await self.base_repo.fetch_raw_market_data()
-        
-        async def fetch_ticker_details(self, symbol: str):
-            return await self.base_repo.fetch_ticker_details(symbol)
-        
-        async def search_assets(self, query: str, market_type: Optional[str] = None):
-            return await self.base_repo.search_assets(query, market_type)
-        
-        async def fetch_candlestick_data(self, symbol: str, timespan: str, multiplier: int, limit: int, start_date: Optional[str] = None, end_date: Optional[str] = None):
-            return await self.base_repo.fetch_candlestick_data(symbol, timespan, multiplier, limit, start_date, end_date)
-        
-        # Favorite stock methods
-        async def add_favorite(self, user_id: UUID, symbol: str):
-            return await self.favorite_repo.add_favorite(user_id, symbol)
-        
-        async def remove_favorite(self, user_id: UUID, symbol: str):
-            return await self.favorite_repo.remove_favorite(user_id, symbol)
-        
-        async def get_user_favorites(self, user_id: UUID):
-            return await self.favorite_repo.get_user_favorites(user_id)
-        
-        async def is_favorite(self, user_id: UUID, symbol: str):
-            return await self.favorite_repo.is_favorite(user_id, symbol)
-        
-        async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str):
-            return await self.favorite_repo.get_favorite_by_user_and_symbol(user_id, symbol)
-    
     favorite_stock_repository = SQLFavoriteStockRepository(db)
-    composite_repository = CompositeMarketRepository(market_repository, favorite_stock_repository)
     
-    return MarketUseCases(composite_repository, cache, portfolio_repository)
+    return MarketUseCases(market_repository, cache, portfolio_repository, favorite_stock_repository)
 
 
 @router.get("/{market_type}/overview", response_model=MarketOverviewResponse)
