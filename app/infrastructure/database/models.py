@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship, Column
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import String
 
 
 class UserSQLModel(SQLModel, table=True):
@@ -188,3 +189,49 @@ class TransactionSQLModel(SQLModel, table=True):
     __table_args__ = (
         {"sqlite_autoincrement": False},
     )
+
+
+class FavoriteStockSQLModel(SQLModel, table=True):
+    """SQLModel for Favorite Stocks table"""
+    __tablename__ = "favorite_stocks"
+    
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="Favorite stock unique ID (UUID)"
+    )
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), index=True),
+        description="User ID who owns this favorite"
+    )
+    symbol: str = Field(
+        sa_column=Column(String(10), index=True),
+        description="Stock symbol (e.g., AAPL, GOOGL)"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Date when stock was added to favorites"
+    )
+    
+    __table_args__ = (
+        {"sqlite_autoincrement": False},
+    )
+    
+    @classmethod
+    def from_domain_entity(cls, favorite_entity):
+        return cls(
+            id=favorite_entity.id,
+            user_id=favorite_entity.user_id,
+            symbol=favorite_entity.symbol,
+            created_at=favorite_entity.created_at
+        )
+    
+    def to_domain_entity(self):
+        from app.domain.entities.favorite_stock import FavoriteStockEntity
+        
+        return FavoriteStockEntity(
+            id=self.id,
+            user_id=self.user_id,
+            symbol=self.symbol,
+            created_at=self.created_at
+        )

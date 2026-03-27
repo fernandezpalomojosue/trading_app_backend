@@ -6,7 +6,9 @@ from datetime import datetime, timezone
 
 from app.domain.entities.user import UserEntity
 from app.domain.use_cases.user_use_cases import UserRepository
-from app.infrastructure.database.models import UserSQLModel
+from app.infrastructure.database.models import UserSQLModel, FavoriteStockSQLModel
+from app.domain.repositories.favorite_stock_repository import FavoriteStockRepository
+from app.domain.entities.favorite_stock import FavoriteStockEntity
 
 
 class SQLUserRepository(UserRepository):
@@ -279,3 +281,68 @@ class SQLPortfolioRepository(PortfolioRepository):
             return user_model.balance
         
         return 0.0
+
+
+# Favorite Stock Repository Implementation
+class SQLFavoriteStockRepository(FavoriteStockRepository):
+    
+    def __init__(self, session: Session):
+        self.session = session
+    
+    async def add_favorite(self, user_id: UUID, symbol: str) -> FavoriteStockEntity:
+        """Add a stock to user's favorites"""
+        # Check if already exists
+        existing = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        if existing:
+            raise ValueError(f"Stock {symbol} is already in favorites")
+        
+        favorite_entity = FavoriteStockEntity(
+            user_id=user_id,
+            symbol=symbol.upper()
+        )
+        
+        favorite_model = FavoriteStockSQLModel.from_domain_entity(favorite_entity)
+        
+        self.session.add(favorite_model)
+        self.session.commit()
+        self.session.refresh(favorite_model)
+        
+        return favorite_model.to_domain_entity()
+    
+    async def remove_favorite(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
+        """Remove a stock from user's favorites"""
+        favorite_model = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        
+        if favorite_model:
+            self.session.delete(favorite_model)
+            self.session.commit()
+            return favorite_model.to_domain_entity()
+        
+        return None
+    
+    async def get_user_favorites(self, user_id: UUID) -> List[FavoriteStockEntity]:
+        """Get all favorite stocks for a user"""
+        statement = select(FavoriteStockSQLModel).where(
+            FavoriteStockSQLModel.user_id == user_id
+        ).order_by(FavoriteStockSQLModel.created_at.desc())
+        
+        favorite_models = self.session.exec(statement).all()
+        
+        favorites = []
+        for model in favorite_models:
+            favorites.append(model.to_domain_entity())
+        
+        return favorites
+    
+    async def is_favorite(self, user_id: UUID, symbol: str) -> bool:
+        """Check if a stock is in user's favorites"""
+        favorite = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        return favorite is not None
+    
+    async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockSQLModel]:
+        """Get specific favorite by user and symbol"""
+        statement = select(FavoriteStockSQLModel).where(
+            FavoriteStockSQLModel.user_id == user_id,
+            FavoriteStockSQLModel.symbol == symbol.upper()
+        )
+        return self.session.exec(statement).first()
