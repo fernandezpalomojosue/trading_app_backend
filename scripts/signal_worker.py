@@ -8,8 +8,15 @@ from app.application.repositories.favorite_repository import FavoriteRepository
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.utils.date_utils import get_last_trading_day
-async def main():
+from fastapi import APIRouter, Header, HTTPException
+
+router = APIRouter()
+
+@router.post("/internal/run-signal")
+async def run_signal(x_api_key: str=Header(None)):
     print("Signal worker started")
+    if x_api_key != "secret-key":
+        raise HTTPException(status_code=401, detail="Invalid API key")
     market_client = MarketRepository()
     cache_repository = CacheRepository()
     indicator_service = IndicatorsService(cache_repository)
@@ -33,6 +40,3 @@ async def main():
             await orchestration_service.generate_signal(stock, "day", "2026-01-01", get_last_trading_day())
         except Exception as e:
             print(f"Error generating signal for {stock}: {e}")
-    
-if __name__ == "__main__":
-    asyncio.run(main())
