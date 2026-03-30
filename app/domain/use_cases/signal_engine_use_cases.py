@@ -8,16 +8,14 @@ Rules:
 """
 from typing import List, Dict, Tuple
 import math
-from app.application.services.indicators_service import IndicatorsService
+from app.application.dto.indicators_dto import IndicatorDataPoint
+from app.application.dto.signals_dto import SignalDataPoint
 
 
 class SignalEngineUseCases:
     """Generates trading signals from technical indicator data"""
 
-    def __init__(self, indicator_service):
-        self.indicator_service = indicator_service
-
-    def calculate_signals(self, data_points: List[Dict]) -> List[Tuple[str, str]]:
+    def calculate_signals(self, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
         """
         Calculate signals for a list of indicator data points.
         
@@ -31,16 +29,16 @@ class SignalEngineUseCases:
         
         for i, point in enumerate(data_points):
             if i == 0:
-                results.append(("hold", "HOLD: No previous data for MACD crossover detection"))
+                results.append(SignalDataPoint(signal="hold", reason="HOLD: No previous data for MACD crossover detection"))
                 continue
                 
             prev_point = data_points[i - 1]
-            signal, reason = self._calculate_single_signal(point, prev_point)
-            results.append((signal, reason))
+            signal, reason = self.calculate_single_signal(point, prev_point)
+            results.append(SignalDataPoint(signal=signal, reason=reason))
             
         return results
 
-    def _calculate_single_signal(self, point: Dict, prev_point: Dict) -> Tuple[str, str]:
+    def calculate_single_signal(self, point: Dict, prev_point: Dict) -> SignalDataPoint:
         """Calculate signal for single point using previous point for crossover detection"""
         rsi = point.get("rsi")
         macd = point.get("macd")
@@ -51,13 +49,13 @@ class SignalEngineUseCases:
         # Check for missing/NaN values
         if any(v is None or (isinstance(v, float) and math.isnan(v)) 
                for v in [rsi, macd, signal_line, ema, close_price]):
-            return "hold", "HOLD: Insufficient data (missing or invalid indicator values)"
+            return SignalDataPoint(signal="hold", reason="HOLD: Insufficient data (missing or invalid indicator values)")
         
         prev_macd = prev_point.get("macd")
         prev_signal = prev_point.get("signal")
         
         if prev_macd is None or prev_signal is None:
-            return "hold", "HOLD: No previous MACD data for crossover detection"
+            return SignalDataPoint(signal="hold", reason="HOLD: No previous MACD data for crossover detection")
         
         macd_cross_up = macd > signal_line and prev_macd <= prev_signal
         macd_cross_down = macd < signal_line and prev_macd >= prev_signal
@@ -67,14 +65,14 @@ class SignalEngineUseCases:
             reason = (f"BUY: RSI oversold ({rsi:.1f} < 30) + "
                      f"MACD crossed above signal ({macd:.3f} > {signal_line:.3f}) + "
                      f"Price above EMA ({close_price:.2f} > {ema:.2f})")
-            return "buy", reason
+            return SignalDataPoint(signal="buy", reason=reason)
         
         # SELL conditions  
         if rsi > 70 and macd_cross_down and close_price < ema:
             reason = (f"SELL: RSI overbought ({rsi:.1f} > 70) + "
                      f"MACD crossed below signal ({macd:.3f} < {signal_line:.3f}) + "
                      f"Price below EMA ({close_price:.2f} < {ema:.2f})")
-            return "sell", reason
+            return SignalDataPoint(signal="sell", reason=reason)
         
         # HOLD - build detailed reason
         reasons = []
@@ -96,4 +94,4 @@ class SignalEngineUseCases:
         else:
             reasons.append(f"Price below EMA ({close_price:.2f} < {ema:.2f})")
         
-        return "hold", "HOLD: " + " | ".join(reasons)
+        return SignalDataPoint(signal="hold", reason="HOLD: " + " | ".join(reasons))
