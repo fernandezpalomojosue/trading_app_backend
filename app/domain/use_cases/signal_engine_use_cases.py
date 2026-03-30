@@ -15,7 +15,7 @@ from app.application.dto.signals_dto import SignalDataPoint
 class SignalEngineUseCases:
     """Generates trading signals from technical indicator data"""
 
-    def calculate_signals(self, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
+    def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
         """
         Calculate signals for a list of indicator data points.
         
@@ -29,12 +29,12 @@ class SignalEngineUseCases:
         
         for i, point in enumerate(data_points):
             if i == 0:
-                results.append(SignalDataPoint(symbol=point.symbol, timestamp=int(time.time() * 1000), signal="hold", reason="HOLD: No previous data for MACD crossover detection"))
+                results.append(SignalDataPoint(symbol=symbol, timestamp=int(time.time() * 1000), signal="hold", reason="HOLD: No previous data for MACD crossover detection"))
                 continue
                 
             prev_point = data_points[i - 1]
-            signal, reason = self.calculate_single_signal(point.symbol, point, prev_point)
-            results.append(SignalDataPoint(symbol=point.symbol, timestamp=int(time.time() * 1000), signal=signal, reason=reason))
+            signal, reason = self.calculate_single_signal(symbol, point, prev_point)
+            results.append(SignalDataPoint(symbol=symbol, timestamp=int(time.time() * 1000), signal=signal, reason=reason))
             
         return results
 
