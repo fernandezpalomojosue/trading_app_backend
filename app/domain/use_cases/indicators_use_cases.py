@@ -120,7 +120,8 @@ class IndicatorsUseCases(IndicatorsService):
             )
             results.append(point)
         
-        response = results
+        # Convert to dictionaries for FastAPI serialization
+        response = [point.dict() for point in results]
 
         await self.cache.set(cache_key, response, ttl=60)
 
