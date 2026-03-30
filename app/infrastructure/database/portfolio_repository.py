@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlmodel import Session, select
 from datetime import datetime, timezone
 
-from app.application.use_cases.portfolio_use_cases import PortfolioRepository
+from app.application.repositories.portfolio_repository import PortfolioRepository
 from app.domain.entities.portfolio import PortfolioHolding, Transaction
 from app.infrastructure.database.models import PortfolioHoldingSQLModel, TransactionSQLModel, UserSQLModel
 
