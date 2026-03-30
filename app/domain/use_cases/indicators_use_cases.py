@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import pandas as pd
 #import ta
 import pandas_ta as pta
