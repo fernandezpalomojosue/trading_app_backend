@@ -57,6 +57,7 @@ class TestIndicatorsUseCasesDTO:
         """Should return CombinedIndicatorsResponse DTO"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
@@ -84,6 +85,7 @@ class TestIndicatorsUseCasesDTO:
         """Should return data that can be serialized to JSON"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
@@ -117,6 +119,7 @@ class TestIndicatorsUseCasesDTO:
         
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
@@ -138,6 +141,7 @@ class TestIndicatorsUseCasesDTO:
         
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
@@ -153,6 +157,7 @@ class TestIndicatorsUseCasesDTO:
         """Should return numeric values for all indicator fields"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
@@ -174,6 +179,7 @@ class TestIndicatorsUseCasesDTO:
         """Should have order_signal and signal_reason populated"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
+            data=[],
             window=14,
             fast=12,
             slow=26,
