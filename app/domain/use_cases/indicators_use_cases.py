@@ -78,16 +78,28 @@ class IndicatorsUseCases(IndicatorsService):
 
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
         
-        results = df[[
-            "timestamp", "ema", "sma", "rsi", "macd", "signal", "histogram"
-        ]].to_dict(orient="records")
-        
-        # Replace NaN with None for JSON serialization
+        # Convert to IndicatorDataPoint objects
+        results = []
         import math
-        for record in results:
-            for key, value in record.items():
+        for _, row in df.iterrows():
+            # Handle NaN values
+            def safe_float(value):
                 if isinstance(value, float) and math.isnan(value):
-                    record[key] = None
+                    return None
+                return value
+            
+            point = IndicatorDataPoint(
+                timestamp=int(row["timestamp"]),
+                symbol=symbol,
+                ema=safe_float(row["ema"]),
+                sma=safe_float(row["sma"]),
+                rsi=safe_float(row["rsi"]),
+                macd=safe_float(row["macd"]),
+                signal=safe_float(row["signal"]),
+                histogram=safe_float(row["histogram"]),
+                fibonacci_levels={}
+            )
+            results.append(point)
         
         response = results
 
