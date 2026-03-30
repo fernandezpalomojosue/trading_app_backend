@@ -9,7 +9,7 @@ from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
-from app.infrastructure.cache.redis_cache import RedisMarketCache
+from app.infrastructure.cache.redis_cache import RedisCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
@@ -22,7 +22,7 @@ def get_indicators_service() -> IndicatorsService:
     
     # Choose cache implementation based on configuration
     if settings.CACHE_TYPE == "redis":
-        cache = RedisMarketCache(settings.REDIS_URL)
+        cache = RedisCache(settings.REDIS_URL)
     else:
         cache = MemoryMarketCache()
     
