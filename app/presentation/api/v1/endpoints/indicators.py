@@ -9,6 +9,8 @@ from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
+from app.application.repositories.market_repository import MarketRepository
+from app.infrastructure.external.market_client import PolygonMarketClient
 
 router = APIRouter()
 
@@ -23,6 +25,10 @@ def get_indicators_service() -> IndicatorsService:
     
     return IndicatorsUseCases(cache)
 
+def get_market_client()->MarketRepository:
+    settings = get_settings()
+    return PolygonMarketClient()
+
 
 @router.get("/{symbol}", response_model=List[IndicatorDataPoint])
 async def get_indicators(
@@ -36,14 +42,18 @@ async def get_indicators(
     end_date: Optional[str] = None,
     limit: int = Query(100, ge=1, le=5000),
     indicators_service: IndicatorsService = Depends(get_indicators_service),
+    market_client: MarketRepository = Depends(get_market_client),
     current_user = Depends(get_current_user_dependency)
 ):
     # Validación
     if fast >= slow:
         raise HTTPException(status_code=400, detail="fast must be less than slow")
 
+    raw_data = await market_client.fetch_stock_data(symbol, timespan, start_date, end_date, limit)
+
     data = await indicators_service.get_indicators(
         symbol,
+        raw_data,
         window,
         fast,
         slow,
