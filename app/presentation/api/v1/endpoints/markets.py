@@ -9,12 +9,12 @@ from app.application.dto.market_dto import (
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
-from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
-from app.domain.repositories.favorite_repository import FavoriteRepository
+from app.application.repositories.market_repository import MarketRepository, MarketDataCache
+from app.application.repositories.favorite_repository import FavoriteRepository
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
-from app.infrastructure.cache.redis_cache import RedisMarketCache
+from app.infrastructure.cache.redis_cache import RedisCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
@@ -33,7 +33,7 @@ def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     
     # Choose cache implementation based on configuration
     if settings.CACHE_TYPE == "redis":
-        cache = RedisMarketCache(settings.REDIS_URL)
+        cache = RedisCache(settings.REDIS_URL)
     else:
         cache = MemoryMarketCache()
     
