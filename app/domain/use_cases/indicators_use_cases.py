@@ -38,21 +38,10 @@ class IndicatorsUseCases(IndicatorsService):
         if cached:
             return cached
 
-        raw_data = await self.cache.get(f"candles_{symbol}_{timespan}_{start_date}_{end_date}")
-        if not raw_data:
-            raw_data = await self.cache.fetch_candlestick_data(
-            symbol,
-            timespan=timespan,
-            multiplier=1,
-            start_date=start_date,
-            end_date=end_date,
-            limit=5000
-        )
-
-        if not raw_data:
+        if not data:
             return []
 
-        df = pd.DataFrame(raw_data)
+        df = pd.DataFrame(data)
         df = df.sort_values("t")
         
         # Log date range for debugging
@@ -84,22 +73,10 @@ class IndicatorsUseCases(IndicatorsService):
         df['histogram'] = macd.iloc[:, 2]
 
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
-
-        # Prepare data for signal calculation
-        signal_data = df[["rsi", "macd", "signal", "ema", "close"]].to_dict(orient="records")
-        
-        # Calculate trading signals (returns tuples of signal and reason)
-        signal_results = self.signal_engine.calculate_signals(signal_data)
         
         results = df[[
             "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
-        
-        # Add signals and reasons to results
-        for i, (signal, reason) in enumerate(signal_results):
-            if i < len(results):
-                results[i]["order_signal"] = signal
-                results[i]["signal_reason"] = reason
         
         # Replace NaN with None for JSON serialization
         import math
