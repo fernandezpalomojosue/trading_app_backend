@@ -54,9 +54,5 @@ async def get_indicators(
         limit
     )
 
-    # limitar resultados
-    if "results" in data:
-        data["results"] = data["results"][-limit:]
-
-    return data
+    return data[-limit:]
 
