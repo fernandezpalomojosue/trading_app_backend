@@ -33,8 +33,8 @@ class SignalEngineUseCases:
                 continue
                 
             prev_point = data_points[i - 1]
-            signal, reason = self.calculate_single_signal(symbol, point, prev_point)
-            results.append(SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal=signal, reason=reason))
+            signalpoint = self.calculate_single_signal(symbol, point, prev_point)
+            results.append(signalpoint)
             
         return results
 

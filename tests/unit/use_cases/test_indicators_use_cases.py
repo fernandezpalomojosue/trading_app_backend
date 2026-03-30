@@ -63,8 +63,8 @@ class TestIndicatorsUseCasesDTO:
             slow=26,
             signal=9,
             timespan="day",
-            start_date="2024-01-01",
-            end_date="2024-03-01"
+            start_date="2025-01-01",
+            end_date="2025-03-01"
         )
         
         assert isinstance(result, list)
