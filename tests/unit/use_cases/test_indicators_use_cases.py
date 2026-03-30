@@ -44,9 +44,9 @@ def mock_cache():
 
 
 @pytest.fixture
-def indicators_use_cases(mock_market_client, mock_cache):
+def indicators_use_cases(mock_cache):
     """Fixture for IndicatorsUseCases with mocked dependencies"""
-    return IndicatorsUseCases(mock_market_client, mock_cache)
+    return IndicatorsUseCases(mock_cache)
 
 
 class TestIndicatorsUseCasesDTO:
