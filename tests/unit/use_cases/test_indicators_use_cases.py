@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
-from app.application.dto.indicators_dto import CombinedIndicatorsResponse
+from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 
 
@@ -66,12 +66,11 @@ class TestIndicatorsUseCasesDTO:
             end_date="2024-03-01"
         )
         
-        assert isinstance(result, CombinedIndicatorsResponse)
-        assert result.symbol == "AAPL"
-        assert len(result.results) > 0
+        assert isinstance(result, list)
+        assert len(result) > 0
         
         # Verify all data points have required fields
-        for point in result.results:
+        for point in result:
             assert hasattr(point, 't')
             assert hasattr(point, 'ema')
             assert hasattr(point, 'sma')
@@ -125,9 +124,8 @@ class TestIndicatorsUseCasesDTO:
             timespan="day"
         )
         
-        assert isinstance(result, CombinedIndicatorsResponse)
-        assert result.symbol == "AAPL"
-        assert result.results == []
+        assert isinstance(result, list)
+        assert result == []
 
     @pytest.mark.asyncio
     async def test_returns_dto_for_insufficient_data(self, indicators_use_cases, mock_market_client):
@@ -147,9 +145,8 @@ class TestIndicatorsUseCasesDTO:
             timespan="day"
         )
         
-        assert isinstance(result, CombinedIndicatorsResponse)
-        assert result.symbol == "AAPL"
-        assert result.results == []
+        assert isinstance(result, list)
+        assert result == []
 
     @pytest.mark.asyncio
     async def test_response_values_are_numeric(self, indicators_use_cases):
@@ -163,7 +160,7 @@ class TestIndicatorsUseCasesDTO:
             timespan="day"
         )
         
-        for point in result.results:
+        for point in result:
             assert isinstance(point.t, int)
             assert isinstance(point.ema, float)
             assert isinstance(point.sma, float)
@@ -184,7 +181,7 @@ class TestIndicatorsUseCasesDTO:
             timespan="day"
         )
         
-        for point in result.results:
+        for point in result:
             assert point.order_signal in ["buy", "sell", "hold"]
             assert point.signal_reason is not None
             assert len(point.signal_reason) > 0
