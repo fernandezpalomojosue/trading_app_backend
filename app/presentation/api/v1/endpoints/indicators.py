@@ -5,7 +5,6 @@ from typing import Optional, List
 from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
-from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.core.config import get_settings
@@ -17,16 +16,12 @@ router = APIRouter()
 def get_indicators_service() -> IndicatorsService:
     """Get indicators service instance"""
     settings = get_settings()
-    
-    # Choose cache implementation based on configuration
     if settings.CACHE_TYPE == "redis":
         cache = RedisCache(settings.REDIS_URL)
     else:
         cache = MemoryMarketCache()
     
-    # Create client and use cases
-    client = PolygonMarketClient()
-    return IndicatorsUseCases(client, cache)
+    return IndicatorsUseCases(cache)
 
 
 @router.get("/{symbol}", response_model=List[IndicatorDataPoint])
