@@ -1,10 +1,8 @@
 # app/presentation/api/v1/endpoints/indicators.py
 from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Optional
+from typing import Optional, List
 
-from app.application.dto.indicators_dto import (
-    CombinedIndicatorsResponse
-)
+from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
@@ -31,7 +29,7 @@ def get_indicators_service() -> IndicatorsService:
     return IndicatorsUseCases(client, cache)
 
 
-@router.get("/{symbol}", response_model=CombinedIndicatorsResponse)
+@router.get("/{symbol}", response_model=List[IndicatorDataPoint])
 async def get_indicators(
     symbol: str,
     window: int = Query(14, ge=1, le=200),
