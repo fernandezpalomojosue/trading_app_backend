@@ -3,7 +3,15 @@ import pandas as pd
 #import ta
 import pandas_ta as pta
 import logging
+import sys
 from datetime import datetime
+
+# Configure logging to output to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
@@ -39,11 +47,22 @@ class IndicatorsUseCases(IndicatorsService):
             return cached
 
         if not data or not isinstance(data, list) or len(data) == 0:
+            print(f"🔴 NO DATA: {data}")
+            logger.info(f"No data provided or invalid data format: {data}")
             return []
 
+        print(f"📊 PROCESSING: {len(data)} data points for {symbol}")
+        logger.info(f"Processing {len(data)} data points for {symbol}")
+        print(f"📋 SAMPLE DATA: {data[:2] if len(data) > 0 else 'No data'}")
+        logger.debug(f"Sample data: {data[:2] if len(data) > 0 else 'No data'}")
+        
         try:
             df = pd.DataFrame(data)
-        except (ValueError, TypeError):
+            logger.info(f"DataFrame created with columns: {list(df.columns)}")
+        except (ValueError, TypeError) as e:
+            logger.error(f"Error creating DataFrame: {e}")
+            logger.error(f"Data type: {type(data)}")
+            logger.error(f"Data content: {data}")
             return []
         df = df.sort_values("t")
         
