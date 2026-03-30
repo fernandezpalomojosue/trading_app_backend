@@ -118,7 +118,7 @@ class TestIndicatorsUseCasesDTO:
         
         # Verify all data points have required fields
         for point in result:
-            assert hasattr(point, 't')
+            assert hasattr(point, 'timestamp')
             assert hasattr(point, 'ema')
             assert hasattr(point, 'sma')
             assert hasattr(point, 'rsi')
