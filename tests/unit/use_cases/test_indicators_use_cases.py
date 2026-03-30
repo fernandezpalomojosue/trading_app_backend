@@ -118,13 +118,16 @@ class TestIndicatorsUseCasesDTO:
         
         # Verify all data points have required fields
         for point in result:
-            assert hasattr(point, 'timestamp')
-            assert hasattr(point, 'ema')
-            assert hasattr(point, 'sma')
-            assert hasattr(point, 'rsi')
-            assert hasattr(point, 'macd')
-            assert hasattr(point, 'signal')
-            assert hasattr(point, 'histogram')
+            assert isinstance(point, dict)
+            assert 'timestamp' in point
+            assert 'ema' in point
+            assert 'sma' in point
+            assert 'rsi' in point
+            assert 'macd' in point
+            assert 'signal' in point
+            assert 'histogram' in point
+            assert 'symbol' in point
+            assert 'fibonacci_levels' in point
 
     @pytest.mark.asyncio
     async def test_response_structure_matches_dto(self, indicators_use_cases):
