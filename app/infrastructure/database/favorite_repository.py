@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 from sqlmodel import Session, select
 
-from app.domain.repositories.favorite_repository import FavoriteRepository
+from app.application.repositories.favorite_repository import FavoriteRepository
 from app.domain.entities.favorite_stock import FavoriteStockEntity
 from app.infrastructure.database.models import FavoriteStockSQLModel
 

@@ -8,10 +8,14 @@ Rules:
 """
 from typing import List, Dict, Tuple
 import math
+from app.application.services.indicators_service import IndicatorsService
 
 
 class SignalEngineUseCases:
     """Generates trading signals from technical indicator data"""
+
+    def __init__(self, indicator_service):
+        self.indicator_service = indicator_service
 
     def calculate_signals(self, data_points: List[Dict]) -> List[Tuple[str, str]]:
         """

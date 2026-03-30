@@ -4,24 +4,24 @@ import pandas as pd
 import pandas_ta as pta
 import logging
 from datetime import datetime
-from app.application.dto.indicators_dto import CombinedIndicatorsResponse
+from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
+from app.application.repositories.cache_repository import CacheRepository
 
 logger = logging.getLogger(__name__)
 
 
 class IndicatorsUseCases(IndicatorsService):
 
-    def __init__(self, market_client: PolygonMarketClient, cache_service, signal_engine: Optional[SignalEngineUseCases] = None):
-        self.market_client = market_client
+    def __init__(self, cache_service):
         self.cache = cache_service
-        self.signal_engine = signal_engine or SignalEngineUseCases()
 
     async def get_indicators(
         self,
         symbol: str,
+        data: List[dict],
         window: int,
         fast: int,
         slow: int,
@@ -30,7 +30,7 @@ class IndicatorsUseCases(IndicatorsService):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 100
-    ) -> CombinedIndicatorsResponse:
+    ) -> List[IndicatorDataPoint]:
 
         cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}"
 
@@ -38,7 +38,9 @@ class IndicatorsUseCases(IndicatorsService):
         if cached:
             return cached
 
-        raw_data = await self.market_client.fetch_candlestick_data(
+        raw_data = await self.cache.get(f"candles_{symbol}_{timespan}_{start_date}_{end_date}")
+        if not raw_data:
+            raw_data = await self.cache.fetch_candlestick_data(
             symbol,
             timespan=timespan,
             multiplier=1,
@@ -48,7 +50,7 @@ class IndicatorsUseCases(IndicatorsService):
         )
 
         if not raw_data:
-            return CombinedIndicatorsResponse(symbol=symbol, results=[])
+            return []
 
         df = pd.DataFrame(raw_data)
         df = df.sort_values("t")
@@ -65,7 +67,7 @@ class IndicatorsUseCases(IndicatorsService):
 
         # Validación mínima
         if len(df) < max(window, slow):
-            return CombinedIndicatorsResponse(symbol=symbol, results=[])
+            return []
 
         # =====================
         # INDICADORES
@@ -106,11 +108,8 @@ class IndicatorsUseCases(IndicatorsService):
                 if isinstance(value, float) and math.isnan(value):
                     record[key] = None
         
-        response = CombinedIndicatorsResponse(
-            symbol=symbol,
-            results=results
-        )
+        response = results
 
-        await self.cache.set(cache_key, response.model_dump(), ttl=60)
+        await self.cache.set(cache_key, response, ttl=60)
 
         return response
