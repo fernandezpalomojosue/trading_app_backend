@@ -57,7 +57,7 @@ class TestSignalEngineServiceCalculateSignals:
         """First data point should be HOLD (no previous point for crossover)"""
         data = [{"rsi": 25, "macd": 0.9, "signal": 0.8, "ema": 145.0, "close": 150.0}]
         
-        results = signal_engine.calculate_signals(data)
+        results = signal_engine.calculate_signals(symbol="AAPL", data_points=data)
         assert len(results) == 1
         signal, reason = results[0]
         assert signal == "hold"
@@ -71,15 +71,15 @@ class TestSignalEngineServiceCalculateSignals:
             {"rsi": 45, "macd": 1.0, "signal": 0.8, "ema": 145.0, "close": 150.0},
         ]
         
-        results = signal_engine.calculate_signals(data)
+        results = signal_engine.calculate_signals(symbol="AAPL", data_points=data)
         assert len(results) == 3
-        assert results[0][0] == "hold"  # First point is always hold
-        assert results[1][0] == "buy"   # Second point meets buy conditions
-        assert results[2][0] == "hold"  # Third point is hold
+        assert results[0].signal == "hold"  # First point is always hold
+        assert results[1].signal == "buy"   # Second point meets buy conditions
+        assert results[2].signal == "hold"  # Third point is hold
 
     def test_empty_list_returns_empty(self, signal_engine):
         """Empty input should return empty list"""
-        results = signal_engine.calculate_signals([])
+        results = signal_engine.calculate_signals(symbol="AAPL", data_points=[])
         assert results == []
 
 
