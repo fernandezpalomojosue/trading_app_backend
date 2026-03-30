@@ -24,7 +24,7 @@ class TestSignalEngineServiceBuySignals:
             "ema": 145.0, "close": 150.0
         }
         
-        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", current_point=current_point, prev_point=prev_point)
+        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
         assert signal == "buy"
         assert "BUY:" in reason
         assert "RSI" in reason
