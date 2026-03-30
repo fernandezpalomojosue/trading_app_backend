@@ -1,4 +1,4 @@
-# app/domain/repositories/favorite_repository.py
+# app/application/repositories/favorite_repository.py
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID

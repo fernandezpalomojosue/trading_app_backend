@@ -4,8 +4,8 @@ from datetime import datetime
 from uuid import UUID
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
 from app.utils.market_utils import MarketDataProcessor
-from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
-from app.domain.repositories.favorite_repository import FavoriteRepository
+from app.application.repositories.market_repository import MarketRepository, MarketDataCache
+from app.application.repositories.favorite_repository import FavoriteRepository
 from app.application.services.market_service import MarketService
 from app.domain.entities.portfolio import PortfolioHolding
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick

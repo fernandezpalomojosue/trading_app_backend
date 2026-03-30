@@ -14,7 +14,7 @@ from app.application.repositories.favorite_repository import FavoriteRepository
 from app.domain.use_cases.market_use_cases import MarketUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
-from app.infrastructure.cache.redis_cache import RedisCache
+from app.infrastructure.cache.redis_cache import RedisMarketCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.portfolio_use_cases import PortfolioRepository
