@@ -93,24 +93,15 @@ class TestIndicatorsUseCasesDTO:
             timespan="day"
         )
         
-        # Serialize and verify structure
-        serialized = result.model_dump()
-        
-        assert "symbol" in serialized
-        assert "results" in serialized
-        assert isinstance(serialized["results"], list)
-        
-        if len(serialized["results"]) > 0:
-            first_result = serialized["results"][0]
-            assert "t" in first_result
+        if len(result) > 0:
+            first_result = result[0]
+            assert "timestamp" in first_result
             assert "ema" in first_result
             assert "sma" in first_result
             assert "rsi" in first_result
             assert "macd" in first_result
             assert "signal" in first_result
             assert "histogram" in first_result
-            assert "order_signal" in first_result
-            assert "signal_reason" in first_result
 
     @pytest.mark.asyncio
     async def test_returns_dto_for_empty_data(self, indicators_use_cases, mock_market_client):
@@ -166,7 +157,7 @@ class TestIndicatorsUseCasesDTO:
         )
         
         for point in result:
-            assert isinstance(point.t, int)
+            assert isinstance(point.timestamp, int)
             assert isinstance(point.ema, float)
             assert isinstance(point.sma, float)
             assert isinstance(point.rsi, float)
