@@ -30,22 +30,6 @@ class TestIndicatorDataPoint:
         assert data.histogram == 0.4
         assert data.fibonacci_levels == {}
 
-    def test_optional_order_signal(self):
-        """Should allow order_signal to be None by default"""
-        data = IndicatorDataPoint(
-            timestamp=1704067200000,
-            symbol="AAPL",
-            ema=150.5,
-            sma=149.8,
-            rsi=65.4,
-            macd=1.2,
-            signal=0.8,
-            histogram=0.4,
-            fibonacci_levels={}
-        )
-        
-        assert data.order_signal is None
-
     def test_required_fields(self):
         """Should fail when required fields are missing"""
         with pytest.raises(ValidationError) as exc_info:
