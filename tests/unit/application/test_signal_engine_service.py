@@ -24,7 +24,7 @@ class TestSignalEngineServiceBuySignals:
             "ema": 145.0, "close": 150.0
         }
         
-        signal, reason = signal_engine.calculate_single_signal(current_point, prev_point)
+        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", current_point=current_point, prev_point=prev_point)
         assert signal == "buy"
         assert "BUY:" in reason
         assert "RSI" in reason
@@ -44,7 +44,7 @@ class TestSignalEngineServiceSellSignals:
             "ema": 155.0, "close": 145.0
         }
         
-        signal, reason = signal_engine.calculate_single_signal(current_point, prev_point)
+        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", current_point=current_point, prev_point=prev_point)
         assert signal == "sell"
         assert "SELL:" in reason
         assert "RSI" in reason
@@ -91,7 +91,7 @@ class TestSignalEngineServiceEdgeCases:
         prev_point = {"rsi": 35, "macd": 0.5, "signal": 0.8, "ema": 145.0, "close": 150.0}
         current_point = {"rsi": None, "macd": 0.9, "signal": 0.8, "ema": 145.0, "close": 150.0}
         
-        signal, reason = signal_engine.calculate_single_signal(current_point, prev_point)
+        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", current_point=current_point, prev_point=prev_point)
         assert signal == "hold"
         assert "Insufficient data" in reason
 
@@ -100,6 +100,6 @@ class TestSignalEngineServiceEdgeCases:
         prev_point = {"rsi": 35, "macd": 0.5, "signal": 0.8, "ema": 145.0, "close": 150.0}
         current_point = {"rsi": 25, "macd": float('nan'), "signal": 0.8, "ema": 145.0, "close": 150.0}
         
-        signal, reason = signal_engine.calculate_single_signal(current_point, prev_point)
+        signal, reason = signal_engine.calculate_single_signal(symbol="AAPL", current_point=current_point, prev_point=prev_point)
         assert signal == "hold"
         assert "Insufficient data" in reason
