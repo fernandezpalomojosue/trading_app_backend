@@ -49,7 +49,7 @@ async def get_indicators(
     if fast >= slow:
         raise HTTPException(status_code=400, detail="fast must be less than slow")
 
-    raw_data = await market_client.fetch_candlestick_data(symbol, timespan, multiplier=1, timespan=timespan, start_date=start_date, end_date=end_date, limit=limit)
+    raw_data = await market_client.fetch_candlestick_data(symbol, timespan, multiplier=1, start_date=start_date, end_date=end_date, limit=limit)
 
     data = await indicators_service.get_indicators(
         symbol,
