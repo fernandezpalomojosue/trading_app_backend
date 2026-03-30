@@ -16,6 +16,6 @@ class SignalEngineService(ABC):
     """Abstract interface for signal engine service"""
     
     @abstractmethod
-    def calculate_signals(self, data_points: List[IndicatorDataPoint]) -> SignalDataPoint:
+    def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> SignalDataPoint:
         """Calculate signals for a list of indicator data points, returns (signal, reason)"""
         pass

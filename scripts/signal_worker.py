@@ -22,9 +22,9 @@ async def main():
 
     orchestration_service = SignalOrchestrator(
         market_client,
-        cache_repository,
         indicator_service,
         signal_engine,
+        cache_repository,
         signal_repository
     )
     
