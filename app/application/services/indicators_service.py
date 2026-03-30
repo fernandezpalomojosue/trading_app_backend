@@ -14,6 +14,7 @@ class IndicatorsService(ABC):
     async def get_indicators(
         self,
         symbol: str,
+        data: List[dict],
         window: int,
         fast: int,
         slow: int,

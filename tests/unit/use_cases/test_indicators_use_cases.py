@@ -45,7 +45,7 @@ def mock_cache():
 
 @pytest.fixture
 def indicators_use_cases(mock_market_client, mock_cache):
-    """Fixture for IndicatorsUseCases with mocked dependencies including signal engine"""
+    """Fixture for IndicatorsUseCases with mocked dependencies"""
     return IndicatorsUseCases(mock_market_client, mock_cache)
 
 
@@ -53,7 +53,7 @@ class TestIndicatorsUseCasesDTO:
     """Tests for IndicatorsUseCases returning CombinedIndicatorsResponse"""
 
     @pytest.mark.asyncio
-    async def test_returns_combined_indicators_response(self, indicators_use_cases, mock_market_client, mock_cache):
+    async def test_returns_combined_indicators_response(self, indicators_use_cases):
         """Should return CombinedIndicatorsResponse DTO"""
         result = await indicators_use_cases.get_indicators(
             symbol="AAPL",
