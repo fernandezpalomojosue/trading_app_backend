@@ -10,29 +10,31 @@ class TestIndicatorDataPoint:
     def test_valid_data_point(self):
         """Should create valid data point with all fields"""
         data = IndicatorDataPoint(
-            t=1704067200000,
+            timestamp=1704067200000,
+            symbol="AAPL",
             ema=150.5,
             sma=149.8,
             rsi=65.4,
             macd=1.2,
             signal=0.8,
             histogram=0.4,
-            order_signal=None
+            fibonacci_levels={}
         )
         
-        assert data.t == 1704067200000
+        assert data.timestamp == 1704067200000
         assert data.ema == 150.5
         assert data.sma == 149.8
         assert data.rsi == 65.4
         assert data.macd == 1.2
         assert data.signal == 0.8
         assert data.histogram == 0.4
-        assert data.order_signal is None
+        assert data.fibonacci_levels == {}
 
     def test_optional_order_signal(self):
         """Should allow order_signal to be None by default"""
         data = IndicatorDataPoint(
-            t=1704067200000,
+            timestamp=1704067200000,
+            symbol="AAPL",
             ema=150.5,
             sma=149.8,
             rsi=65.4,
@@ -47,7 +49,8 @@ class TestIndicatorDataPoint:
         """Should accept valid order signal values"""
         for signal in ["buy", "sell", "hold", None]:
             data = IndicatorDataPoint(
-                t=1704067200000,
+                timestamp=1704067200000,
+                symbol="AAPL",
                 ema=150.5,
                 sma=149.8,
                 rsi=65.4,
@@ -62,7 +65,8 @@ class TestIndicatorDataPoint:
         """Should fail when required fields are missing"""
         with pytest.raises(ValidationError) as exc_info:
             IndicatorDataPoint(
-                t=1704067200000,
+                timestamp=1704067200000,
+                symbol="AAPL",
                 # Missing ema
                 sma=149.8,
                 rsi=65.4,
@@ -77,7 +81,8 @@ class TestIndicatorDataPoint:
         """Should enforce correct field types"""
         with pytest.raises(ValidationError) as exc_info:
             IndicatorDataPoint(
-                t="invalid_timestamp",
+                timestamp="invalid_timestamp",
+                symbol="AAPL",
                 ema=150.5,
                 sma=149.8,
                 rsi=65.4,
@@ -86,7 +91,7 @@ class TestIndicatorDataPoint:
                 histogram=0.4
             )
         
-        assert "t" in str(exc_info.value)
+        assert "timestamp" in str(exc_info.value)
 
 
 class TestIndicatorDataPointList:
@@ -96,7 +101,8 @@ class TestIndicatorDataPointList:
         """Should create valid list of data points"""
         data_points = [
             IndicatorDataPoint(
-                t=1704067200000,
+                timestamp=1704067200000,
+                symbol="AAPL",
                 ema=150.5,
                 sma=149.8,
                 rsi=65.4,
@@ -105,7 +111,8 @@ class TestIndicatorDataPointList:
                 histogram=0.4
             ),
             IndicatorDataPoint(
-                t=1704153600000,
+                timestamp=1704153600000,
+                symbol="AAPL",
                 ema=151.2,
                 sma=150.1,
                 rsi=67.8,
@@ -129,7 +136,8 @@ class TestIndicatorDataPointList:
     def test_list_serialization(self):
         """Should serialize list of data points correctly"""
         data_point = IndicatorDataPoint(
-            t=1704067200000,
+            timestamp=1704067200000,
+            symbol="AAPL",
             ema=150.5,
             sma=149.8,
             rsi=65.4,
@@ -142,5 +150,5 @@ class TestIndicatorDataPointList:
         serialized = [point.model_dump() for point in data_points]
         
         assert len(serialized) == 1
-        assert serialized[0]["t"] == 1704067200000
+        assert serialized[0]["timestamp"] == 1704067200000
         assert serialized[0]["ema"] == 150.5
