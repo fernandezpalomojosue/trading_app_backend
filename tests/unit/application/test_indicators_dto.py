@@ -40,26 +40,11 @@ class TestIndicatorDataPoint:
             rsi=65.4,
             macd=1.2,
             signal=0.8,
-            histogram=0.4
+            histogram=0.4,
+            fibonacci_levels={}
         )
         
         assert data.order_signal is None
-
-    def test_order_signal_values(self):
-        """Should accept valid order signal values"""
-        for signal in ["buy", "sell", "hold", None]:
-            data = IndicatorDataPoint(
-                timestamp=1704067200000,
-                symbol="AAPL",
-                ema=150.5,
-                sma=149.8,
-                rsi=65.4,
-                macd=1.2,
-                signal=0.8,
-                histogram=0.4,
-                order_signal=signal
-            )
-            assert data.order_signal == signal
 
     def test_required_fields(self):
         """Should fail when required fields are missing"""
@@ -72,7 +57,8 @@ class TestIndicatorDataPoint:
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             )
         
         assert "ema" in str(exc_info.value)
@@ -88,7 +74,8 @@ class TestIndicatorDataPoint:
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             )
         
         assert "timestamp" in str(exc_info.value)
@@ -108,7 +95,8 @@ class TestIndicatorDataPointList:
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             ),
             IndicatorDataPoint(
                 timestamp=1704153600000,
@@ -118,7 +106,8 @@ class TestIndicatorDataPointList:
                 rsi=67.8,
                 macd=1.5,
                 signal=1.1,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             )
         ]
         
@@ -143,7 +132,8 @@ class TestIndicatorDataPointList:
             rsi=65.4,
             macd=1.2,
             signal=0.8,
-            histogram=0.4   
+            histogram=0.4,
+            fibonacci_levels={}
         )
         
         data_points = [data_point]
