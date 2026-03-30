@@ -38,10 +38,13 @@ class IndicatorsUseCases(IndicatorsService):
         if cached:
             return cached
 
-        if not data:
+        if not data or not isinstance(data, list) or len(data) == 0:
             return []
 
-        df = pd.DataFrame(data)
+        try:
+            df = pd.DataFrame(data)
+        except (ValueError, TypeError):
+            return []
         df = df.sort_values("t")
         
         # Log date range for debugging
