@@ -56,6 +56,7 @@ class IndicatorsUseCases(IndicatorsService):
             logger.info(f"Indicators for {symbol}: requested from {start_date} to {end_date}, got {len(df)} records from {first_date} to {last_date}")
         
         df["close"] = df["c"]
+        df["timestamp"] = df["t"]
 
         # Validación mínima
         if len(df) < max(window, slow):
@@ -78,7 +79,7 @@ class IndicatorsUseCases(IndicatorsService):
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
         
         results = df[[
-            "t", "ema", "sma", "rsi", "macd", "signal", "histogram"
+            "timestamp", "ema", "sma", "rsi", "macd", "signal", "histogram"
         ]].to_dict(orient="records")
         
         # Replace NaN with None for JSON serialization
