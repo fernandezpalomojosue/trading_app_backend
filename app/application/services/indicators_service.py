@@ -1,9 +1,9 @@
 # app/application/services/indicators_service.py
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 from app.application.dto.indicators_dto import (
-    CombinedIndicatorsResponse
+    IndicatorDataPoint
 )
 
 
@@ -14,6 +14,7 @@ class IndicatorsService(ABC):
     async def get_indicators(
         self,
         symbol: str,
+        data: List[dict],
         window: int,
         fast: int,
         slow: int,
@@ -22,6 +23,6 @@ class IndicatorsService(ABC):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 100
-    ) -> CombinedIndicatorsResponse:
+    ) -> List[IndicatorDataPoint]:
         """Get all technical indicators for a symbol"""
         pass

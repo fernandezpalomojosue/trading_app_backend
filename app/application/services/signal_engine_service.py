@@ -6,14 +6,16 @@ Rules:
 - SELL: RSI > 70 (overbought) + MACD crosses below signal + Price < EMA  
 - HOLD: Otherwise
 """
-from typing import List, Dict, Tuple
+from typing import List
 from abc import ABC, abstractmethod
+from app.application.dto.indicators_dto import IndicatorDataPoint
+from app.application.dto.signals_dto import SignalDataPoint
 
 
-class SignalEngineServiceInterface(ABC):
+class SignalEngineService(ABC):
     """Abstract interface for signal engine service"""
     
     @abstractmethod
-    def calculate_signals(self, data_points: List[Dict]) -> List[Tuple[str, str]]:
+    def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> SignalDataPoint:
         """Calculate signals for a list of indicator data points, returns (signal, reason)"""
         pass

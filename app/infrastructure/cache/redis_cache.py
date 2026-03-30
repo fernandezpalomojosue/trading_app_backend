@@ -4,11 +4,11 @@ import redis.asyncio as redis
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 
-from app.domain.use_cases.market_use_cases import MarketDataCache
+from app.application.repositories.cache_repository import CacheRepository
 
 
-class RedisMarketCache(MarketDataCache):
-    """Redis implementation of market data cache"""
+class RedisCache(CacheRepository):
+    """Redis implementation of cache repository"""
     
     def __init__(self, redis_url: str, default_ttl: int = 300, key_prefix: str = "market:"):
         self.default_ttl = default_ttl

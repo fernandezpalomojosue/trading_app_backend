@@ -1,15 +1,12 @@
 # app/presentation/api/v1/endpoints/indicators.py
 from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Optional
+from typing import Optional, List
 
-from app.application.dto.indicators_dto import (
-    CombinedIndicatorsResponse
-)
+from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
-from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
-from app.infrastructure.cache.redis_cache import RedisMarketCache
+from app.infrastructure.cache.redis_cache import RedisCache
 from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 
@@ -19,19 +16,15 @@ router = APIRouter()
 def get_indicators_service() -> IndicatorsService:
     """Get indicators service instance"""
     settings = get_settings()
-    
-    # Choose cache implementation based on configuration
     if settings.CACHE_TYPE == "redis":
-        cache = RedisMarketCache(settings.REDIS_URL)
+        cache = RedisCache(settings.REDIS_URL)
     else:
         cache = MemoryMarketCache()
     
-    # Create client and use cases
-    client = PolygonMarketClient()
-    return IndicatorsUseCases(client, cache)
+    return IndicatorsUseCases(cache)
 
 
-@router.get("/{symbol}", response_model=CombinedIndicatorsResponse)
+@router.get("/{symbol}", response_model=List[IndicatorDataPoint])
 async def get_indicators(
     symbol: str,
     window: int = Query(14, ge=1, le=200),

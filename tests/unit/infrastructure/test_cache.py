@@ -10,7 +10,7 @@ import os
 # Add to project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from app.infrastructure.cache.redis_cache import RedisMarketCache
+from app.infrastructure.cache.redis_cache import RedisCache
 from app.infrastructure.cache.memory_cache import MemoryMarketCache
 
 
@@ -21,7 +21,7 @@ async def test_redis_cache():
     
     try:
         # Initialize Redis cache
-        redis_cache = RedisMarketCache("redis://localhost:6379/0")
+        redis_cache = RedisCache("redis://localhost:6379/0")
         
         # Test set and get
         await redis_cache.set("test_key", {"message": "Hello Redis!"}, ttl=60)

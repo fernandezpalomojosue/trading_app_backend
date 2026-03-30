@@ -1,77 +1,48 @@
 # tests/unit/application/test_indicators_dto.py
 import pytest
 from pydantic import ValidationError
-from app.application.dto.indicators_dto import (
-    CombinedIndicatorDataPoint,
-    CombinedIndicatorsResponse
-)
+from app.application.dto.indicators_dto import IndicatorDataPoint
 
 
-class TestCombinedIndicatorDataPoint:
-    """Tests for CombinedIndicatorDataPoint DTO"""
+class TestIndicatorDataPoint:
+    """Tests for IndicatorDataPoint DTO"""
 
     def test_valid_data_point(self):
         """Should create valid data point with all fields"""
-        data = CombinedIndicatorDataPoint(
-            t=1704067200000,
+        data = IndicatorDataPoint(
+            timestamp=1704067200000,
+            symbol="AAPL",
             ema=150.5,
             sma=149.8,
             rsi=65.4,
             macd=1.2,
             signal=0.8,
             histogram=0.4,
-            order_signal=None
+            fibonacci_levels={}
         )
         
-        assert data.t == 1704067200000
+        assert data.timestamp == 1704067200000
         assert data.ema == 150.5
         assert data.sma == 149.8
         assert data.rsi == 65.4
         assert data.macd == 1.2
         assert data.signal == 0.8
         assert data.histogram == 0.4
-        assert data.order_signal is None
-
-    def test_optional_order_signal(self):
-        """Should allow order_signal to be None by default"""
-        data = CombinedIndicatorDataPoint(
-            t=1704067200000,
-            ema=150.5,
-            sma=149.8,
-            rsi=65.4,
-            macd=1.2,
-            signal=0.8,
-            histogram=0.4
-        )
-        
-        assert data.order_signal is None
-
-    def test_order_signal_values(self):
-        """Should accept valid order signal values"""
-        for signal in ["buy", "sell", "hold", None]:
-            data = CombinedIndicatorDataPoint(
-                t=1704067200000,
-                ema=150.5,
-                sma=149.8,
-                rsi=65.4,
-                macd=1.2,
-                signal=0.8,
-                histogram=0.4,
-                order_signal=signal
-            )
-            assert data.order_signal == signal
+        assert data.fibonacci_levels == {}
 
     def test_required_fields(self):
         """Should fail when required fields are missing"""
         with pytest.raises(ValidationError) as exc_info:
-            CombinedIndicatorDataPoint(
-                t=1704067200000,
+            IndicatorDataPoint(
+                timestamp=1704067200000,
+                symbol="AAPL",
                 # Missing ema
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             )
         
         assert "ema" in str(exc_info.value)
@@ -79,130 +50,79 @@ class TestCombinedIndicatorDataPoint:
     def test_field_types(self):
         """Should enforce correct field types"""
         with pytest.raises(ValidationError) as exc_info:
-            CombinedIndicatorDataPoint(
-                t="invalid_timestamp",
+            IndicatorDataPoint(
+                timestamp="invalid_timestamp",
+                symbol="AAPL",
                 ema=150.5,
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             )
         
-        assert "t" in str(exc_info.value)
+        assert "timestamp" in str(exc_info.value)
 
 
-class TestCombinedIndicatorsResponse:
-    """Tests for CombinedIndicatorsResponse DTO"""
-
-    def test_valid_response(self):
-        """Should create valid response with symbol and results"""
+class TestIndicatorDataPointList:
+    """Tests for List[IndicatorDataPoint] response"""
+    
+    def test_list_of_data_points(self):
+        """Should create valid list of data points"""
         data_points = [
-            CombinedIndicatorDataPoint(
-                t=1704067200000,
+            IndicatorDataPoint(
+                timestamp=1704067200000,
+                symbol="AAPL",
                 ema=150.5,
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
                 signal=0.8,
-                histogram=0.4
+                histogram=0.4,
+                fibonacci_levels={}
             ),
-            CombinedIndicatorDataPoint(
-                t=1704153600000,
+            IndicatorDataPoint(
+                timestamp=1704153600000,
+                symbol="AAPL",
                 ema=151.2,
                 sma=150.1,
-                rsi=68.9,
+                rsi=67.8,
                 macd=1.5,
-                signal=0.9,
-                histogram=0.6
+                signal=1.1,
+                histogram=0.4,
+                fibonacci_levels={}
             )
         ]
         
-        response = CombinedIndicatorsResponse(
-            symbol="AAPL",
-            results=data_points
-        )
+        assert len(data_points) == 2
+        assert data_points[0].ema == 150.5
+        assert data_points[1].ema == 151.2
+    
+    def test_empty_list(self):
+        """Should handle empty list"""
+        data_points = []
         
-        assert response.symbol == "AAPL"
-        assert len(response.results) == 2
-        assert response.results[0].t == 1704067200000
-        assert response.results[1].t == 1704153600000
-
-    def test_empty_results(self):
-        """Should allow empty results list"""
-        response = CombinedIndicatorsResponse(
+        assert len(data_points) == 0
+        assert isinstance(data_points, list)
+    
+    def test_list_serialization(self):
+        """Should serialize list of data points correctly"""
+        data_point = IndicatorDataPoint(
+            timestamp=1704067200000,
             symbol="AAPL",
-            results=[]
-        )
-        
-        assert response.symbol == "AAPL"
-        assert response.results == []
-
-    def test_response_serialization(self):
-        """Should serialize response to dict correctly"""
-        data_point = CombinedIndicatorDataPoint(
-            t=1704067200000,
             ema=150.5,
             sma=149.8,
             rsi=65.4,
             macd=1.2,
             signal=0.8,
             histogram=0.4,
-            order_signal="buy"
+            fibonacci_levels={}
         )
         
-        response = CombinedIndicatorsResponse(
-            symbol="AAPL",
-            results=[data_point]
-        )
+        data_points = [data_point]
+        serialized = [point.model_dump() for point in data_points]
         
-        serialized = response.model_dump()
-        
-        assert serialized["symbol"] == "AAPL"
-        assert len(serialized["results"]) == 1
-        assert serialized["results"][0]["t"] == 1704067200000
-        assert serialized["results"][0]["ema"] == 150.5
-        assert serialized["results"][0]["order_signal"] == "buy"
-
-    def test_required_symbol(self):
-        """Should fail when symbol is missing"""
-        with pytest.raises(ValidationError) as exc_info:
-            CombinedIndicatorsResponse(
-                results=[]
-            )
-        
-        assert "symbol" in str(exc_info.value)
-
-    def test_symbol_type(self):
-        """Should enforce string type for symbol"""
-        with pytest.raises(ValidationError) as exc_info:
-            CombinedIndicatorsResponse(
-                symbol=123,
-                results=[]
-            )
-        
-        assert "symbol" in str(exc_info.value)
-
-    def test_response_from_dict(self):
-        """Should create response from dict"""
-        data = {
-            "symbol": "MSFT",
-            "results": [
-                {
-                    "t": 1704067200000,
-                    "ema": 150.5,
-                    "sma": 149.8,
-                    "rsi": 65.4,
-                    "macd": 1.2,
-                    "signal": 0.8,
-                    "histogram": 0.4,
-                    "order_signal": None
-                }
-            ]
-        }
-        
-        response = CombinedIndicatorsResponse.model_validate(data)
-        
-        assert response.symbol == "MSFT"
-        assert len(response.results) == 1
-        assert response.results[0].ema == 150.5
+        assert len(serialized) == 1
+        assert serialized[0]["timestamp"] == 1704067200000
+        assert serialized[0]["ema"] == 150.5

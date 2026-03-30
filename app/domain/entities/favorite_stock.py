@@ -1,7 +1,6 @@
 # app/domain/entities/favorite_stock.py
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
 from pydantic import BaseModel, Field, validator
 import re
 

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.repositories.market_repository import MarketRepository, MarketDataCache
+from app.application.repositories.market_repository import MarketRepository, MarketDataCache
 from app.domain.entities.favorite_stock import FavoriteStockEntity
 
 

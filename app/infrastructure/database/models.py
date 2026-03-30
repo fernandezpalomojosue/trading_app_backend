@@ -235,3 +235,66 @@ class FavoriteStockSQLModel(SQLModel, table=True):
             symbol=self.symbol,
             created_at=self.created_at
         )
+class SignalStockSQLModel(SQLModel, table=True):
+    """SQLModel for Signal Stocks table"""
+    __tablename__ = "signal_stocks"
+    
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="Signal stock unique ID (UUID)"
+    )
+    symbol: str = Field(
+        sa_column=Column(String(10), index=True),
+        description="Stock symbol (e.g., AAPL, GOOGL)"
+    )
+    signal: str = Field(
+        description="Signal type: BUY, SELL, or HOLD"
+    )
+    stop_loss: float = Field(
+        description="Stop loss price"
+    )
+    take_profit: float = Field(
+        description="Take profit price"
+    )
+    confidence: float = Field(
+        description="Confidence level (0-1)"
+    )
+    reason: str = Field(
+        description="Reason for the signal"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Signal creation date"
+    )
+    
+    __table_args__ = (
+        {"sqlite_autoincrement": False},
+    )
+    
+    @classmethod
+    def from_domain_entity(cls, signal_entity):
+        return cls(
+            id=signal_entity.id,
+            symbol=signal_entity.symbol,
+            signal=signal_entity.signal,
+            stop_loss=signal_entity.stop_loss,
+            take_profit=signal_entity.take_profit,
+            confidence=signal_entity.confidence,
+            reason=signal_entity.reason,
+            created_at=signal_entity.created_at
+        )
+    
+    def to_domain_entity(self):
+        from app.domain.entities.signal_stock import SignalStockEntity
+        
+        return SignalStockEntity(
+            id=self.id,
+            symbol=self.symbol,
+            signal=self.signal,
+            stop_loss=self.stop_loss,
+            take_profit=self.take_profit,
+            confidence=self.confidence,
+            reason=self.reason,
+            created_at=self.created_at
+        )
