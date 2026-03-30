@@ -94,4 +94,4 @@ class SignalEngineUseCases:
         else:
             reasons.append(f"Price below EMA ({close_price:.2f} < {ema:.2f})")
         
-        return SignalDataPoint(signal="hold", reason="HOLD: " + " | ".join(reasons))
+        return SignalDataPoint(timestamp=int(time.time() * 1000), symbol=symbol, signal="hold", reason="HOLD: " + " | ".join(reasons))
