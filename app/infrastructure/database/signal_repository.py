@@ -1,4 +1,5 @@
 from sqlmodel import Session
+from app.application.dto.signals_dto import SignalDataPoint
 from app.application.repositories.signal_repository import SignalRepository
 from app.domain.entities.signal_stock import SignalStockEntity
 from app.infrastructure.database.models import SignalStockSQLModel
@@ -8,15 +9,15 @@ class SQLSignalRepository(SignalRepository):
     def __init__(self, session: Session):
         self.session = session
     
-    async def save_signal(self, symbol: str, signal: dict) -> SignalStockEntity:
+    async def save_signal(self, symbol: str, signal: SignalDataPoint) -> SignalStockEntity:
         """Save a signal for a symbol"""
         signal_model = SignalStockSQLModel(
             symbol=symbol,
-            signal=signal.get("signal"),
-            stop_loss=signal.get("stop_loss"),
-            take_profit=signal.get("take_profit"),
-            confidence=signal.get("confidence"),
-            reason=signal.get("reason")
+            signal=signal.signal,
+            stop_loss=signal.stop_loss,
+            take_profit=signal.take_profit,
+            confidence=signal.confidence,
+            reason=signal.reason
         )
         self.session.add(signal_model)
         self.session.commit()
