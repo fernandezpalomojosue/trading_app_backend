@@ -19,6 +19,13 @@ jobs:
           pip install -r requirements.txt
       - name: Run signals
         run: |
+          echo "🔍 Debug: Checking if secret exists..."
+          if [ -n "${{ secrets.SIGNAL_WORKER_API_KEY }}" ]; then
+            echo "✅ Secret found, length: $(echo -n "${{ secrets.SIGNAL_WORKER_API_KEY }}" | wc -c)"
+          else
+            echo "❌ Secret is empty or missing"
+          fi
+          echo "🔍 Debug: Making request..."
           curl -X POST https://trading-app-backend-2ykk.onrender.com/api/v1/signals/internal/run-signals \
           -H "Content-Type: application/json" \
-          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}"
+          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}" \ -v
