@@ -45,7 +45,6 @@ class IndicatorsUseCases(IndicatorsService):
         cached = await self.cache.get(cache_key)
         if cached:
             # Convert cached dictionaries back to IndicatorDataPoint objects
-            from app.application.dto.indicators_dto import IndicatorDataPoint
             return [
                 IndicatorDataPoint(
                     timestamp=item.get('timestamp'),
