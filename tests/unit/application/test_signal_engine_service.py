@@ -74,7 +74,7 @@ class TestSignalEngineServiceCalculateSignals:
                 symbol="AAPL",
                 rsi=25, macd=0.9, signal=0.8,
                 ema=145.0, sma=140.0,
-                histogram=0.1, fibonacci_levels={}
+                histogram=0.1, close_price=140.0, fibonacci_levels={}
             )
         ]
         
@@ -92,21 +92,21 @@ class TestSignalEngineServiceCalculateSignals:
                 symbol="AAPL",
                 rsi=35, macd=0.5, signal=0.8,
                 ema=145.0, sma=140.0,
-                histogram=-0.3, fibonacci_levels={}
+                histogram=-0.3, close_price=140.0, fibonacci_levels={}
             ),
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
                 rsi=25, macd=0.9, signal=0.8,
                 ema=145.0, sma=140.0,
-                histogram=0.1, fibonacci_levels={}
+                histogram=0.1, close_price=150.0, fibonacci_levels={}
             ),
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
                 rsi=45, macd=1.0, signal=0.8,
                 ema=145.0, sma=140.0,
-                histogram=0.2, fibonacci_levels={}
+                histogram=0.2, close_price=150.0, fibonacci_levels={}
             ),
         ]
         
@@ -132,7 +132,7 @@ class TestSignalEngineServiceEdgeCases:
             symbol="AAPL",
             rsi=35, macd=0.5, signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=-0.3, fibonacci_levels={}
+            histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
@@ -153,14 +153,14 @@ class TestSignalEngineServiceEdgeCases:
             symbol="AAPL",
             rsi=35, macd=0.5, signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=-0.3, fibonacci_levels={}
+            histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
             rsi=25, macd=float('nan'), signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=0.1, fibonacci_levels={}
+            histogram=0.1, close_price=145.0, fibonacci_levels={}
         )
         
         signalpoint = await signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
