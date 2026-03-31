@@ -1,7 +1,7 @@
 name: Run Signals Cron Job
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Every 5 minutes
+    - cron: '*/15 * * * *'  
   workflow_dispatch:  # Allow manual triggering
 jobs:
   run-signals:
