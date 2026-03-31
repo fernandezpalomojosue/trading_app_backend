@@ -21,9 +21,11 @@ class SignalOrchestrator:
         
         signals = await self.signal_engine_service.calculate_signals(symbol, indicators)
 
-        await self.signal_repository.save_signal(symbol, signals)
+        last_signal = signals[-1]
+        
+        await self.signal_repository.save_signal(symbol, last_signal)
 
-        await self.cache_client.set(f"signal_{symbol}", signals, ttl=60)
+        await self.cache_client.set(f"signal_{symbol}", last_signal, ttl=60)
         
         return signals
         
