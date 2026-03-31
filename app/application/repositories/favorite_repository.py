@@ -32,3 +32,8 @@ class FavoriteRepository(ABC):
     async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
         """Get specific favorite by user and symbol"""
         pass
+    
+    @abstractmethod
+    async def get_all_favorites(self) -> List[str]:
+        """Get all favorites"""
+        pass
