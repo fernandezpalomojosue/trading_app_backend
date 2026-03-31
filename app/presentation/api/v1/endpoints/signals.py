@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from app.infrastructure.database.signal_repository import SQLSignalRepository
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.application.repositories.cache_repository import CacheRepository
@@ -28,7 +28,7 @@ def get_favorites_repository(db: Session = Depends(get_session)) -> FavoriteRepo
 
 @router.post("/internal/run-signals")
 async def run_signals(
-    x_api_key: str = None,
+    x_api_key: str = Header(None, alias="x-api-key"),
     cache: CacheRepository = Depends(get_cache_repository),
     signal_repo: SQLSignalRepository = Depends(get_signal_repository),
     favorites_repo: FavoriteRepository = Depends(get_favorites_repository)
