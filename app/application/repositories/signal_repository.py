@@ -6,3 +6,7 @@ class SignalRepository(ABC):
     @abstractmethod
     async def save_signal(self, symbol: str, signal: dict)-> SignalStockEntity:
         pass
+    
+    @abstractmethod
+    async def get_by_symbol(self, symbol: str)-> SignalStockEntity:
+        pass
