@@ -39,6 +39,9 @@ class AppBaseSettings(BaseSettings):
     CACHE_DEFAULT_TTL: int = 300
     CACHE_KEY_PREFIX: str = "trading_app:"
     CACHE_TYPE: str = "memory"  # "memory" or "redis"
+    
+    # Signal Worker Configuration
+    SIGNAL_WORKER_API_KEY: str = "your-secret-key-change-in-production"
 
     def get_database_url(self) -> str:
         """Get the appropriate database URL based on environment."""
