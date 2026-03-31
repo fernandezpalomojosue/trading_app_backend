@@ -30,4 +30,19 @@ class SQLSignalRepository(SignalRepository):
             confidence=signal_model.confidence,
             reason=signal_model.reason
         )
+    
+    async def get_by_symbol(self, symbol: str) -> SignalStockEntity:
+        """Get signal by symbol"""
+        signal_model = self.session.get(SignalStockSQLModel, symbol)
+        if signal_model:
+            return SignalStockEntity(
+                id=signal_model.id,
+                symbol=signal_model.symbol,
+                signal=signal_model.signal,
+                stop_loss=signal_model.stop_loss,
+                take_profit=signal_model.take_profit,
+                confidence=signal_model.confidence,
+                reason=signal_model.reason
+            )
+        return None
         
