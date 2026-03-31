@@ -39,7 +39,7 @@ def get_market_client()->MarketRepository:
 
 def get_indicators_service()->IndicatorsService:
     """Get indicators service instance"""
-    return IndicatorsUseCases()
+    return IndicatorsUseCases(get_cache_repository())
 
 def get_signal_engine_service()->SignalEngineService:
     """Get signal engine service instance"""
