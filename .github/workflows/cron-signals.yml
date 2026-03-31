@@ -1,16 +1,16 @@
 name: Run Signals Cron Job
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/15 * * * *'  
   workflow_dispatch:  # Allow manual triggering
 jobs:
   run-signals:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install dependencies
@@ -28,5 +28,4 @@ jobs:
           echo "🔍 Debug: Making request..."
           curl -X POST https://trading-app-backend-2ykk.onrender.com/api/v1/signals/internal/run-signals \
           -H "Content-Type: application/json" \
-          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}" \
-          -v
+          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}" \ -v
