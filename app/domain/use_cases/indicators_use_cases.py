@@ -130,6 +130,7 @@ class IndicatorsUseCases(IndicatorsService):
                 macd=safe_float(row["macd"]),
                 signal=safe_float(row["signal"]),
                 histogram=safe_float(row["histogram"]),
+                close_price=safe_float(row["close"]),  # close might not be in row
                 fibonacci_levels={}
             )
             results.append(point)

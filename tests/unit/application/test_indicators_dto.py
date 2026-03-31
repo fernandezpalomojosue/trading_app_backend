@@ -18,6 +18,7 @@ class TestIndicatorDataPoint:
             macd=1.2,
             signal=0.8,
             histogram=0.4,
+            close_price=150.0,
             fibonacci_levels={}
         )
         
@@ -80,6 +81,7 @@ class TestIndicatorDataPointList:
                 macd=1.2,
                 signal=0.8,
                 histogram=0.4,
+                close_price=150.0,
                 fibonacci_levels={}
             ),
             IndicatorDataPoint(
@@ -90,7 +92,8 @@ class TestIndicatorDataPointList:
                 rsi=67.8,
                 macd=1.5,
                 signal=1.1,
-                histogram=0.4,
+                histogram=0.6,
+                close_price=151.0,
                 fibonacci_levels={}
             )
         ]
@@ -110,6 +113,7 @@ class TestIndicatorDataPointList:
             macd=1.2,
             signal=0.8,
             histogram=0.4,
+            close_price=150.0,
             fibonacci_levels={}
         )
         

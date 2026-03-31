@@ -7,11 +7,12 @@ class IndicatorDataPoint(BaseModel):
     """Combined data point with all technical indicators"""
     timestamp: int
     symbol: str
-    ema: float
-    sma: float
-    rsi: float
-    macd: float
-    signal: float
-    histogram: float
+    ema: Optional[float]
+    sma: Optional[float]
+    rsi: Optional[float]
+    macd: Optional[float]
+    signal: Optional[float]
+    histogram: Optional[float]
+    close_price: Optional[float]
     fibonacci_levels: dict
 
