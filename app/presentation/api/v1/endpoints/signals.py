@@ -82,7 +82,7 @@ async def run_signals(
                 market_client=get_market_client(),
                 indicator_service=get_indicators_service(),
                 signal_engine_service=get_signal_engine_service(),
-                cache_client=cache,
+                cache_client=get_cache_repository(),
                 signal_repository=signal_repo
             )
             
