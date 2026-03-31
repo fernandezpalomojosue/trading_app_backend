@@ -28,4 +28,7 @@ jobs:
           echo "🔍 Debug: Making request..."
           curl -X POST https://trading-app-backend-2ykk.onrender.com/api/v1/signals/internal/run-signals \
           -H "Content-Type: application/json" \
-          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}" \ -v
+          -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}" \
+          -v \
+          --max-time 30 \
+          --connect-timeout 10
