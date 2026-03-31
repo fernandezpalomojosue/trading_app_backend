@@ -42,6 +42,11 @@ class AppBaseSettings(BaseSettings):
     
     # Signal Worker Configuration
     SIGNAL_WORKER_API_KEY: str = "your-secret-key-change-in-production"
+    
+    def get_signal_worker_api_key(self) -> str:
+        """Get signal worker API key from environment"""
+        import os
+        return os.getenv("SIGNAL_WORKER_API_KEY", self.SIGNAL_WORKER_API_KEY)
 
     def get_database_url(self) -> str:
         """Get the appropriate database URL based on environment."""
