@@ -66,10 +66,25 @@ async def run_signals(
     results = []
     for stock in stocks:
         try:
-            # Create orchestrator
+            # Create orchestrator with all required dependencies
             market_client = PolygonMarketClient()
             cache_repo = MemoryMarketCache()
-            orchestrator = SignalOrchestrator(market_client, cache_repo)
+            
+            # Import required services
+            from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
+            from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
+            
+            # Create all dependencies
+            indicator_service = IndicatorsUseCases(cache_repo)
+            signal_engine_service = SignalEngineUseCases()
+            
+            orchestrator = SignalOrchestrator(
+                market_client=market_client,
+                indicator_service=indicator_service,
+                signal_engine_service=signal_engine_service,
+                cache_client=cache_repo,
+                signal_repository=signal_repo
+            )
             
             # Generate signal
             signal = await orchestrator.generate_signal(stock, "day", "2025-01-01", "2025-12-31")
