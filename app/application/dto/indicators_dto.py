@@ -11,7 +11,7 @@ class IndicatorDataPoint(BaseModel):
     sma: Optional[float]
     rsi: Optional[float]
     macd: Optional[float]
-    signal: Optional[float]
+    macd_signal: Optional[float]
     histogram: Optional[float]
     close_price: Optional[float]
     fibonacci_levels: dict

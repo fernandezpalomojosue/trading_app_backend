@@ -53,7 +53,7 @@ class IndicatorsUseCases(IndicatorsService):
                     sma=item.get('sma'),
                     rsi=item.get('rsi'),
                     macd=item.get('macd'),
-                    signal=item.get('signal'),
+                    macd_signal=item.get('signal'),
                     histogram=item.get('histogram'),
                     fibonacci_levels=item.get('fibonacci_levels', {})
                 )
@@ -106,10 +106,10 @@ class IndicatorsUseCases(IndicatorsService):
         macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
 
         df['macd'] = macd.iloc[:, 0]
-        df['signal'] = macd.iloc[:, 1]
+        df['macd_signal'] = macd.iloc[:, 1]
         df['histogram'] = macd.iloc[:, 2]
 
-        df = df.dropna(subset=["ema", "sma", "rsi", "macd", "signal", "histogram"])
+        df = df.dropna(subset=["ema", "sma", "rsi", "macd", "macd_signal", "histogram"])
         
         # Convert to IndicatorDataPoint objects
         results = []
@@ -128,7 +128,7 @@ class IndicatorsUseCases(IndicatorsService):
                 sma=safe_float(row["sma"]),
                 rsi=safe_float(row["rsi"]),
                 macd=safe_float(row["macd"]),
-                signal=safe_float(row["signal"]),
+                macd_signal=safe_float(row["macd_signal"]),
                 histogram=safe_float(row["histogram"]),
                 close_price=safe_float(row["close"]),  # close might not be in row
                 fibonacci_levels={}
