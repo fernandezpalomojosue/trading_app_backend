@@ -70,3 +70,9 @@ class SQLFavoriteStockRepository(FavoriteRepository):
             FavoriteStockSQLModel.symbol == symbol.upper()
         )
         return self.session.exec(statement).first()
+    
+    async def get_all_favorites(self) -> List[str]:
+        """Get all unique favorite symbols from all users"""
+        statement = select(FavoriteStockSQLModel.symbol).distinct()
+        symbols = self.session.exec(statement).all()
+        return [symbol.upper() for symbol in symbols]

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.domain.entities.user import UserEntity
 from app.infrastructure.database.signal_repository import SQLSignalRepository
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.application.repositories.cache_repository import CacheRepository
@@ -7,7 +6,6 @@ from app.application.repositories.favorite_repository import FavoriteRepository
 from app.db.base import get_session
 from sqlmodel import Session
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
-from app.core.security import get_current_user
 import logging
 
 logger = logging.getLogger(__name__)
@@ -33,8 +31,7 @@ async def run_signals(
     x_api_key: str = None,
     cache: CacheRepository = Depends(get_cache_repository),
     signal_repo: SQLSignalRepository = Depends(get_signal_repository),
-    favorites_repo: FavoriteRepository = Depends(get_favorites_repository),
-    current_user: UserEntity = Depends(get_current_user)
+    favorites_repo: FavoriteRepository = Depends(get_favorites_repository)
 ):
     """Internal endpoint for cron job to generate signals"""
     # Verify API key
@@ -52,8 +49,12 @@ async def run_signals(
     from app.application.repositories.market_repository import MarketRepository
     from app.db.base import get_session
     
-    # Get stocks to process
-    stocks = await favorites_repo.get_user_favorites(current_user.id)
+    # Get stocks to process (all favorites from all users)
+    stocks = await favorites_repo.get_all_favorites()
+    
+    # If no favorites found, use default stocks
+    if not stocks:
+        stocks = ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA"]
     
     results = []
     for stock in stocks:
@@ -69,6 +70,7 @@ async def run_signals(
             if signal:
                 # Save to database
                 await signal_repo.save_signal(stock, signal)
+                await cache.set(f"signal:{stock}", signal)
                 results.append({"symbol": stock, "signal": signal, "status": "success"})
             else:
                 results.append({"symbol": stock, "status": "no_signal"})
