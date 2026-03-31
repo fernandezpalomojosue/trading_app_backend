@@ -1,7 +1,13 @@
 # app/db/base.py
 from sqlmodel import SQLModel,Session,create_engine
 from app.core.config import settings
-from app.infrastructure.database.models import UserSQLModel     
+from app.infrastructure.database.models import (
+    UserSQLModel,
+    PortfolioHoldingSQLModel, 
+    TransactionSQLModel,
+    FavoriteStockSQLModel,
+    SignalStockSQLModel
+)     
 from sqlalchemy.orm import sessionmaker
 
 # Para compatibilidad con Alembic
