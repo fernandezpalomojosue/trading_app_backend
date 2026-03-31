@@ -63,6 +63,7 @@ async def get_indicators(
         end_date,
         limit
     )
+    print(limit)
 
     return data[-limit:]
 
