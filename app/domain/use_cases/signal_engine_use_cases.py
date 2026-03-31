@@ -38,21 +38,21 @@ class SignalEngineUseCases:
             
         return results
 
-    async def calculate_single_signal(self, symbol: str, point: Dict, prev_point: Dict) -> SignalDataPoint:
+    async def calculate_single_signal(self, symbol: str, point: IndicatorDataPoint, prev_point: IndicatorDataPoint) -> SignalDataPoint:
         """Calculate signal for single point using previous point for crossover detection"""
-        rsi = point.get("rsi")
-        macd = point.get("macd")
-        signal_line = point.get("signal")
-        ema = point.get("ema")
-        close_price = point.get("close")
+        rsi = point.rsi
+        macd = point.macd
+        signal_line = point.signal
+        ema = point.ema
+        close_price = getattr(point, 'close', None)  # close_price might not be in IndicatorDataPoint
         
         # Check for missing/NaN values
         if any(v is None or (isinstance(v, float) and math.isnan(v)) 
                for v in [rsi, macd, signal_line, ema, close_price]):
             return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: Insufficient data (missing or invalid indicator values)")
         
-        prev_macd = prev_point.get("macd")
-        prev_signal = prev_point.get("signal")
+        prev_macd = prev_point.macd
+        prev_signal = prev_point.signal
         
         if prev_macd is None or prev_signal is None:
             return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous MACD data for crossover detection")
