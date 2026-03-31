@@ -38,8 +38,8 @@ async def run_signals(
     from app.core.config import get_settings
     settings = get_settings()
     
-    if x_api_key != settings.SIGNAL_WORKER_API_KEY:
-        logger.info("settings.SIGNAL_WORKER_API_KEY: %s", settings.SIGNAL_WORKER_API_KEY)
+    if x_api_key != settings.get_signal_worker_api_key():
+        logger.info("settings.SIGNAL_WORKER_API_KEY: %s", settings.get_signal_worker_api_key())
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     # Import and run signal orchestrator
