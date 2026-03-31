@@ -124,7 +124,7 @@ class TestIndicatorsUseCasesDTO:
             assert 'sma' in point.model_dump()
             assert 'rsi' in point.model_dump()
             assert 'macd' in point.model_dump()
-            assert 'signal' in point.model_dump()
+            assert 'macd_signal' in point.model_dump()
             assert 'histogram' in point.model_dump()
             assert 'symbol' in point.model_dump()
             assert 'fibonacci_levels' in point.model_dump()

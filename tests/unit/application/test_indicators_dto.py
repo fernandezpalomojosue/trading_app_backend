@@ -16,7 +16,7 @@ class TestIndicatorDataPoint:
             sma=149.8,
             rsi=65.4,
             macd=1.2,
-            signal=0.8,
+            macd_signal=0.8,
             histogram=0.4,
             close_price=150.0,
             fibonacci_levels={}
@@ -41,7 +41,7 @@ class TestIndicatorDataPoint:
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
-                signal=0.8,
+                macd_signal=0.8,
                 histogram=0.4,
                 fibonacci_levels={}
             )
@@ -58,7 +58,7 @@ class TestIndicatorDataPoint:
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
-                signal=0.8,
+                macd_signal=0.8,
                 histogram=0.4,
                 fibonacci_levels={}
             )
@@ -79,7 +79,7 @@ class TestIndicatorDataPointList:
                 sma=149.8,
                 rsi=65.4,
                 macd=1.2,
-                signal=0.8,
+                macd_signal=0.8,
                 histogram=0.4,
                 close_price=150.0,
                 fibonacci_levels={}
@@ -111,7 +111,7 @@ class TestIndicatorDataPointList:
             sma=149.8,
             rsi=65.4,
             macd=1.2,
-            signal=0.8,
+            macd_signal=0.8,
             histogram=0.4,
             close_price=150.0,
             fibonacci_levels={}
