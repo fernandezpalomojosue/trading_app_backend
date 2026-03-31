@@ -99,13 +99,6 @@ class TestIndicatorDataPointList:
         assert data_points[0].ema == 150.5
         assert data_points[1].ema == 151.2
     
-    def test_empty_list(self):
-        """Should handle empty list"""
-        data_points = []
-        
-        assert len(data_points) == 0
-        assert isinstance(data_points, list)
-    
     def test_list_serialization(self):
         """Should serialize list of data points correctly"""
         data_point = IndicatorDataPoint(
