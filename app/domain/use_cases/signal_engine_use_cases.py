@@ -44,7 +44,7 @@ class SignalEngineUseCases:
         macd = point.macd
         signal_line = point.signal
         ema = point.ema
-        close_price = getattr(point, 'close', None)  # close_price might not be in IndicatorDataPoint
+        close_price = point.close_price
         
         # Check for missing/NaN values
         if any(v is None or (isinstance(v, float) and math.isnan(v)) 
