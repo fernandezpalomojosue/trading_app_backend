@@ -139,7 +139,7 @@ class TestSignalEngineServiceEdgeCases:
             symbol="AAPL",
             rsi=None, macd=0.9, signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=0.1, fibonacci_levels={}
+            histogram=0.1, close_price=150.0, fibonacci_levels={}
         )
         
         signalpoint = await signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
