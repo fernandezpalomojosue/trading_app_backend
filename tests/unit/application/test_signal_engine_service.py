@@ -19,14 +19,14 @@ class TestSignalEngineServiceBuySignals:
         prev_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=35, macd=0.5, signal=0.8,
+            rsi=35, macd=0.5, macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=25, macd=0.9, signal=0.8,
+            rsi=25, macd=0.9, macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=0.1, close_price=150.0, fibonacci_levels={}
         )
@@ -45,14 +45,14 @@ class TestSignalEngineServiceSellSignals:
         prev_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=65, macd=0.9, signal=0.5,
+            rsi=65, macd=0.9, macd_signal=0.5,
             ema=155.0, sma=150.0,
             histogram=0.4, close_price=160.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=75, macd=0.4, signal=0.5,
+            rsi=75, macd=0.4, macd_signal=0.5,
             ema=155.0, sma=150.0,
             histogram=-0.1, close_price=145.0, fibonacci_levels={}
         )
@@ -72,7 +72,7 @@ class TestSignalEngineServiceCalculateSignals:
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
-                rsi=25, macd=0.9, signal=0.8,
+                rsi=25, macd=0.9, macd_signal=0.8,
                 ema=145.0, sma=140.0,
                 histogram=0.1, close_price=140.0, fibonacci_levels={}
             )
@@ -90,21 +90,21 @@ class TestSignalEngineServiceCalculateSignals:
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
-                rsi=35, macd=0.5, signal=0.8,
+                rsi=35, macd=0.5, macd_signal=0.8,
                 ema=145.0, sma=140.0,
                 histogram=-0.3, close_price=140.0, fibonacci_levels={}
             ),
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
-                rsi=25, macd=0.9, signal=0.8,
+                rsi=25, macd=0.9, macd_signal=0.8,
                 ema=145.0, sma=140.0,
                 histogram=0.1, close_price=150.0, fibonacci_levels={}
             ),
             IndicatorDataPoint(
                 timestamp=1234567890000,
                 symbol="AAPL",
-                rsi=45, macd=1.0, signal=0.8,
+                rsi=45, macd=1.0, macd_signal=0.8,
                 ema=145.0, sma=140.0,
                 histogram=0.2, close_price=150.0, fibonacci_levels={}
             ),
@@ -130,14 +130,14 @@ class TestSignalEngineServiceEdgeCases:
         prev_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=35, macd=0.5, signal=0.8,
+            rsi=35, macd=0.5, macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=None, macd=0.9, signal=0.8,
+            rsi=None, macd=0.9, macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=0.1, close_price=150.0, fibonacci_levels={}
         )
@@ -151,14 +151,14 @@ class TestSignalEngineServiceEdgeCases:
         prev_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=35, macd=0.5, signal=0.8,
+            rsi=35, macd=0.5, macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=25, macd=float('nan'), signal=0.8,
+            rsi=25, macd=float('nan'), macd_signal=0.8,
             ema=145.0, sma=140.0,
             histogram=0.1, close_price=145.0, fibonacci_levels={}
         )

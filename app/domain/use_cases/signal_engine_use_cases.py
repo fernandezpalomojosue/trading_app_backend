@@ -42,7 +42,7 @@ class SignalEngineUseCases:
         """Calculate signal for single point using previous point for crossover detection"""
         rsi = point.rsi
         macd = point.macd
-        signal_line = point.signal
+        signal_line = point.macd_signal
         ema = point.ema
         close_price = point.close_price
         take_profit = point.close_price * 1.05
@@ -53,7 +53,7 @@ class SignalEngineUseCases:
             return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: Insufficient data (missing or invalid indicator values)")
         
         prev_macd = prev_point.macd
-        prev_signal = prev_point.signal
+        prev_signal = prev_point.macd_signal
         
         if prev_macd is None or prev_signal is None:
             return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous MACD data for crossover detection")
