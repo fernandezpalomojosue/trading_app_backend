@@ -19,6 +19,6 @@ jobs:
           pip install -r requirements.txt
       - name: Run signals
         run: |
-          curl -X POST https://tu-api.onrender.com/internal/run-signals \
+          curl -X POST https://trading-app-backend-2ykk.onrender.com/api/v1/signals/internal/run-signals \
           -H "Content-Type: application/json" \
           -H "x-api-key: ${{ secrets.SIGNAL_WORKER_API_KEY }}"
