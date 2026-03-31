@@ -44,7 +44,21 @@ class IndicatorsUseCases(IndicatorsService):
 
         cached = await self.cache.get(cache_key)
         if cached:
-            return cached
+            # Convert cached dictionaries back to IndicatorDataPoint objects
+            return [
+                IndicatorDataPoint(
+                    timestamp=item.get('timestamp'),
+                    symbol=item.get('symbol'),
+                    ema=item.get('ema'),
+                    sma=item.get('sma'),
+                    rsi=item.get('rsi'),
+                    macd=item.get('macd'),
+                    signal=item.get('signal'),
+                    histogram=item.get('histogram'),
+                    fibonacci_levels=item.get('fibonacci_levels', {})
+                )
+                for item in cached
+            ]
 
         if not data or not isinstance(data, list) or len(data) == 0:
             print(f"🔴 NO DATA: {data}")
@@ -120,9 +134,9 @@ class IndicatorsUseCases(IndicatorsService):
             )
             results.append(point)
         
-        # Convert to dictionaries for FastAPI serialization
-        response = [point.dict() for point in results]
+        # Cache as dictionaries for FastAPI serialization, but return objects for internal use
+        cache_data = [point.dict() for point in results]
 
-        await self.cache.set(cache_key, response, ttl=60)
+        await self.cache.set(cache_key, cache_data, ttl=60)
 
-        return response
+        return results
