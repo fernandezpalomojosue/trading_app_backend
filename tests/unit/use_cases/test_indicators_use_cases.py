@@ -118,16 +118,16 @@ class TestIndicatorsUseCasesDTO:
         
         # Verify all data points have required fields
         for point in result:
-            assert isinstance(point, dict)
-            assert 'timestamp' in point
-            assert 'ema' in point
-            assert 'sma' in point
-            assert 'rsi' in point
-            assert 'macd' in point
-            assert 'signal' in point
-            assert 'histogram' in point
-            assert 'symbol' in point
-            assert 'fibonacci_levels' in point
+            assert isinstance(point, IndicatorDataPoint)
+            assert 'timestamp' in point.model_dump()
+            assert 'ema' in point.model_dump()
+            assert 'sma' in point.model_dump()
+            assert 'rsi' in point.model_dump()
+            assert 'macd' in point.model_dump()
+            assert 'signal' in point.model_dump()
+            assert 'histogram' in point.model_dump()
+            assert 'symbol' in point.model_dump()
+            assert 'fibonacci_levels' in point.model_dump()
 
     @pytest.mark.asyncio
     async def test_response_structure_matches_dto(self, indicators_use_cases):
@@ -144,13 +144,13 @@ class TestIndicatorsUseCasesDTO:
         
         if len(result) > 0:
             first_result = result[0]
-            assert "timestamp" in first_result
-            assert "ema" in first_result
-            assert "sma" in first_result
-            assert "rsi" in first_result
-            assert "macd" in first_result
-            assert "signal" in first_result
-            assert "histogram" in first_result
+            assert "timestamp" in first_result.model_dump()
+            assert "ema" in first_result.model_dump()
+            assert "sma" in first_result.model_dump()
+            assert "rsi" in first_result.model_dump()
+            assert "macd" in first_result.model_dump()
+            assert "signal" in first_result.model_dump()
+            assert "histogram" in first_result.model_dump()
 
     @pytest.mark.asyncio
     async def test_returns_dto_for_empty_data(self, indicators_use_cases, mock_market_client):
@@ -206,13 +206,13 @@ class TestIndicatorsUseCasesDTO:
         )
         
         for point in result:
-            assert isinstance(point.timestamp, int)
-            assert isinstance(point.ema, float)
-            assert isinstance(point.sma, float)
-            assert isinstance(point.rsi, float)
-            assert isinstance(point.macd, float)
-            assert isinstance(point.signal, float)
-            assert isinstance(point.histogram, float)
+            assert isinstance(point.model_dump()["timestamp"], int)
+            assert isinstance(point.model_dump()["ema"], float)
+            assert isinstance(point.model_dump()["sma"], float)
+            assert isinstance(point.model_dump()["rsi"], float)
+            assert isinstance(point.model_dump()["macd"], float)
+            assert isinstance(point.model_dump()["signal"], float)
+            assert isinstance(point.model_dump()["histogram"], float)
 
     @pytest.mark.asyncio
     async def test_order_signal_and_reason_are_populated(self, indicators_use_cases):
@@ -228,6 +228,6 @@ class TestIndicatorsUseCasesDTO:
         )
         
         for point in result:
-            assert point.order_signal in ["buy", "sell", "hold"]
-            assert point.signal_reason is not None
-            assert len(point.signal_reason) > 0
+            assert point.model_dump()["order_signal"] in ["buy", "sell", "hold"]
+            assert point.model_dump()["signal_reason"] is not None
+            assert len(point.model_dump()["signal_reason"]) > 0
