@@ -21,14 +21,14 @@ class TestSignalEngineServiceBuySignals:
             symbol="AAPL",
             rsi=35, macd=0.5, signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=-0.3, fibonacci_levels={}
+            histogram=-0.3, close_price=140.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
             rsi=25, macd=0.9, signal=0.8,
             ema=145.0, sma=140.0,
-            histogram=0.1, fibonacci_levels={}
+            histogram=0.1, close_price=150.0, fibonacci_levels={}
         )
         
         signalpoint = await signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
@@ -47,14 +47,14 @@ class TestSignalEngineServiceSellSignals:
             symbol="AAPL",
             rsi=65, macd=0.9, signal=0.5,
             ema=155.0, sma=150.0,
-            histogram=0.4, fibonacci_levels={}
+            histogram=0.4, close_price=160.0, fibonacci_levels={}
         )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
             rsi=75, macd=0.4, signal=0.5,
             ema=155.0, sma=150.0,
-            histogram=-0.1, fibonacci_levels={}
+            histogram=-0.1, close_price=145.0, fibonacci_levels={}
         )
         
         signalpoint = await signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
