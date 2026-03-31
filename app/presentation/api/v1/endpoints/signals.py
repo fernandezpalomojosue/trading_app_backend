@@ -8,6 +8,9 @@ from app.db.base import get_session
 from sqlmodel import Session
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 from app.core.security import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -39,6 +42,7 @@ async def run_signals(
     settings = get_settings()
     
     if x_api_key != settings.SIGNAL_WORKER_API_KEY:
+        logger.info("settings.SIGNAL_WORKER_API_KEY: %s", settings.SIGNAL_WORKER_API_KEY)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     # Import and run signal orchestrator
