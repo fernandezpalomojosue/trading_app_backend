@@ -45,7 +45,8 @@ class SignalEngineUseCases:
         signal_line = point.signal
         ema = point.ema
         close_price = point.close_price
-        
+        take_profit = point.close_price * 1.05
+        stop_loss = point.close_price * 0.95
         # Check for missing/NaN values
         if any(v is None or (isinstance(v, float) and math.isnan(v)) 
                for v in [rsi, macd, signal_line, ema, close_price]):
@@ -94,4 +95,4 @@ class SignalEngineUseCases:
         else:
             reasons.append(f"Price below EMA ({close_price:.2f} < {ema:.2f})")
         
-        return SignalDataPoint(timestamp=int(datetime.now().timestamp() * 1000), symbol=symbol, signal="hold", reason="HOLD: " + " | ".join(reasons))
+        return SignalDataPoint(timestamp=int(datetime.now().timestamp() * 1000), symbol=symbol, signal="hold", reason="HOLD: " + " | ".join(reasons), take_profit=take_profit, stop_loss=stop_loss)
