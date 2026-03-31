@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class SignalDataPoint(BaseModel):
     timestamp: int
     symbol: str
-    macd_signal: Optional[str] = None
+    signal: Optional[str] = None
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
     confidence: Optional[float] = None
