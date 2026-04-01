@@ -29,7 +29,7 @@ class SignalEngineUseCases:
         
         for i, point in enumerate(data_points):
             if i == 0:
-                results.append(SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous data for MACD crossover detection"))
+                results.append(SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous data for MACD crossover detection", take_profit=1, stop_loss=1, confidence=1))
                 continue
                 
             prev_point = data_points[i - 1]
@@ -47,16 +47,17 @@ class SignalEngineUseCases:
         close_price = point.close_price
         take_profit = point.close_price * 1.05
         stop_loss = point.close_price * 0.95
+        confidence = 0.9
         # Check for missing/NaN values
         if any(v is None or (isinstance(v, float) and math.isnan(v)) 
                for v in [rsi, macd, signal_line, ema, close_price]):
-            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: Insufficient data (missing or invalid indicator values)")
+            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: Insufficient data (missing or invalid indicator values)", take_profit=take_profit, stop_loss=stop_loss, confidence=confidence)
         
         prev_macd = prev_point.macd
         prev_signal = prev_point.macd_signal
         
         if prev_macd is None or prev_signal is None:
-            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous MACD data for crossover detection")
+            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="hold", reason="HOLD: No previous MACD data for crossover detection", take_profit=take_profit, stop_loss=stop_loss, confidence=confidence)
         
         macd_cross_up = macd > signal_line and prev_macd <= prev_signal
         macd_cross_down = macd < signal_line and prev_macd >= prev_signal
@@ -66,14 +67,14 @@ class SignalEngineUseCases:
             reason = (f"BUY: RSI oversold ({rsi:.1f} < 30) + "
                      f"MACD crossed above signal ({macd:.3f} > {signal_line:.3f}) + "
                      f"Price above EMA ({close_price:.2f} > {ema:.2f})")
-            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="buy", reason=reason)
+            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="buy", reason=reason, take_profit=take_profit, stop_loss=stop_loss, confidence=confidence)
         
         # SELL conditions  
         if rsi > 70 and macd_cross_down and close_price < ema:
             reason = (f"SELL: RSI overbought ({rsi:.1f} > 70) + "
                      f"MACD crossed below signal ({macd:.3f} < {signal_line:.3f}) + "
                      f"Price below EMA ({close_price:.2f} < {ema:.2f})")
-            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="sell", reason=reason)
+            return SignalDataPoint(symbol=symbol, timestamp=int(datetime.now().timestamp() * 1000), signal="sell", reason=reason, take_profit=take_profit, stop_loss=stop_loss, confidence=confidence)
         
         # HOLD - build detailed reason
         reasons = []
@@ -95,4 +96,4 @@ class SignalEngineUseCases:
         else:
             reasons.append(f"Price below EMA ({close_price:.2f} < {ema:.2f})")
         
-        return SignalDataPoint(timestamp=int(datetime.now().timestamp() * 1000), symbol=symbol, signal="hold", reason="HOLD: " + " | ".join(reasons), take_profit=take_profit, stop_loss=stop_loss)
+        return SignalDataPoint(timestamp=int(datetime.now().timestamp() * 1000), symbol=symbol, signal="hold", reason="HOLD: " + " | ".join(reasons), take_profit=take_profit, stop_loss=stop_loss, confidence=confidence)
