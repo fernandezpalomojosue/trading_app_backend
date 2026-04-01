@@ -87,7 +87,7 @@ def main():
                     tables_check = conn.execute(text("""
                         SELECT COUNT(*) FROM information_schema.tables 
                         WHERE table_schema = 'public' 
-                        AND table_name IN ('users', 'portfolio_holdings', 'transactions', 'signal_stocks')
+                        AND table_name IN ('users', 'portfolio_holdings', 'transactions', 'signal_stocks','favorite_stocks')
                     """))
                     essential_tables = tables_check.scalar()
                     

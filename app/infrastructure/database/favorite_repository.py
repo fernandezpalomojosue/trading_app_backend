@@ -63,13 +63,7 @@ class SQLFavoriteStockRepository(FavoriteRepository):
         favorite = await self.get_favorite_by_user_and_symbol(user_id, symbol)
         return favorite is not None
     
-    async def get_favorite_by_user_and_symbol(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockSQLModel]:
-        """Get specific favorite by user and symbol"""
-        statement = select(FavoriteStockSQLModel).where(
-            FavoriteStockSQLModel.user_id == user_id,
-            FavoriteStockSQLModel.symbol == symbol.upper()
-        )
-        return self.session.exec(statement).first()
+
     
     async def get_all_favorites(self) -> List[str]:
         """Get all unique favorite symbols from all users"""
