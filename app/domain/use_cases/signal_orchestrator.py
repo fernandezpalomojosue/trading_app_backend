@@ -27,5 +27,5 @@ class SignalOrchestrator:
 
         await self.cache_client.set(f"signal_{symbol}", last_signal, ttl=60)
         
-        return signals
+        return last_signal
         
