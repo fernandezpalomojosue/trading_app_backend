@@ -4,14 +4,20 @@ from app.infrastructure.cache.redis_cache import RedisCache
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.database.signal_repository import SQLSignalRepository
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
-from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.utils.date_utils import get_last_trading_day
 from app.db.base import get_session
+from app.core.config import get_settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def run_signal_job():
-    print("Signal worker started")
+
+    logger.info("Signal generation job started")
+    
+    try:
     market_client = PolygonMarketClient()
     cache_repository = RedisCache()
     indicator_service = IndicatorsUseCases(cache_repository)
