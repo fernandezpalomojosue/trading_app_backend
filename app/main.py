@@ -1,7 +1,7 @@
 # app/main.py
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from scripts.signal_worker import run_signal_job
+from app.workers.signal_worker import run_signal_job
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
