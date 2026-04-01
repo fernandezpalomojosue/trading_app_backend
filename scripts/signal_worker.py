@@ -17,7 +17,6 @@ async def run_signal_job():
 
     logger.info("Signal generation job started")
     
-    try:
     market_client = PolygonMarketClient()
     cache_repository = RedisCache()
     indicator_service = IndicatorsUseCases(cache_repository)
