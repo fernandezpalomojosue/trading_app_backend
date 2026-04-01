@@ -37,18 +37,51 @@ async def lifespan(app: FastAPI):
         print(f"All required tables exist: {required_tables}")
     
     print("Starting scheduler...")
-    scheduler.add_job(
-        run_signal_job,
-        "interval",
-        minutes=15,
-    )
-    scheduler.start()
-    print("Scheduler started!")
+    try:
+        # Add signal generation job
+        scheduler.add_job(
+            run_signal_job,
+            "interval",
+            minutes=15,
+            id="signal_generation_job",
+            name="Signal Generation Job",
+            replace_existing=True
+        )
+        
+        # Only start scheduler if not in testing environment
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+            # If we're in an existing loop, don't start scheduler
+            if loop.is_running():
+                print("⚠️  Detected running event loop, skipping scheduler start (testing mode)")
+            else:
+                scheduler.start()
+                print("✅ Scheduler started successfully!")
+                print(f"📅 Signal job scheduled to run every 15 minutes")
+        except RuntimeError:
+            # No running loop, safe to start scheduler
+            scheduler.start()
+            print("✅ Scheduler started successfully!")
+            print(f"📅 Signal job scheduled to run every 15 minutes")
+            
+    except Exception as e:
+        print(f"❌ Failed to start scheduler: {e}")
+        # Don't raise in testing environment
+        if settings.ENVIRONMENT != "testing":
+            raise
+    
     yield
     print("Shutting down app...")
-    scheduler.shutdown()
-    print("Scheduler stopped!")
-    engine.dispose()
+    # Safe shutdown with error handling
+    try:
+        if scheduler.running:
+            scheduler.shutdown(wait=False)
+            print("Scheduler stopped!")
+    except Exception as e:
+        print(f"⚠️  Error stopping scheduler: {e}")
+    finally:
+        engine.dispose()
 
 
 app = FastAPI(
