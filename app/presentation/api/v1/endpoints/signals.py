@@ -102,8 +102,8 @@ async def run_signals(
     
     return {"message": "Signals processed", "results": results}
 
-@router.get("/signal/{symbol}")
-async def get_signals(
+@router.get("/{symbol}")
+async def get_signal(
     symbol: str,
     cache: CacheRepository = Depends(get_cache_repository),
     signal_repo: SQLSignalRepository = Depends(get_signal_repository)
