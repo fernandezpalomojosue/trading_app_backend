@@ -1,6 +1,7 @@
 # app/main.py
 from contextlib import asynccontextmanager
-
+from apscheduler.scheduler.asyncio import AsyncIOScheduler
+from app.scripts.signal_worker import run_signal_job
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,6 +10,7 @@ from app.db.base import create_db_and_tables, engine
 from app.presentation.api.v1.endpoints.routers import api_router
 from sqlalchemy import inspect
 
+scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,8 +36,18 @@ async def lifespan(app: FastAPI):
     else:
         print(f"All required tables exist: {required_tables}")
     
+    print("Starting scheduler...")
+    scheduler.add_job(
+        run_signal_job,
+        "interval",
+        minutes=15,
+    )
+    scheduler.start()
+    print("Scheduler started!")
     yield
     print("Shutting down app...")
+    scheduler.shutdown()
+    print("Scheduler stopped!")
     engine.dispose()
 
 
