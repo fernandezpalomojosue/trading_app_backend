@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.application.dto.signals_dto import SignalDataPoint
 from app.application.repositories.signal_repository import SignalRepository
 from app.domain.entities.signal_stock import SignalStockEntity
@@ -34,7 +34,9 @@ class SQLSignalRepository(SignalRepository):
     
     async def get_by_symbol(self, symbol: str) -> SignalStockEntity:
         """Get signal by symbol"""
-        signal_model = self.session.get(SignalStockSQLModel, symbol)
+        signal_model = self.session.exec(
+            select(SignalStockSQLModel).where(SignalStockSQLModel.symbol == symbol)
+        ).first()
         if signal_model:
             return SignalStockEntity(
                 id=signal_model.id,
