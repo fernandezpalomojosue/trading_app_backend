@@ -26,7 +26,7 @@ async def run_signal_job():
         signal_engine = SignalEngineUseCases()
         
         # Use session context manager for proper cleanup
-        async with get_session() as session:
+        with get_session() as session:
             signal_repository = SQLSignalRepository(session)
             favorite_repository = SQLFavoriteStockRepository(session)
             
