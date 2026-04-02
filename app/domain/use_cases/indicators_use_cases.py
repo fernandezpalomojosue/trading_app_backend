@@ -49,6 +49,7 @@ class IndicatorsUseCases(IndicatorsService):
                 IndicatorDataPoint(
                     timestamp=item.get('timestamp'),
                     symbol=item.get('symbol'),
+                    close_price=item.get('close_price'),
                     ema=item.get('ema'),
                     sma=item.get('sma'),
                     rsi=item.get('rsi'),
