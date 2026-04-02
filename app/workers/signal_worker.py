@@ -7,6 +7,7 @@ from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepo
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.utils.date_utils import get_last_trading_day
+from app.core.config import get_settings
 from app.db.base import get_session
 import logging
 
@@ -19,7 +20,8 @@ async def run_signal_job():
     
     try:
         market_client = PolygonMarketClient()
-        cache_repository = RedisCache()
+        settings = get_settings()
+        cache_repository = RedisCache(redis_url=settings.REDIS_URL)
         indicator_service = IndicatorsUseCases(cache_repository)
         signal_engine = SignalEngineUseCases()
         
@@ -29,7 +31,6 @@ async def run_signal_job():
             favorite_repository = SQLFavoriteStockRepository(session)
             
             # Get default stocks from environment or use fallback
-            settings = get_settings()
             default_stocks = getattr(settings, 'DEFAULT_SIGNAL_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,NVDA')
             stocks = default_stocks.split(',') if isinstance(default_stocks, str) else default_stocks
             
