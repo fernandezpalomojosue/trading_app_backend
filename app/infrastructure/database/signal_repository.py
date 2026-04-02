@@ -20,8 +20,8 @@ class SQLSignalRepository(SignalRepository):
             reason=signal.reason
         )
         self.session.add(signal_model)
-        self.session.commit()
-        self.session.refresh(signal_model)
+        await self.session.commit()
+        await self.session.refresh(signal_model)
         return SignalStockEntity(
             id=signal_model.id,
             symbol=signal_model.symbol,
