@@ -15,7 +15,7 @@ from datetime import datetime
 class SignalEngineUseCases:
     """Generates trading signals from technical indicator data"""
 
-    async def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
+    def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
         """
         Calculate signals for a list of indicator data points.
         
@@ -33,12 +33,12 @@ class SignalEngineUseCases:
                 continue
                 
             prev_point = data_points[i - 1]
-            signalpoint = await self.calculate_single_signal(symbol, point, prev_point)
+            signalpoint = self.calculate_single_signal(symbol, point, prev_point)
             results.append(signalpoint)
             
         return results
 
-    async def calculate_single_signal(self, symbol: str, point: IndicatorDataPoint, prev_point: IndicatorDataPoint) -> SignalDataPoint:
+    def calculate_single_signal(self, symbol: str, point: IndicatorDataPoint, prev_point: IndicatorDataPoint) -> SignalDataPoint:
         """Calculate signal for single point using previous point for crossover detection"""
         rsi = point.rsi
         macd = point.macd

@@ -19,7 +19,7 @@ class SignalOrchestrator:
 
         indicators = await self.indicator_service.get_indicators(symbol, data=data, window=indicators_window, fast=indicators_fast, slow=indicators_slow, signal=indicators_signal, timespan=timespan, start_date=start_date, end_date=end_date, limit=100)
         
-        signals = await self.signal_engine_service.calculate_signals(symbol, indicators)
+        signals = self.signal_engine_service.calculate_signals(symbol, indicators)
 
         last_signal = signals[-1]
         
