@@ -1,5 +1,6 @@
 # app/db/base.py
 from sqlmodel import SQLModel,Session,create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.core.config import settings
 from app.infrastructure.database.models import (
     UserSQLModel,
@@ -21,11 +22,30 @@ engine = create_engine(
     pool_recycle=300,  # Recicla las conexiones cada 5 minutos
 )
 
-# Crear la sesión local
+# Crear el motor de la base de datos asíncrono (para la app)
+async_engine = create_async_engine(
+    settings.get_database_url().replace("postgresql://", "postgresql+asyncpg://"),
+    echo=settings.ECHO_SQL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
+
+# Crear la sesión local asíncrona
+AsyncSessionLocal = sessionmaker(
+    class_=AsyncSession, 
+    autocommit=False, 
+    autoflush=False, 
+    bind=async_engine
+)
+
+# Mantener la sesión síncrona para compatibilidad
 SessionLocal = sessionmaker(class_=Session, autocommit=False, autoflush=False, bind=engine)
 
-def get_session():
-    with SessionLocal() as session:
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_session():
+    async with AsyncSessionLocal() as session:
         yield session
 
 def create_db_and_tables():
