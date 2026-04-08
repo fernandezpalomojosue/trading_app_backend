@@ -8,7 +8,7 @@ from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import get_settings
-from app.db.base import get_session
+from app.db.base import SessionLocal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ async def run_signal_job():
         signal_engine = SignalEngineUseCases()
         
         # Use session context manager for proper cleanup
-        with get_session() as session:
+        with SessionLocal() as session:
             signal_repository = SQLSignalRepository(session)
             favorite_repository = SQLFavoriteStockRepository(session)
             
