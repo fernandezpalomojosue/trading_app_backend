@@ -35,7 +35,12 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
     async def remove_favorite(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
         """Remove a stock from user's favorites"""
-        favorite_model = await self.get_user_favorites(user_id)
+        # Find the specific favorite to remove
+        statement = select(FavoriteStockSQLModel).where(
+            FavoriteStockSQLModel.user_id == user_id,
+            FavoriteStockSQLModel.symbol == symbol.upper()
+        )
+        favorite_model = self.session.exec(statement).first()
         
         if favorite_model:
             self.session.delete(favorite_model)
@@ -60,8 +65,12 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
     async def is_favorite(self, user_id: UUID, symbol: str) -> bool:
         """Check if a stock is in user's favorites"""
-        favorite = await self.get_user_favorites(user_id)
-        return any(f.symbol == symbol.upper() for f in favorite)
+        statement = select(FavoriteStockSQLModel).where(
+            FavoriteStockSQLModel.user_id == user_id,
+            FavoriteStockSQLModel.symbol == symbol.upper()
+        )
+        favorite_model = self.session.exec(statement).first()
+        return favorite_model is not None
     
 
     
