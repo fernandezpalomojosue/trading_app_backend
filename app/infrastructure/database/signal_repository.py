@@ -19,6 +19,7 @@ class SQLSignalRepository(SignalRepository):
             confidence=signal.confidence,
             reason=signal.reason
         )
+        # Let the default_factory handle created_at without timezone
         self.session.add(signal_model)
         self.session.commit()
         self.session.refresh(signal_model)

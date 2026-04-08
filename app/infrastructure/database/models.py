@@ -274,6 +274,11 @@ class SignalStockSQLModel(SQLModel, table=True):
     
     @classmethod
     def from_domain_entity(cls, signal_entity):
+        # Ensure created_at is timezone-naive for PostgreSQL
+        created_at = signal_entity.created_at
+        if created_at.tzinfo is not None:
+            created_at = created_at.replace(tzinfo=None)
+        
         return cls(
             id=signal_entity.id,
             symbol=signal_entity.symbol,
@@ -282,7 +287,7 @@ class SignalStockSQLModel(SQLModel, table=True):
             take_profit=signal_entity.take_profit,
             confidence=signal_entity.confidence,
             reason=signal_entity.reason,
-            created_at=signal_entity.created_at
+            created_at=created_at
         )
     
     def to_domain_entity(self):
