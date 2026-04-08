@@ -26,6 +26,9 @@ from sqlmodel import Session
 
 router = APIRouter(prefix="/markets", tags=["market_info"])
 
+def get_favorite_repository(db: Session = Depends(get_session)) -> FavoriteRepository:
+    """Get favorite repository instance"""
+    return SQLFavoriteStockRepository(db)
 
 def get_market_service(db: Session = Depends(get_session)) -> MarketService:
     """Get market service instance (use cases implementation)"""
@@ -128,11 +131,12 @@ async def get_candlestick_data(
 async def add_favorite_stock(
     symbol: str,
     market_service: MarketService = Depends(get_market_service),
+    favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
     current_user = Depends(get_current_user_dependency)
 ):
     """Add a stock to user's favorites"""
     try:
-        favorite = await market_service.add_favorite_stock(current_user.id, symbol)
+        favorite = await favorite_repository.add_favorite(current_user.id, symbol)
         return favorite
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -141,12 +145,12 @@ async def add_favorite_stock(
 @router.delete("/favorites/{symbol}", response_model=FavoriteStockResponse)
 async def remove_favorite_stock(
     symbol: str,
-    market_service: MarketService = Depends(get_market_service),
+    favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
     current_user = Depends(get_current_user_dependency)
 ):
     """Remove a stock from user's favorites"""
     try:
-        favorite = await market_service.remove_favorite_stock(current_user.id, symbol)
+        favorite = await favorite_repository.remove_favorite(current_user.id, symbol)
         return favorite
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -154,12 +158,12 @@ async def remove_favorite_stock(
 
 @router.get("/favorites", response_model=FavoriteStockListResponse)
 async def get_favorite_stocks(
-    market_service: MarketService = Depends(get_market_service),
+    favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
     current_user = Depends(get_current_user_dependency)
 ):
     """Get user's favorite stocks"""
     try:
-        favorites = await market_service.get_user_favorite_stocks(current_user.id)
+        favorites = await favorite_repository.get_user_favorites(current_user.id)
         return favorites
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
