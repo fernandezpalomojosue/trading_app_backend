@@ -1,7 +1,6 @@
 # app/main.py
 from contextlib import asynccontextmanager
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.workers.signal_worker import run_signal_job
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,7 +9,6 @@ from app.db.base import create_db_and_tables, engine
 from app.presentation.api.v1.endpoints.routers import api_router
 from sqlalchemy import inspect
 
-scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,7 +18,6 @@ async def lifespan(app: FastAPI):
     - Shutdown: cierra conexiones
     """
     print(f"Starting app in {settings.ENVIRONMENT} mode...")
-    print(f"🔧 Environment check: ENVIRONMENT = '{settings.ENVIRONMENT}'")
     
     # Check if tables exist, create if missing
     inspector = inspect(engine)
@@ -37,51 +34,9 @@ async def lifespan(app: FastAPI):
     else:
         print(f"All required tables exist: {required_tables}")
     
-    print("Starting scheduler...")
-    try:
-        # Add signal generation job
-        scheduler.add_job(
-            run_signal_job,
-            "interval",
-            minutes=15,
-            id="signal_generation_job",
-            name="Signal Generation Job",
-            replace_existing=True
-        )
-        
-        # Start scheduler in production and development, skip only in testing
-        print(f"🔧 Scheduler decision: ENVIRONMENT = '{settings.ENVIRONMENT}'")
-        if settings.ENVIRONMENT == "testing":
-            print("⚠️  Testing environment detected, skipping scheduler start")
-        else:
-            print("🚀 Starting scheduler for production/development...")
-            try:
-                scheduler.start()
-                print("✅ Scheduler started successfully!")
-                print(f"📅 Signal job scheduled to run every 15 minutes")
-            except Exception as e:
-                print(f"❌ Failed to start scheduler: {e}")
-                # Don't raise in testing environment
-                if settings.ENVIRONMENT != "testing":
-                    raise
-            
-    except Exception as e:
-        print(f"❌ Failed to start scheduler: {e}")
-        # Don't raise in testing environment
-        if settings.ENVIRONMENT != "testing":
-            raise
-    
     yield
     print("Shutting down app...")
-    # Safe shutdown with error handling
-    try:
-        if scheduler.running:
-            scheduler.shutdown(wait=False)
-            print("Scheduler stopped!")
-    except Exception as e:
-        print(f"⚠️  Error stopping scheduler: {e}")
-    finally:
-        engine.dispose()
+    engine.dispose()
 
 
 app = FastAPI(
