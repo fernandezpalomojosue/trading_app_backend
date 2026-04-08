@@ -12,7 +12,7 @@ from app.infrastructure.database.user_repository import SQLUserRepository
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
-async def get_current_user_dependency(
+def get_current_user_dependency(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_session)
 ) -> UserEntity:
@@ -31,7 +31,7 @@ async def get_current_user_dependency(
     
     # Get user from database
     user_repository = SQLUserRepository(db)
-    user = await user_repository.get_user_by_email(email)
+    user = user_repository.get_user_by_email(email)
     if not user:
         raise credentials_exception
     

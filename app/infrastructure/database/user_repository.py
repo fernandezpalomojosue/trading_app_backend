@@ -13,7 +13,7 @@ class SQLUserRepository(UserRepository):
     def __init__(self, session: Session):
         self.session = session
     
-    async def create_user(self, user: UserEntity, hashed_password: str) -> UserEntity:
+    def create_user(self, user: UserEntity, hashed_password: str) -> UserEntity:
         """Create a new user in the database"""
         user_model = UserSQLModel.from_domain_entity(user)
         user_model.hashed_password = hashed_password
@@ -24,7 +24,7 @@ class SQLUserRepository(UserRepository):
         
         return user_model.to_domain_entity()
     
-    async def get_user_by_email(self, email: str) -> Optional[UserEntity]:
+    def get_user_by_email(self, email: str) -> Optional[UserEntity]:
         """Get user by email"""
         statement = select(UserSQLModel).where(UserSQLModel.email == email)
         user_model = self.session.exec(statement).first()
@@ -33,7 +33,7 @@ class SQLUserRepository(UserRepository):
             return user_model.to_domain_entity()
         return None
     
-    async def get_user_by_id(self, user_id: UUID) -> Optional[UserEntity]:
+    def get_user_by_id(self, user_id: UUID) -> Optional[UserEntity]:
         """Get user by ID"""
         statement = select(UserSQLModel).where(UserSQLModel.id == user_id)
         user_model = self.session.exec(statement).first()
@@ -42,7 +42,7 @@ class SQLUserRepository(UserRepository):
             return user_model.to_domain_entity()
         return None
     
-    async def update_user(self, user: UserEntity) -> UserEntity:
+    def update_user(self, user: UserEntity) -> UserEntity:
         """Update user in database"""
         statement = select(UserSQLModel).where(UserSQLModel.id == user.id)
         user_model = self.session.exec(statement).first()
@@ -63,7 +63,7 @@ class SQLUserRepository(UserRepository):
         
         return user
     
-    async def verify_password(self, email: str, password: str) -> bool:
+    def verify_password(self, email: str, password: str) -> bool:
         """Verify user password"""
         user_model = self.get_user_with_password(email)
         
@@ -79,7 +79,7 @@ class SQLUserRepository(UserRepository):
         statement = select(UserSQLModel).where(UserSQLModel.email == email)
         return self.session.exec(statement).first()
     
-    async def delete_user(self, user_id: UUID) -> bool:
+    def delete_user(self, user_id: UUID) -> bool:
         """Delete user from database"""
         statement = select(UserSQLModel).where(UserSQLModel.id == user_id)
         user_model = self.session.exec(statement).first()
@@ -91,7 +91,7 @@ class SQLUserRepository(UserRepository):
         
         return False
     
-    async def user_exists(self, email: str) -> bool:
+    def user_exists(self, email: str) -> bool:
         """Check if user exists by email"""
         statement = select(UserSQLModel).where(UserSQLModel.email == email)
         user_model = self.session.exec(statement).first()
