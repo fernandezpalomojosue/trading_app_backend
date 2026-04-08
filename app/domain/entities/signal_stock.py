@@ -11,5 +11,5 @@ class SignalStockEntity(BaseModel):
     take_profit: float = Field(description="Take profit price")
     confidence: float = Field(description="Confidence level (0-1)")
     reason: str = Field(description="Reason for the signal")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Update timestamp")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None), description="Creation timestamp")
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None), description="Update timestamp")
