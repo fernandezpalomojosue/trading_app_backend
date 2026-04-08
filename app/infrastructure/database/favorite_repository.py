@@ -16,8 +16,8 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     async def add_favorite(self, user_id: UUID, symbol: str) -> FavoriteStockEntity:
         """Add a stock to user's favorites"""
         # Check if already exists
-        existing = await self.get_user_favorites(user_id)
-        if any(f.symbol == symbol.upper() for f in existing):
+        existing = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        if existing:
             raise ValueError(f"Stock {symbol} is already in favorites")
         
         favorite_entity = FavoriteStockEntity(

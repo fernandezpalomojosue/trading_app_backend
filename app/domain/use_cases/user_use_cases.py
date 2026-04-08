@@ -50,11 +50,11 @@ class PasswordService(ABC):
     """Abstract service for password operations"""
     
     @abstractmethod
-    def hash_password(self, password: str) -> str:
+    async def hash_password(self, password: str) -> str:
         pass
     
     @abstractmethod
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+    async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         pass
 
 
@@ -62,11 +62,11 @@ class TokenService(ABC):
     """Abstract service for token operations"""
     
     @abstractmethod
-    def create_access_token(self, data: dict) -> str:
+    async def create_access_token(self, data: dict) -> str:
         pass
     
     @abstractmethod
-    def verify_token(self, token: str) -> Optional[str]:
+    async def verify_token(self, token: str) -> Optional[str]:
         pass
 
 
