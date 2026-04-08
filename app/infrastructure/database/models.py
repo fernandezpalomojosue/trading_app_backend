@@ -264,7 +264,7 @@ class SignalStockSQLModel(SQLModel, table=True):
         description="Reason for the signal"
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
         description="Signal creation date"
     )
     
