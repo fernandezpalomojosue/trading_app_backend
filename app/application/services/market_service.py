@@ -34,18 +34,3 @@ class MarketService(ABC):
     async def get_candlestick_data(self, symbol: str, timespan: str = "day", multiplier: int = 1, limit: int = 100, start_date: str = None, end_date: str = None) -> CandleStickDataResponse:
         """Get candlestick data for a specific asset"""
         pass
-    
-    @abstractmethod
-    async def add_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
-        """Add a stock to user's favorites"""
-        pass
-    
-    @abstractmethod
-    async def remove_favorite_stock(self, user_id: UUID, symbol: str) -> FavoriteStockResponse:
-        """Remove a stock from user's favorites"""
-        pass
-    
-    @abstractmethod
-    async def get_user_favorite_stocks(self, user_id: UUID) -> FavoriteStockListResponse:
-        """Get all favorite stocks for a user"""
-        pass
