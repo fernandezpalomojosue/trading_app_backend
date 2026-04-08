@@ -8,10 +8,14 @@ from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import get_settings
-from app.db.base import SessionLocal
+from app.db.base import SessionLocal, engine
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import Session
+
 import logging
 
 logger = logging.getLogger(__name__)
+SessionLocal = sessionmaker(class_=Session, autocommit=False, autoflush=False, bind=engine)
 
 async def run_signal_job():
     """Run signal generation job for all default stocks"""
