@@ -163,7 +163,23 @@ async def get_favorite_stocks(
 ):
     """Get user's favorite stocks"""
     try:
-        favorites = await favorite_repository.get_user_favorites(current_user.id)
-        return favorites
+        # Get favorite entities from repository
+        favorite_entities = await favorite_repository.get_user_favorites(current_user.id)
+        
+        # Convert entities to DTO responses
+        favorite_responses = []
+        for entity in favorite_entities:
+            favorite_responses.append(FavoriteStockResponse(
+                id=str(entity.id),
+                user_id=str(entity.user_id),
+                symbol=entity.symbol,
+                created_at=entity.created_at.isoformat() if entity.created_at else ""
+            ))
+        
+        # Return proper DTO structure
+        return FavoriteStockListResponse(
+            favorites=favorite_responses,
+            total=len(favorite_responses)
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
