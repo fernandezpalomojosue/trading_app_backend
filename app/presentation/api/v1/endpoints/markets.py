@@ -136,8 +136,15 @@ async def add_favorite_stock(
 ):
     """Add a stock to user's favorites"""
     try:
-        favorite = await favorite_repository.add_favorite(current_user.id, symbol)
-        return favorite
+        favorite_entity = await favorite_repository.add_favorite(current_user.id, symbol)
+        
+        # Convert entity to DTO response
+        return FavoriteStockResponse(
+            id=str(favorite_entity.id),
+            user_id=str(favorite_entity.user_id),
+            symbol=favorite_entity.symbol,
+            created_at=favorite_entity.created_at.isoformat() if favorite_entity.created_at else ""
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -150,8 +157,20 @@ async def remove_favorite_stock(
 ):
     """Remove a stock from user's favorites"""
     try:
-        favorite = await favorite_repository.remove_favorite(current_user.id, symbol)
-        return favorite
+        favorite_entity = await favorite_repository.remove_favorite(current_user.id, symbol)
+        
+        if not favorite_entity:
+            raise HTTPException(status_code=404, detail="Favorite stock not found")
+        
+        # Convert entity to DTO response
+        return FavoriteStockResponse(
+            id=str(favorite_entity.id),
+            user_id=str(favorite_entity.user_id),
+            symbol=favorite_entity.symbol,
+            created_at=favorite_entity.created_at.isoformat() if favorite_entity.created_at else ""
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
