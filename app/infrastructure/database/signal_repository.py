@@ -14,10 +14,10 @@ class SQLSignalRepository(SignalRepository):
         signal_model = SignalStockSQLModel(
             symbol=symbol,
             signal=signal.signal,
-            stop_loss=signal.stop_loss,
-            take_profit=signal.take_profit,
-            confidence=signal.confidence,
-            reason=signal.reason
+            stop_loss=signal.stop_loss or 0.0,
+            take_profit=signal.take_profit or 0.0,
+            confidence=signal.confidence or 0.0,
+            reason=signal.reason or ""
         )
         # Let the default_factory handle created_at without timezone
         self.session.add(signal_model)
@@ -27,10 +27,10 @@ class SQLSignalRepository(SignalRepository):
             id=signal_model.id,
             symbol=signal_model.symbol,
             signal=signal_model.signal,
-            stop_loss=signal_model.stop_loss,
-            take_profit=signal_model.take_profit,
-            confidence=signal_model.confidence,
-            reason=signal_model.reason
+            stop_loss=signal_model.stop_loss or 0.0,
+            take_profit=signal_model.take_profit or 0.0,
+            confidence=signal_model.confidence or 0.0,
+            reason=signal_model.reason or ""
         )
     
     async def get_by_symbol(self, symbol: str) -> SignalStockEntity:
@@ -43,10 +43,10 @@ class SQLSignalRepository(SignalRepository):
                 id=signal_model.id,
                 symbol=signal_model.symbol,
                 signal=signal_model.signal,
-                stop_loss=signal_model.stop_loss,
-                take_profit=signal_model.take_profit,
-                confidence=signal_model.confidence,
-                reason=signal_model.reason
+                stop_loss=signal_model.stop_loss or 0.0,
+                take_profit=signal_model.take_profit or 0.0,
+                confidence=signal_model.confidence or 0.0,
+                reason=signal_model.reason or ""
             )
         return None
         
