@@ -16,7 +16,7 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     async def add_favorite(self, user_id: UUID, symbol: str) -> FavoriteStockEntity:
         """Add a stock to user's favorites"""
         # Check if already exists
-        existing = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        existing = await self.is_favorite(user_id, symbol)
         if existing:
             raise ValueError(f"Stock {symbol} is already in favorites")
         
@@ -35,7 +35,7 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
     async def remove_favorite(self, user_id: UUID, symbol: str) -> Optional[FavoriteStockEntity]:
         """Remove a stock from user's favorites"""
-        favorite_model = await self.get_favorite_by_user_and_symbol(user_id, symbol)
+        favorite_model = await self.get_user_favorites(user_id)
         
         if favorite_model:
             self.session.delete(favorite_model)
@@ -60,8 +60,8 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
     async def is_favorite(self, user_id: UUID, symbol: str) -> bool:
         """Check if a stock is in user's favorites"""
-        favorite = await self.get_favorite_by_user_and_symbol(user_id, symbol)
-        return favorite is not None
+        favorite = await self.get_user_favorites(user_id)
+        return any(f.symbol == symbol.upper() for f in favorite)
     
 
     
