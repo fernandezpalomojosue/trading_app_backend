@@ -223,7 +223,7 @@ class IndicatorsUseCases(IndicatorsService):
             'high_ts': high_ts,
             'low_ts': low_ts
         }
-        self.cache.set(cache_key, cache_data, ttl=86400)  # 24 hours
+        await self.cache.set(cache_key, cache_data, ttl=86400)  # 24 hours
         
         logger.info(f"Calculated Fibonacci levels for {symbol}: {list(fibonacci_levels.keys())}")
         return fibonacci_levels
