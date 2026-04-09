@@ -92,7 +92,9 @@ async def run_signals(
             if signal:
                 # Save to database
                 await signal_repo.save_signal(stock, signal)
-                await cache.set(f"signal:{stock}", signal)
+                cache_success = await cache.set(f"signal:{stock}", signal)
+                if not cache_success:
+                    print(f"Warning: Failed to cache signal for {stock}")
                 results.append({"symbol": stock, "signal": signal, "status": "success"})
             else:
                 results.append({"symbol": stock, "status": "no_signal"})
@@ -114,7 +116,9 @@ async def get_signal(
     
     result = await signal_repo.get_by_symbol(symbol)
     if result:
-        await cache.set(f"signal:{symbol}", result)
+        cache_success = await cache.set(f"signal:{symbol}", result)
+        if not cache_success:
+            print(f"Warning: Failed to cache signal for {symbol}")
         return result
     
     raise HTTPException(status_code=404, detail=f"No signal found for symbol: {symbol}")

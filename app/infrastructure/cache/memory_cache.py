@@ -31,8 +31,8 @@ class MemoryMarketCache(MarketDataCache):
         self._hits += 1
         return entry["value"]
     
-    async def set(self, key: str, value: Any, ttl: int = None) -> None:
-        """Set value in cache"""
+    async def set(self, key: str, value: Any, ttl: int = None) -> bool:
+        """Set value in cache. Returns True if successful."""
         ttl = ttl or self.default_ttl
         expires_at = time.time() + ttl
         
@@ -41,14 +41,17 @@ class MemoryMarketCache(MarketDataCache):
             "expires_at": expires_at,
             "created_at": time.time()
         }
+        return True
     
-    async def delete(self, key: str) -> None:
-        """Delete key from cache"""
+    async def delete(self, key: str) -> bool:
+        """Delete key from cache. Returns True if key was deleted."""
         if key in self._cache:
             del self._cache[key]
+            return True
+        return False
     
-    async def clear_pattern(self, pattern: str) -> None:
-        """Clear keys matching pattern"""
+    async def clear_pattern(self, pattern: str) -> int:
+        """Clear keys matching pattern. Returns number of keys deleted."""
         keys_to_delete = []
         for key in self._cache.keys():
             if re.search(pattern, key):
@@ -56,6 +59,8 @@ class MemoryMarketCache(MarketDataCache):
         
         for key in keys_to_delete:
             del self._cache[key]
+        
+        return len(keys_to_delete)
     
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""

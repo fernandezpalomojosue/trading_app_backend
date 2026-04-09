@@ -25,7 +25,10 @@ class SignalOrchestrator:
         
         await self.signal_repository.save_signal(symbol, last_signal)
 
-        await self.cache_client.set(f"signal_{symbol}", last_signal, ttl=60)
+        # Cache the signal (ignore cache failures)
+        cache_success = await self.cache_client.set(f"signal_{symbol}", last_signal, ttl=60)
+        if not cache_success:
+            print(f"Warning: Failed to cache signal for {symbol}")
         
         return last_signal
         
