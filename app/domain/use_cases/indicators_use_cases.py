@@ -99,17 +99,14 @@ class IndicatorsUseCases(IndicatorsService):
         # =====================
         # INDICADORES
         # =====================
-
-        df["ema"] = pta.ema(df["close"], length=window)
-        df["sma"] = pta.sma(df["close"], length=window)
-        df["rsi"] = pta.rsi(df["close"], length=window)
-
-        macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
-
-        df['macd'] = macd.iloc[:, 0]
-        df['macd_signal'] = macd.iloc[:, 1]
-        df['histogram'] = macd.iloc[:, 2]
-
+        
+        # Calculate each indicator using separate functions
+        df = self._calculate_ema(df, window)
+        df = self._calculate_sma(df, window)
+        df = self._calculate_rsi(df, window)
+        df = self._calculate_macd(df, fast, slow, signal)
+        
+        # Remove rows with NaN values in indicators
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "macd_signal", "histogram"])
         
         # Convert to IndicatorDataPoint objects
@@ -142,3 +139,28 @@ class IndicatorsUseCases(IndicatorsService):
         await self.cache.set(cache_key, cache_data, ttl=60)
 
         return results
+
+    def _calculate_ema(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+        """Calculate Exponential Moving Average (EMA)"""
+        df["ema"] = pta.ema(df["close"], length=window)
+        return df
+
+    def _calculate_sma(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+        """Calculate Simple Moving Average (SMA)"""
+        df["sma"] = pta.sma(df["close"], length=window)
+        return df
+
+    def _calculate_rsi(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+        """Calculate Relative Strength Index (RSI)"""
+        df["rsi"] = pta.rsi(df["close"], length=window)
+        return df
+
+    def _calculate_macd(self, df: pd.DataFrame, fast: int, slow: int, signal: int) -> pd.DataFrame:
+        """Calculate MACD (Moving Average Convergence Divergence)"""
+        macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
+        
+        df['macd'] = macd.iloc[:, 0]
+        df['macd_signal'] = macd.iloc[:, 1]
+        df['histogram'] = macd.iloc[:, 2]
+        
+        return df
