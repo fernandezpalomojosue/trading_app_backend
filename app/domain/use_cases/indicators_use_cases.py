@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 import pandas as pd
 #import ta
 import pandas_ta as pta
@@ -17,6 +17,7 @@ from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.application.repositories.cache_repository import CacheRepository
+from app.domain.services.fibonacci_service import FibonacciService
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class IndicatorsUseCases(IndicatorsService):
 
     def __init__(self, cache_service):
         self.cache = cache_service
+        self.fibonacci_service = FibonacciService()
 
     async def get_indicators(
         self,
@@ -109,6 +111,11 @@ class IndicatorsUseCases(IndicatorsService):
         df = self._calculate_rsi(df, window)
         df = self._calculate_macd(df, fast, slow, signal)
         
+        # Calculate Fibonacci retracement levels
+        # Convert DataFrame to list of dictionaries for Fibonacci service
+        data_list = df.to_dict('records')
+        fibonacci_levels = self._calculate_fibonacci_levels(data_list, symbol)
+        
         # Remove rows with NaN values in indicators
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "macd_signal", "histogram"])
         
@@ -123,7 +130,7 @@ class IndicatorsUseCases(IndicatorsService):
                 return value
             
             point = IndicatorDataPoint(
-                timestamp=int(row["timestamp"]),
+                timestamp=int(row["t"]),
                 symbol=symbol,
                 ema=safe_float(row["ema"]),
                 sma=safe_float(row["sma"]),
@@ -131,13 +138,13 @@ class IndicatorsUseCases(IndicatorsService):
                 macd=safe_float(row["macd"]),
                 macd_signal=safe_float(row["macd_signal"]),
                 histogram=safe_float(row["histogram"]),
-                close_price=safe_float(row["close"]),  # close might not be in row
-                fibonacci_levels={}
+                close_price=safe_float(row["c"]), 
+                fibonacci_levels=fibonacci_levels
             )
             results.append(point)
         
         # Cache as dictionaries for FastAPI serialization, but return objects for internal use
-        cache_data = [point.dict() for point in results]
+        cache_data = [point.model_dump() for point in results]
         print(f"DEBUG: About to call cache.set for {symbol} with {len(cache_data)} items")
 
         cache_result = await self.cache.set(cache_key, cache_data, ttl=60)
@@ -169,3 +176,54 @@ class IndicatorsUseCases(IndicatorsService):
         df['histogram'] = macd.iloc[:, 2]
         
         return df
+
+    def _calculate_fibonacci_levels(self, data: List[Dict], symbol: str) -> Dict[str, float]:
+        """
+        Calculate Fibonacci retracement levels with caching support
+        
+        Args:
+            data: List of dictionaries with OHLC data
+            symbol: Stock symbol for cache key
+            
+        Returns:
+            Dictionary of Fibonacci levels
+        """
+        # Generate cache key for Fibonacci data
+        if data:
+            timestamps = [item['t'] for item in data]
+            cache_key = f"fibonacci_{symbol}_{min(timestamps)}_{max(timestamps)}"
+        else:
+            cache_key = f"fibonacci_{symbol}_empty"
+        
+        # Try to get cached Fibonacci levels
+        cached = self.cache.get(cache_key)
+        if cached:
+            logger.info(f"Using cached Fibonacci levels for {symbol}")
+            # Extract levels from cached data structure
+            if isinstance(cached, dict) and 'levels' in cached:
+                return cached['levels']
+            elif isinstance(cached, dict):
+                # Direct levels dictionary
+                return cached
+            else:
+                # Handle unexpected cache format
+                logger.warning(f"Unexpected cache format for {symbol}: {type(cached)}")
+                return {}
+        
+        # Calculate new Fibonacci levels
+        fibonacci_levels, high_ts, low_ts = self.fibonacci_service.calculate_fibonacci_levels(data)
+        
+        if not fibonacci_levels:
+            logger.warning(f"Could not calculate Fibonacci levels for {symbol}")
+            return {}
+        
+        # Cache the result with metadata
+        cache_data = {
+            'levels': fibonacci_levels,
+            'high_ts': high_ts,
+            'low_ts': low_ts
+        }
+        self.cache.set(cache_key, cache_data, ttl=86400)  # 24 hours
+        
+        logger.info(f"Calculated Fibonacci levels for {symbol}: {list(fibonacci_levels.keys())}")
+        return fibonacci_levels

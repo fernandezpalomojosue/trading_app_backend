@@ -119,15 +119,15 @@ class TestIndicatorsUseCasesDTO:
         # Verify all data points have required fields
         for point in result:
             assert isinstance(point, IndicatorDataPoint)
-            assert 'timestamp' in point.model_dump()
-            assert 'ema' in point.model_dump()
-            assert 'sma' in point.model_dump()
-            assert 'rsi' in point.model_dump()
-            assert 'macd' in point.model_dump()
-            assert 'macd_signal' in point.model_dump()
-            assert 'histogram' in point.model_dump()
-            assert 'symbol' in point.model_dump()
-            assert 'fibonacci_levels' in point.model_dump()
+            assert point.timestamp is not None
+            assert point.ema is not None
+            assert point.sma is not None
+            assert point.rsi is not None
+            assert point.macd is not None
+            assert point.macd_signal is not None
+            assert point.histogram is not None
+            assert point.symbol is not None
+            assert point.fibonacci_levels is not None
 
     @pytest.mark.asyncio
     async def test_response_structure_matches_dto(self, indicators_use_cases):
