@@ -51,38 +51,28 @@ class PolygonMarketClient(MarketRepository):
         if not self.api_key:
             raise ValueError("Se requiere una API key para Massive API. Configura MASSIVE_API_KEY")
         self.rate_limiter = RateLimiter(calls_per_minute=rate_limit)
-        self.session = None
-    
-    async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session:
-            await self.session.close()
     
     async def _make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Make a rate-limited API request"""
         await self.rate_limiter.wait_if_needed()
         
-        if not self.session:
-            self.session = aiohttp.ClientSession()
-        
         url = f"{self.BASE_URL}{endpoint}"
         params = params or {}
         params["apikey"] = self.api_key
         
-        try:
-            async with self.session.get(url, params=params) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(
-                        status_code=response.status,
-                        detail=f"Polygon API error: {await response.text()}"
-                    )
-        except aiohttp.ClientError as e:
-            raise HTTPException(status_code=500, detail=f"External API error: {str(e)}")
+        # Always use a new session with context manager to ensure proper cleanup
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        raise HTTPException(
+                            status_code=response.status,
+                            detail=f"Polygon API error: {await response.text()}"
+                        )
+            except aiohttp.ClientError as e:
+                raise HTTPException(status_code=500, detail=f"External API error: {str(e)}")
     
     async def fetch_raw_market_data(self, date: str) -> Dict[str, Any]:
         """Fetch raw market data - INFRASTRUCTURE ONLY"""
