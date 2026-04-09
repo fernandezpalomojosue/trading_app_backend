@@ -114,7 +114,7 @@ class IndicatorsUseCases(IndicatorsService):
         # Calculate Fibonacci retracement levels
         # Convert DataFrame to list of dictionaries for Fibonacci service
         data_list = df.to_dict('records')
-        fibonacci_levels = self._calculate_fibonacci_levels(data_list, symbol)
+        fibonacci_levels = await self._calculate_fibonacci_levels(data_list, symbol)
         
         # Remove rows with NaN values in indicators
         df = df.dropna(subset=["ema", "sma", "rsi", "macd", "macd_signal", "histogram"])
@@ -177,7 +177,7 @@ class IndicatorsUseCases(IndicatorsService):
         
         return df
 
-    def _calculate_fibonacci_levels(self, data: List[Dict], symbol: str) -> Dict[str, float]:
+    async def _calculate_fibonacci_levels(self, data: List[Dict], symbol: str) -> Dict[str, float]:
         """
         Calculate Fibonacci retracement levels with caching support
         
@@ -196,7 +196,7 @@ class IndicatorsUseCases(IndicatorsService):
             cache_key = f"fibonacci_{symbol}_empty"
         
         # Try to get cached Fibonacci levels
-        cached = self.cache.get(cache_key)
+        cached = await self.cache.get(cache_key)
         if cached:
             logger.info(f"Using cached Fibonacci levels for {symbol}")
             # Extract levels from cached data structure
