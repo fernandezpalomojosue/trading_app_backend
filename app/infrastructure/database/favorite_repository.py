@@ -74,7 +74,7 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
 
     
-    async def get_all_favorites(self) -> List[str]:
+    def get_all_favorites(self) -> List[str]:
         """Get all unique favorite symbols from all users"""
         statement = select(FavoriteStockSQLModel.symbol).distinct()
         symbols = self.session.exec(statement).all()
