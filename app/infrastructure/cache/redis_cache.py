@@ -47,40 +47,47 @@ class RedisCache(CacheRepository):
             self._misses += 1
             return None
     
-    async def set(self, key: str, value: Any, ttl: int = 300) -> None:
-        """Set value in Redis cache with TTL"""
+    async def set(self, key: str, value: Any, ttl: int = 300) -> bool:
+        """Set value in Redis cache with TTL. Returns True if successful, False on error."""
         try:
             redis_client = await self._get_redis()
             redis_key = self._make_key(key)
             
             serialized_value = json.dumps(value, default=str)
             await redis_client.setex(redis_key, ttl or self.default_ttl, serialized_value)
+            return True
             
         except Exception as e:
             print(f"Redis set error: {e}")
+            return False
     
-    async def delete(self, key: str) -> None:
-        """Delete key from Redis cache"""
+    async def delete(self, key: str) -> bool:
+        """Delete key from Redis cache. Returns True if successful, False on error."""
         try:
             redis_client = await self._get_redis()
             redis_key = self._make_key(key)
-            await redis_client.delete(redis_key)
+            deleted_count = await redis_client.delete(redis_key)
+            return deleted_count > 0
             
         except Exception as e:
             print(f"Redis delete error: {e}")
+            return False
     
-    async def clear_pattern(self, pattern: str) -> None:
-        """Clear keys matching pattern"""
+    async def clear_pattern(self, pattern: str) -> int:
+        """Clear keys matching pattern. Returns number of keys deleted, 0 on error."""
         try:
             redis_client = await self._get_redis()
             redis_pattern = self._make_key(pattern)
             
             keys = await redis_client.keys(redis_pattern)
             if keys:
-                await redis_client.delete(*keys)
+                deleted_count = await redis_client.delete(*keys)
+                return deleted_count
+            return 0
                 
         except Exception as e:
             print(f"Redis clear pattern error: {e}")
+            return 0
     
     async def close(self):
         """Close Redis connection"""
