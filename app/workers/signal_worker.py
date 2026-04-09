@@ -58,12 +58,21 @@ async def run_signal_job():
             for stock in stocks:
                 try:
                     logger.info(f"Generating signal for {stock}")
+                    
+                    # Log before calling orchestration_service.generate_signal
+                    logger.info(f"DEBUG: About to call orchestration_service.generate_signal for {stock}")
+                    
                     signal = await orchestration_service.generate_signal(
                         stock, "day", "2026-01-01", get_last_trading_day()
                     )
+                    
+                    # Log after successful call
+                    logger.info(f"DEBUG: Successfully completed orchestration_service.generate_signal for {stock}")
                     logger.info(f"Successfully generated signal for {stock}: {signal}")
                 except Exception as e:
                     logger.error(f"Error generating signal for {stock}: {e}")
+                    import traceback
+                    logger.error(f"TRACEBACK: {traceback.format_exc()}")
                     
     except Exception as e:
         logger.error(f"Critical error in signal job: {e}")

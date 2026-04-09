@@ -41,9 +41,12 @@ class IndicatorsUseCases(IndicatorsService):
     ) -> List[IndicatorDataPoint]:
 
         cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}"
+        print(f"DEBUG: About to call cache.get for {symbol} with key: {cache_key}")
 
         cached = await self.cache.get(cache_key)
+        print(f"DEBUG: Cache get result for {symbol}: {type(cached)} - {cached is not None}")
         if cached:
+            print(f"DEBUG: Using cached indicators for {symbol}")
             # Convert cached dictionaries back to IndicatorDataPoint objects
             return [
                 IndicatorDataPoint(
@@ -135,8 +138,10 @@ class IndicatorsUseCases(IndicatorsService):
         
         # Cache as dictionaries for FastAPI serialization, but return objects for internal use
         cache_data = [point.dict() for point in results]
+        print(f"DEBUG: About to call cache.set for {symbol} with {len(cache_data)} items")
 
-        await self.cache.set(cache_key, cache_data, ttl=60)
+        cache_result = await self.cache.set(cache_key, cache_data, ttl=60)
+        print(f"DEBUG: Cache set result for {symbol}: {type(cache_result)} - {cache_result}")
 
         return results
 
