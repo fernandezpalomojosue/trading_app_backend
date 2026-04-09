@@ -9,7 +9,7 @@ class SQLSignalRepository(SignalRepository):
     def __init__(self, session: Session):
         self.session = session
     
-    async def save_signal(self, symbol: str, signal: SignalDataPoint) -> SignalStockEntity:
+    def save_signal(self, symbol: str, signal: SignalDataPoint) -> SignalStockEntity:
         """Save a signal for a symbol"""
         signal_model = SignalStockSQLModel(
             symbol=symbol,
@@ -21,8 +21,8 @@ class SQLSignalRepository(SignalRepository):
         )
         # Let the default_factory handle created_at without timezone
         self.session.add(signal_model)
-        await self.session.commit()
-        await self.session.refresh(signal_model)
+        self.session.commit()
+        self.session.refresh(signal_model)
         return SignalStockEntity(
             id=signal_model.id,
             symbol=signal_model.symbol,
@@ -33,7 +33,7 @@ class SQLSignalRepository(SignalRepository):
             reason=signal_model.reason or ""
         )
     
-    async def get_by_symbol(self, symbol: str) -> SignalStockEntity:
+    def get_by_symbol(self, symbol: str) -> SignalStockEntity:
         """Get signal by symbol"""
         signal_model = self.session.exec(
             select(SignalStockSQLModel).where(SignalStockSQLModel.symbol == symbol)
