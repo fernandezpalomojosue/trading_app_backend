@@ -32,7 +32,7 @@ class SignalOrchestrator:
         print(f"DEBUG: Got last signal for {symbol}: {last_signal}")
         
         print(f"DEBUG: About to call signal_repository.save_signal for {symbol}")
-        await self.signal_repository.save_signal(symbol, last_signal)
+        self.signal_repository.save_signal(symbol, last_signal)
         print(f"DEBUG: Successfully saved signal to database for {symbol}")
 
         print(f"DEBUG: About to call cache_client.set for {symbol}")
