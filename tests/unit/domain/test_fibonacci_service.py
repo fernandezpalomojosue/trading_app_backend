@@ -9,15 +9,22 @@ class TestFibonacciService:
     
     def test_calculate_fibonacci_levels_success(self):
         """Test successful Fibonacci calculation"""
-        # Create test data
-        df = pd.DataFrame({
-            'h': [150, 155, 160, 158, 162],
-            'l': [140, 142, 138, 145, 148],
-            't': [1000, 2000, 3000, 4000, 5000]
-        })
+        # Create test data with sufficient points (>=10)
+        data = [
+            {'h': 150, 'l': 140, 't': 1000},
+            {'h': 155, 'l': 142, 't': 2000},
+            {'h': 160, 'l': 138, 't': 3000},
+            {'h': 158, 'l': 145, 't': 4000},
+            {'h': 162, 'l': 148, 't': 5000},
+            {'h': 165, 'l': 150, 't': 6000},
+            {'h': 168, 'l': 152, 't': 7000},
+            {'h': 170, 'l': 155, 't': 8000},
+            {'h': 172, 'l': 158, 't': 9000},
+            {'h': 175, 'l': 160, 't': 10000}
+        ]
         
         service = FibonacciService()
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(df)
+        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
         
         assert levels is not None
         assert '0.236' in levels
@@ -25,19 +32,17 @@ class TestFibonacciService:
         assert '0.5' in levels
         assert '0.618' in levels
         assert '0.786' in levels
-        assert high_ts == 4000  # Max high at timestamp 4000
-        assert low_ts == 3000   # Min low at timestamp 3000
+        assert high_ts == 10000  # Max high (175) at timestamp 10000
+        assert low_ts == 3000   # Min low (138) at timestamp 3000
     
     def test_calculate_fibonacci_levels_insufficient_data(self):
         """Test Fibonacci calculation with insufficient data"""
-        df = pd.DataFrame({
-            'h': [150],
-            'l': [140],
-            't': [1000]
-        })
+        data = [
+            {'h': 150, 'l': 140, 't': 1000}
+        ]
         
         service = FibonacciService(min_bars=5)
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(df)
+        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
         
         assert levels == {}
         assert high_ts is None
@@ -45,14 +50,14 @@ class TestFibonacciService:
     
     def test_calculate_fibonacci_levels_no_movement(self):
         """Test Fibonacci calculation when high == low"""
-        df = pd.DataFrame({
-            'h': [150, 150, 150],
-            'l': [150, 150, 150],
-            't': [1000, 2000, 3000]
-        })
+        data = [
+            {'h': 150, 'l': 150, 't': 1000},
+            {'h': 150, 'l': 150, 't': 2000},
+            {'h': 150, 'l': 150, 't': 3000}
+        ]
         
         service = FibonacciService()
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(df)
+        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
         
         assert levels == {}
         assert high_ts is None
