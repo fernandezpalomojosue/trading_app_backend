@@ -130,7 +130,7 @@ class IndicatorsUseCases(IndicatorsService):
                 return value
             
             point = IndicatorDataPoint(
-                timestamp=int(row["timestamp"]),
+                timestamp=int(row["t"]),
                 symbol=symbol,
                 ema=safe_float(row["ema"]),
                 sma=safe_float(row["sma"]),
@@ -138,13 +138,13 @@ class IndicatorsUseCases(IndicatorsService):
                 macd=safe_float(row["macd"]),
                 macd_signal=safe_float(row["macd_signal"]),
                 histogram=safe_float(row["histogram"]),
-                close_price=safe_float(row["close"]), 
+                close_price=safe_float(row["c"]), 
                 fibonacci_levels=fibonacci_levels
             )
             results.append(point)
         
         # Cache as dictionaries for FastAPI serialization, but return objects for internal use
-        cache_data = [point.dict() for point in results]
+        cache_data = [point.model_dump() for point in results]
         print(f"DEBUG: About to call cache.set for {symbol} with {len(cache_data)} items")
 
         cache_result = await self.cache.set(cache_key, cache_data, ttl=60)
@@ -177,19 +177,23 @@ class IndicatorsUseCases(IndicatorsService):
         
         return df
 
-    def _calculate_fibonacci_levels(self, df: pd.DataFrame, symbol: str) -> Dict[str, float]:
+    def _calculate_fibonacci_levels(self, data: List[Dict], symbol: str) -> Dict[str, float]:
         """
         Calculate Fibonacci retracement levels with caching support
         
         Args:
-            df: DataFrame with OHLC data
+            data: List of dictionaries with OHLC data
             symbol: Stock symbol for cache key
             
         Returns:
             Dictionary of Fibonacci levels
         """
         # Generate cache key for Fibonacci data
-        cache_key = f"fibonacci_{symbol}_{df['t'].min()}_{df['t'].max()}"
+        if data:
+            timestamps = [item['t'] for item in data]
+            cache_key = f"fibonacci_{symbol}_{min(timestamps)}_{max(timestamps)}"
+        else:
+            cache_key = f"fibonacci_{symbol}_empty"
         
         # Try to get cached Fibonacci levels
         cached = self.cache.get(cache_key)
@@ -198,12 +202,16 @@ class IndicatorsUseCases(IndicatorsService):
             # Extract levels from cached data structure
             if isinstance(cached, dict) and 'levels' in cached:
                 return cached['levels']
-            else:
-                # Handle legacy cache format
+            elif isinstance(cached, dict):
+                # Direct levels dictionary
                 return cached
+            else:
+                # Handle unexpected cache format
+                logger.warning(f"Unexpected cache format for {symbol}: {type(cached)}")
+                return {}
         
         # Calculate new Fibonacci levels
-        fibonacci_levels, high_ts, low_ts = self.fibonacci_service.calculate_fibonacci_levels(df)
+        fibonacci_levels, high_ts, low_ts = self.fibonacci_service.calculate_fibonacci_levels(data)
         
         if not fibonacci_levels:
             logger.warning(f"Could not calculate Fibonacci levels for {symbol}")
