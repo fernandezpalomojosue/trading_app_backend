@@ -36,7 +36,9 @@ async def run_signal_job():
             
             # Get default stocks from environment or use fallback
             default_stocks = getattr(settings, 'DEFAULT_SIGNAL_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,NVDA')
-            stocks = default_stocks.split(',') if isinstance(default_stocks, str) else default_stocks
+            #stocks = default_stocks.split(',') if isinstance(default_stocks, str) else default_stocks
+            
+            stocks = await favorite_repository.get_all_favorites()
             
             # For system jobs, we don't have a user context, so use default stocks
             logger.info(f"Using default stocks: {stocks}")
