@@ -25,7 +25,7 @@ class SignalOrchestrator:
         print(f"DEBUG: Successfully got indicators for {symbol}: {len(indicators)} indicators")
         
         print(f"DEBUG: About to call signal_engine_service.calculate_signals for {symbol}")
-        signals = self.signal_engine_service.calculate_signals(symbol, indicators)
+        signals = self.signal_engine_service.calculate_single_signal(symbol, indicators[-1],indicators[-2])
         print(f"DEBUG: Successfully calculated signals for {symbol}: {len(signals)} signals")
 
         last_signal = signals[-1]

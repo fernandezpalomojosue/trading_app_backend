@@ -16,6 +16,11 @@ class SignalEngineService(ABC):
     """Abstract interface for signal engine service"""
     
     @abstractmethod
-    async def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> SignalDataPoint:
+    async def calculate_signals(self, symbol: str, data_points: List[IndicatorDataPoint]) -> List[SignalDataPoint]:
         """Calculate signals for a list of indicator data points, returns (signal, reason)"""
+        pass
+    
+    @abstractmethod
+    async def calculate_single_signal(self, symbol: str, point: IndicatorDataPoint, prev_point: IndicatorDataPoint) -> SignalDataPoint:
+        """Calculate signal for single point using previous point for crossover detection"""
         pass
