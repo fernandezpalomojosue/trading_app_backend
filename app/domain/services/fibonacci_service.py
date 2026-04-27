@@ -14,7 +14,7 @@ class FibonacciService:
     def __init__(self, min_bars: int = 10):
         self.min_bars = min_bars
     
-    def calculate_fibonacci_levels(self, data: List[Dict[str, Any]]) -> Tuple[Dict[str, float], Optional[int], Optional[int]]:
+    async def calculate_fibonacci_levels(self, data: List[Dict[str, Any]]) -> Tuple[Dict[str, float], Optional[int], Optional[int]]:
         """
         Calculate Fibonacci retracement levels from OHLC data
         
@@ -56,7 +56,7 @@ class FibonacciService:
         
         return levels, int(high_ts), int(low_ts)
     
-    def should_recalculate(self, current_high_ts: int, current_low_ts: int, 
+    async def should_recalculate(self, current_high_ts: int, current_low_ts: int, 
                           cached_high_ts: int, cached_low_ts: int) -> bool:
         """
         Determine if Fibonacci levels should be recalculated based on timestamp comparison
@@ -80,7 +80,7 @@ class FibonacciService:
         
         return should_recalc
     
-    def get_nearest_support_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
+    async def get_nearest_support_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
         """
         Find the nearest Fibonacci support level below current price
         
@@ -98,7 +98,7 @@ class FibonacciService:
         
         return max(support_levels)  # Highest level below price
     
-    def get_nearest_resistance_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
+    async def get_nearest_resistance_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
         """
         Find the nearest Fibonacci resistance level above current price
         

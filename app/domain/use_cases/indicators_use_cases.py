@@ -1,17 +1,9 @@
 from typing import Optional, List, Dict
 import pandas as pd
-#import ta
 import pandas_ta as pta
 import logging
-import sys
 from datetime import datetime
 
-# Configure logging to output to stdout
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
 from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.services.indicators_service import IndicatorsService
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
@@ -43,12 +35,9 @@ class IndicatorsUseCases(IndicatorsService):
     ) -> List[IndicatorDataPoint]:
 
         cache_key = f"indicators_{symbol}_{window}_{fast}_{slow}_{signal}_{timespan}_{start_date}_{end_date}"
-        print(f"DEBUG: About to call cache.get for {symbol} with key: {cache_key}")
 
         cached = await self.cache.get(cache_key)
-        print(f"DEBUG: Cache get result for {symbol}: {type(cached)} - {cached is not None}")
         if cached:
-            print(f"DEBUG: Using cached indicators for {symbol}")
             # Convert cached dictionaries back to IndicatorDataPoint objects
             return [
                 IndicatorDataPoint(
@@ -67,32 +56,16 @@ class IndicatorsUseCases(IndicatorsService):
             ]
 
         if not data or not isinstance(data, list) or len(data) == 0:
-            print(f"🔴 NO DATA: {data}")
-            logger.info(f"No data provided or invalid data format: {data}")
             return []
 
-        print(f"📊 PROCESSING: {len(data)} data points for {symbol}")
-        logger.info(f"Processing {len(data)} data points for {symbol}")
-        print(f"📋 SAMPLE DATA: {data[:2] if len(data) > 0 else 'No data'}")
-        logger.debug(f"Sample data: {data[:2] if len(data) > 0 else 'No data'}")
         
         try:
             df = pd.DataFrame(data)
-            logger.info(f"DataFrame created with columns: {list(df.columns)}")
         except (ValueError, TypeError) as e:
             logger.error(f"Error creating DataFrame: {e}")
-            logger.error(f"Data type: {type(data)}")
-            logger.error(f"Data content: {data}")
             return []
         df = df.sort_values("t")
         
-        # Log date range for debugging
-        if len(df) > 0:
-            first_ts = df["t"].iloc[0]
-            last_ts = df["t"].iloc[-1]
-            first_date = datetime.fromtimestamp(first_ts / 1000).strftime('%Y-%m-%d')
-            last_date = datetime.fromtimestamp(last_ts / 1000).strftime('%Y-%m-%d')
-            logger.info(f"Indicators for {symbol}: requested from {start_date} to {end_date}, got {len(df)} records from {first_date} to {last_date}")
         
         df["close"] = df["c"]
         df["timestamp"] = df["t"]
@@ -106,10 +79,10 @@ class IndicatorsUseCases(IndicatorsService):
         # =====================
         
         # Calculate each indicator using separate functions
-        df = self._calculate_ema(df, window)
-        df = self._calculate_sma(df, window)
-        df = self._calculate_rsi(df, window)
-        df = self._calculate_macd(df, fast, slow, signal)
+        df = await self._calculate_ema(df, window)
+        df = await self._calculate_sma(df, window)
+        df = await self._calculate_rsi(df, window)
+        df = await self._calculate_macd(df, fast, slow, signal)
         
         # Calculate Fibonacci retracement levels
         # Convert DataFrame to list of dictionaries for Fibonacci service
@@ -145,29 +118,26 @@ class IndicatorsUseCases(IndicatorsService):
         
         # Cache as dictionaries for FastAPI serialization, but return objects for internal use
         cache_data = [point.model_dump() for point in results]
-        print(f"DEBUG: About to call cache.set for {symbol} with {len(cache_data)} items")
-
-        cache_result = await self.cache.set(cache_key, cache_data, ttl=60)
-        print(f"DEBUG: Cache set result for {symbol}: {type(cache_result)} - {cache_result}")
+        await self.cache.set(cache_key, cache_data, ttl=60)
 
         return results
 
-    def _calculate_ema(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+    async def _calculate_ema(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
         """Calculate Exponential Moving Average (EMA)"""
         df["ema"] = pta.ema(df["close"], length=window)
         return df
 
-    def _calculate_sma(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+    async def _calculate_sma(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
         """Calculate Simple Moving Average (SMA)"""
         df["sma"] = pta.sma(df["close"], length=window)
         return df
 
-    def _calculate_rsi(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
+    async def _calculate_rsi(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
         """Calculate Relative Strength Index (RSI)"""
         df["rsi"] = pta.rsi(df["close"], length=window)
         return df
 
-    def _calculate_macd(self, df: pd.DataFrame, fast: int, slow: int, signal: int) -> pd.DataFrame:
+    async def _calculate_macd(self, df: pd.DataFrame, fast: int, slow: int, signal: int) -> pd.DataFrame:
         """Calculate MACD (Moving Average Convergence Divergence)"""
         macd = pta.macd(df['close'], fast=fast, slow=slow, signal=signal)
         
@@ -198,7 +168,6 @@ class IndicatorsUseCases(IndicatorsService):
         # Try to get cached Fibonacci levels
         cached = await self.cache.get(cache_key)
         if cached:
-            logger.info(f"Using cached Fibonacci levels for {symbol}")
             # Extract levels from cached data structure
             if isinstance(cached, dict) and 'levels' in cached:
                 return cached['levels']
@@ -211,7 +180,7 @@ class IndicatorsUseCases(IndicatorsService):
                 return {}
         
         # Calculate new Fibonacci levels
-        fibonacci_levels, high_ts, low_ts = self.fibonacci_service.calculate_fibonacci_levels(data)
+        fibonacci_levels, high_ts, low_ts = await self.fibonacci_service.calculate_fibonacci_levels(data)
         
         if not fibonacci_levels:
             logger.warning(f"Could not calculate Fibonacci levels for {symbol}")
@@ -225,5 +194,4 @@ class IndicatorsUseCases(IndicatorsService):
         }
         await self.cache.set(cache_key, cache_data, ttl=86400)  # 24 hours
         
-        logger.info(f"Calculated Fibonacci levels for {symbol}: {list(fibonacci_levels.keys())}")
         return fibonacci_levels
