@@ -74,8 +74,15 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
 
     
-    def get_all_favorites(self) -> List[str]:
+    async def get_all_favorites(self) -> List[FavoriteStockEntity]:
         """Get all unique favorite symbols from all users"""
         statement = select(FavoriteStockSQLModel.symbol).distinct()
         symbols = self.session.exec(statement).all()
-        return [symbol.upper() for symbol in symbols]
+        
+        favorites = []
+        for symbol in symbols:
+            favorites.append(FavoriteStockEntity(
+                user_id=UUID(int=0),  # Default user ID for system-wide favorites
+                symbol=symbol.upper()
+            ))
+        return favorites
