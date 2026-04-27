@@ -210,7 +210,7 @@ async def get_all_favorite_symbols(
 ):
     """Get all unique favorite symbols from all users (union of all favorites)"""
     try:
-        symbols = await favorite_repository.get_all_favorites()
-        return sorted(symbols)
+        favorites = await favorite_repository.get_all_favorites()
+        return favorites
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
