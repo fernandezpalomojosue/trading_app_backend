@@ -1,0 +1,22 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: TradingApp2
+          environment_name: TradingApp2-dev
+          version_label: ${{ github.sha }}
+          region: us-east-1
+          deployment_package: deploy.zip
