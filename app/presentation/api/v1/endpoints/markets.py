@@ -204,7 +204,7 @@ async def get_favorite_stocks(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/favorites/all", response_model=List[str])
+@router.get("/favorites/all", response_model=List[FavoriteStockResponse])
 async def get_all_favorite_symbols(
     favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
 ):
