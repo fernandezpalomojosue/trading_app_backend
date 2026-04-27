@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from uuid import UUID
+from app.application.dto.market_dto import FavoriteStockListResponse
 from app.domain.entities.favorite_stock import FavoriteStockEntity
 
 
@@ -29,6 +30,6 @@ class FavoriteRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_all_favorites(self) -> List[str]:
+    async def get_all_favorites(self) -> FavoriteStockListResponse:
         """Get all favorites"""
         pass

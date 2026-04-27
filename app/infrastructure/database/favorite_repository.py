@@ -82,7 +82,7 @@ class SQLFavoriteStockRepository(FavoriteRepository):
         favorites = []
         for symbol in symbols:
             favorites.append(FavoriteStockEntity(
-                user_id=UUID(int=0),  # Default user ID for system-wide favorites
+                user_id=UUID(int=0),  
                 symbol=symbol.upper()
             ))
         return favorites
