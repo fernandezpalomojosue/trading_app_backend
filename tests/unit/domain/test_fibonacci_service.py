@@ -7,7 +7,7 @@ import pandas as pd
 class TestFibonacciService:
     """Test Fibonacci service functionality"""
     
-    def test_calculate_fibonacci_levels_success(self):
+    async def test_calculate_fibonacci_levels_success(self):
         """Test successful Fibonacci calculation"""
         # Create test data with sufficient points (>=10)
         data = [
@@ -24,7 +24,7 @@ class TestFibonacciService:
         ]
         
         service = FibonacciService()
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
+        levels, high_ts, low_ts = await service.calculate_fibonacci_levels(data)
         
         assert levels is not None
         assert '0.236' in levels
@@ -35,20 +35,20 @@ class TestFibonacciService:
         assert high_ts == 10000  # Max high (175) at timestamp 10000
         assert low_ts == 3000   # Min low (138) at timestamp 3000
     
-    def test_calculate_fibonacci_levels_insufficient_data(self):
+    async def test_calculate_fibonacci_levels_insufficient_data(self):
         """Test Fibonacci calculation with insufficient data"""
         data = [
             {'h': 150, 'l': 140, 't': 1000}
         ]
         
         service = FibonacciService(min_bars=5)
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
+        levels, high_ts, low_ts = await service.calculate_fibonacci_levels(data)
         
         assert levels == {}
         assert high_ts is None
         assert low_ts is None
     
-    def test_calculate_fibonacci_levels_no_movement(self):
+    async def test_calculate_fibonacci_levels_no_movement(self):
         """Test Fibonacci calculation when high == low"""
         data = [
             {'h': 150, 'l': 150, 't': 1000},
@@ -57,34 +57,34 @@ class TestFibonacciService:
         ]
         
         service = FibonacciService()
-        levels, high_ts, low_ts = service.calculate_fibonacci_levels(data)
+        levels, high_ts, low_ts = await service.calculate_fibonacci_levels(data)
         
         assert levels == {}
         assert high_ts is None
         assert low_ts is None
     
-    def test_get_nearest_support_level(self):
+    async def test_get_nearest_support_level(self):
         """Test finding nearest support level"""
         levels = {'0.236': 145.0, '0.382': 148.0, '0.5': 150.0, '0.618': 152.0, '0.786': 155.0}
         service = FibonacciService()
         
         # Test price above all levels
-        support = service.get_nearest_support_level(160.0, levels)
+        support = await service.get_nearest_support_level(160.0, levels)
         assert support == 155.0  # 0.618
         
         # Test price below all levels
-        support = service.get_nearest_support_level(140.0, levels)
+        support = await service.get_nearest_support_level(140.0, levels)
         assert support is None
     
-    def test_get_nearest_resistance_level(self):
+    async def test_get_nearest_resistance_level(self):
         """Test finding nearest resistance level"""
         levels = {'0.236': 145.0, '0.382': 148.0, '0.5': 150.0, '0.618': 152.0, '0.786': 155.0}
         service = FibonacciService()
         
         # Test price below all levels
-        resistance = service.get_nearest_resistance_level(140.0, levels)
+        resistance = await service.get_nearest_resistance_level(140.0, levels)
         assert resistance == 145.0  # 0.236
         
         # Test price above all levels
-        resistance = service.get_nearest_resistance_level(160.0, levels)
+        resistance = await service.get_nearest_resistance_level(160.0, levels)
         assert resistance is None
