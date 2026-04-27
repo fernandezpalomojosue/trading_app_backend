@@ -202,3 +202,15 @@ async def get_favorite_stocks(
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/favorites/all", response_model=List[str])
+async def get_all_favorite_symbols(
+    favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
+):
+    """Get all unique favorite symbols from all users (union of all favorites)"""
+    try:
+        symbols = await favorite_repository.get_all_favorites()
+        return sorted(symbols)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
