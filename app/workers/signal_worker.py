@@ -45,7 +45,7 @@ async def run_signal_job():
                 stocks = default_stocks.split(',') if isinstance(default_stocks, str) else default_stocks
                 logger.info(f"No favorites found, using default stocks: {stocks}")
             else:
-                logger.info(f"Using favorites from database: {stocks}")
+                logger.info(f"Using favorites from database: {stocks.symbols}")
             
             orchestration_service = SignalOrchestrator(
                 market_client,
