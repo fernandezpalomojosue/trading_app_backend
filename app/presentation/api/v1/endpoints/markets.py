@@ -211,12 +211,6 @@ async def get_all_favorite_symbols(
 ):
     """Get all unique favorite symbols from all users (union of all favorites)"""
     try:
-        symbols = await favorite_repository.get_all_favorites()
-        # Remove duplicates and sort
-        unique_symbols = sorted(set(symbol.upper() for symbol in symbols))
-        return UniqueSymbolsResponse(
-            symbols=unique_symbols,
-            total=len(unique_symbols)
-        )
+        return await favorite_repository.get_all_favorites()
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
