@@ -88,7 +88,7 @@ class PolygonMarketClient(MarketRepository):
     async def get_asset_raw_data(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Get raw asset data from API - INFRASTRUCTURE ONLY"""
         try:
-            ticker_data = await self._make_request(f"/v3/reference/tickers/{symbol.upper()}")
+            ticker_data = await self._make_request(f"/v3/reference/tickers/{symbol}")
             return ticker_data.get("results")
         except Exception:
             return None
@@ -122,7 +122,7 @@ class PolygonMarketClient(MarketRepository):
             
             # Use Massive API Custom Bars endpoint (timespan is full word: day, hour, minute, etc.)
             data = await self._make_request(
-                f"/v2/aggs/ticker/{symbol.upper()}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
+                f"/v2/aggs/ticker/{symbol}/range/{multiplier}/{timespan}/{from_date}/{to_date}",
                 {"adjusted": "true", "sort": "asc", "limit": str(limit)}
             )
             
@@ -165,7 +165,7 @@ class PolygonMarketClient(MarketRepository):
         """Fetch complete ticker details from reference endpoint - INFRASTRUCTURE ONLY"""
         try:
             # Use Polygon API reference endpoint for ticker details
-            data = await self._make_request(f"/v3/reference/tickers/{symbol.upper()}")
+            data = await self._make_request(f"/v3/reference/tickers/{symbol}")
             
             return data if data.get("status") == "OK" else None
         except Exception as e:
@@ -194,7 +194,7 @@ class PolygonMarketClient(MarketRepository):
             to_date = end_date or await self.get_last_trading_date()
             
             data = await self._make_request(
-                f"/v1/indicators/ema/{symbol.upper()}",
+                f"/v1/indicators/ema/{symbol}",
                 {
                     "window": str(window),
                     "timespan": timespan,
@@ -223,7 +223,7 @@ class PolygonMarketClient(MarketRepository):
             to_date = end_date or await self.get_last_trading_date()
             
             data = await self._make_request(
-                f"/v1/indicators/sma/{symbol.upper()}",
+                f"/v1/indicators/sma/{symbol}",
                 {
                     "window": str(window),
                     "timespan": timespan,
@@ -252,7 +252,7 @@ class PolygonMarketClient(MarketRepository):
             to_date = end_date or await self.get_last_trading_date()
             
             data = await self._make_request(
-                f"/v1/indicators/rsi/{symbol.upper()}",
+                f"/v1/indicators/rsi/{symbol}",
                 {
                     "window": str(window),
                     "timespan": timespan,
@@ -283,7 +283,7 @@ class PolygonMarketClient(MarketRepository):
             to_date = end_date or await self.get_last_trading_date()
             
             data = await self._make_request(
-                f"/v1/indicators/macd/{symbol.upper()}",
+                f"/v1/indicators/macd/{symbol}",
                 {
                     "fast": str(fast),
                     "slow": str(slow),
