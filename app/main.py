@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
             )
             
             # Start scheduler
-            scheduler.start()
+            #scheduler.start()
             print("✅ Scheduler started successfully!")
             print(f"📅 Signal job scheduled to run every 5 minutes")
         except Exception as e:
