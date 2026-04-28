@@ -141,7 +141,7 @@ class MarketUseCases(MarketService):
         # Try cache first
         cached_asset = await self.cache_service.get(cache_key)
         if cached_asset:
-            return cached_asset
+            return AssetResponse(**cached_asset)
     
         try:
             # 1. Get OHLCV data from last trading day using aggregates endpoint
@@ -291,6 +291,10 @@ class MarketUseCases(MarketService):
                 details={}
             )
             assets.append(asset_response)
+        
+        # Cache the result
+        await self.cache_service.set(cache_key, [a.model_dump() for a in assets], ttl=300)
+        
         return assets
         
     async def get_candlestick_data(
