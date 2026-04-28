@@ -14,6 +14,7 @@ from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.services.indicators_service import IndicatorsService
 from app.application.services.signal_engine_service import SignalEngineService
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
+from app.workers.signal_worker import run_signal_job
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def get_signal_engine_service()->SignalEngineService:
     """Get signal engine service instance"""
     return SignalEngineUseCases()
 
-@router.post("/internal/run-signals")
+@router.post("/internal/run-signals", include_in_schema=False)
 async def run_signals(
     x_api_key: str = Header(None, alias="x-api-key"),
     cache: CacheRepository = Depends(get_cache_repository),
@@ -68,41 +69,7 @@ async def run_signals(
         logger.error("Expected: %s", expected_key)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
-    # Get stocks to process (all favorites from all users)
-    stocks = await favorites_repo.get_all_favorites()
-    
-    # If no favorites found, use default stocks
-    if not stocks:
-        stocks = ["AAPL", "GOOGL", "MSFT", "TSLA", "NVDA"]
-    
-    results = []
-    for stock in stocks:
-        try:
-            orchestrator = SignalOrchestrator(
-                market_client=get_market_client(),
-                indicator_service=get_indicators_service(),
-                signal_engine_service=get_signal_engine_service(),
-                cache_client=get_cache_repository(),
-                signal_repository=signal_repo
-            )
-            
-            # Generate signal
-            signal = await orchestrator.generate_signal(stock, "day", "2025-01-01", "2025-12-31")
-            
-            if signal:
-                # Save to database
-                signal_repo.save_signal(stock, signal)
-                cache_success = await cache.set(f"signal:{stock}", signal)
-                if not cache_success:
-                    print(f"Warning: Failed to cache signal for {stock}")
-                results.append({"symbol": stock, "signal": signal, "status": "success"})
-            else:
-                results.append({"symbol": stock, "status": "no_signal"})
-                
-        except Exception as e:
-            results.append({"symbol": stock, "status": "error", "error": str(e)})
-    
-    return {"message": "Signals processed", "results": results}
+    run_signal_job()
 
 @router.get("/{symbol}")
 async def get_signal(
