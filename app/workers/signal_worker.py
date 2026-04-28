@@ -55,7 +55,7 @@ async def run_signal_job():
                 signal_repository
             )
             
-            for stock in stocks:
+            for stock in stocks.symbols:
                 try:
                     logger.info(f"Generating signal for {stock}")
                     
