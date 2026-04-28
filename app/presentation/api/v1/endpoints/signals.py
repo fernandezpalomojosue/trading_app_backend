@@ -121,6 +121,23 @@ async def get_signal(
             print(f"Warning: Failed to cache signal for {symbol}")
         return result
     
-    raise HTTPException(status_code=404, detail=f"No signal found for symbol: {symbol}")
+    orchestrator = SignalOrchestrator(
+                market_client=get_market_client(),
+                indicator_service=get_indicators_service(),
+                signal_engine_service=get_signal_engine_service(),
+                cache_client=get_cache_repository(),
+                signal_repository=signal_repo
+            )
+            
+    # Generate signal
+    signal = await orchestrator.generate_signal(symbol, "day", "2025-01-01", "2025-12-31")
+            
+    if signal:
+        cache_success = await cache.set(f"signal:{symbol}", signal)
+        if not cache_success:
+            print(f"Warning: Failed to cache signal for {symbol}")
+        return signal
+    else:
+        return {"symbol": symbol, "status": "no_signal"}
     
     
