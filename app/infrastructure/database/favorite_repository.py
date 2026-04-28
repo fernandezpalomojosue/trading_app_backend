@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 from app.application.repositories.favorite_repository import FavoriteRepository
 from app.domain.entities.favorite_stock import FavoriteStockEntity
 from app.infrastructure.database.models import FavoriteStockSQLModel
+from app.application.dto.market_dto import UniqueSymbolsResponse
 
 
 class SQLFavoriteStockRepository(FavoriteRepository):
@@ -74,15 +75,12 @@ class SQLFavoriteStockRepository(FavoriteRepository):
     
 
     
-    async def get_all_favorites(self) -> List[FavoriteStockEntity]:
+    async def get_all_favorites(self) -> UniqueSymbolsResponse:
         """Get all unique favorite symbols from all users"""
         statement = select(FavoriteStockSQLModel.symbol).distinct()
-        symbols = self.session.exec(statement).all()
+        favorites_models = self.session.exec(statement).all()
         
         favorites = []
-        for symbol in symbols:
-            favorites.append(FavoriteStockEntity(
-                user_id=UUID(int=0),  
-                symbol=symbol.upper()
-            ))
-        return favorites
+        for favorite in favorites_models:
+            favorites.append(favorite)
+        return UniqueSymbolsResponse(symbols=favorites, count=len(favorites))

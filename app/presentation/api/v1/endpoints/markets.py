@@ -5,7 +5,8 @@ from uuid import UUID
 
 from app.application.dto.market_dto import (
     MarketOverviewResponse, AssetResponse, CandleStickDataResponse,
-    FavoriteStockRequest, FavoriteStockResponse, FavoriteStockListResponse
+    FavoriteStockRequest, FavoriteStockResponse, FavoriteStockListResponse,
+    UniqueSymbolsResponse
 )
 from app.application.services.market_service import MarketService
 from app.domain.entities.market import MarketType
@@ -204,13 +205,18 @@ async def get_favorite_stocks(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/favorites/all", response_model=List[FavoriteStockResponse])
+@router.get("/favorites/all", response_model=UniqueSymbolsResponse)
 async def get_all_favorite_symbols(
     favorite_repository: FavoriteRepository = Depends(get_favorite_repository),
 ):
     """Get all unique favorite symbols from all users (union of all favorites)"""
     try:
-        favorites = await favorite_repository.get_all_favorites()
-        return favorites
+        symbols = await favorite_repository.get_all_favorites()
+        # Remove duplicates and sort
+        unique_symbols = sorted(set(symbol.upper() for symbol in symbols))
+        return UniqueSymbolsResponse(
+            symbols=unique_symbols,
+            total=len(unique_symbols)
+        )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
