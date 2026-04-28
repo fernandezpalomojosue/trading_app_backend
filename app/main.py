@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
             scheduler.add_job(
                 run_signal_job,
                 "interval",
-                minutes=15,
+                minutes=5,
                 id="signal_generation_job",
                 name="Signal Generation Job",
                 replace_existing=True
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
             # Start scheduler
             scheduler.start()
             print("✅ Scheduler started successfully!")
-            print(f"📅 Signal job scheduled to run every 15 minutes")
+            print(f"📅 Signal job scheduled to run every 5 minutes")
         except Exception as e:
             print(f"❌ Failed to start scheduler: {e}")
             # Don't raise in testing environment
