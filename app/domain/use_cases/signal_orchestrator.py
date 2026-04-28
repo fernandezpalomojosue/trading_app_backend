@@ -25,22 +25,21 @@ class SignalOrchestrator:
         print(f"DEBUG: Successfully got indicators for {symbol}: {len(indicators)} indicators")
         
         print(f"DEBUG: About to call signal_engine_service.calculate_signals for {symbol}")
-        signals = self.signal_engine_service.calculate_single_signal(symbol, indicators[-1],indicators[-2])
+        signal = self.signal_engine_service.calculate_single_signal(symbol, indicators[-1],indicators[-2])
         print(f"DEBUG: Successfully calculated signals for {symbol}")
 
-        last_signal = signals[-1]
-        print(f"DEBUG: Got last signal for {symbol}: {last_signal}")
+        print(f"DEBUG: Got last signal for {symbol}: {signal}")
         
         print(f"DEBUG: About to call signal_repository.save_signal for {symbol}")
-        self.signal_repository.save_signal(symbol, last_signal)
+        self.signal_repository.save_signal(symbol, signal)
         print(f"DEBUG: Successfully saved signal to database for {symbol}")
 
         print(f"DEBUG: About to call cache_client.set for {symbol}")
-        cache_result = await self.cache_client.set(f"signal_{symbol}", last_signal, ttl=60)
+        cache_result = await self.cache_client.set(f"signal_{symbol}", signal, ttl=60)
         print(f"DEBUG: Cache set result for {symbol}: {cache_result}")
         if cache_result is not True:
             print(f"Warning: Failed to cache signal for {symbol}")
         
         print(f"DEBUG: Completed generate_signal for {symbol}")
-        return last_signal
+        return signal
         
