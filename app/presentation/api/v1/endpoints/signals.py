@@ -49,9 +49,6 @@ def get_signal_engine_service()->SignalEngineService:
 @router.post("/internal/run-signals", include_in_schema=False)
 async def run_signals(
     x_api_key: str = Header(None, alias="x-api-key"),
-    cache: CacheRepository = Depends(get_cache_repository),
-    signal_repo: SQLSignalRepository = Depends(get_signal_repository),
-    favorites_repo: FavoriteRepository = Depends(get_favorites_repository)
 ):
     """Internal endpoint for cron job to generate signals"""
     # Verify API key
@@ -69,7 +66,7 @@ async def run_signals(
         logger.error("Expected: %s", expected_key)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
-    run_signal_job()
+    await run_signal_job()
 
 @router.get("/{symbol}")
 async def get_signal(
