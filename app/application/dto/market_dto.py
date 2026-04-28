@@ -129,7 +129,7 @@ class FavoriteStockListResponse(BaseModel):
 class UniqueSymbolsResponse(BaseModel):
     """DTO for unique favorite symbols from all users"""
     symbols: List[str] = []
-    total: int = 0
+    count: int = 0
     
     class Config:
         from_attributes = True
@@ -137,4 +137,4 @@ class UniqueSymbolsResponse(BaseModel):
 class UniqueSymbolsResponse(BaseModel):
     """DTO for unique favorite symbols from all users"""
     symbols: List[str] = []
-    total: int = 0
+    count: int = 0

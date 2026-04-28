@@ -38,7 +38,7 @@ async def run_signal_job():
             default_stocks = getattr(settings, 'DEFAULT_SIGNAL_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,NVDA')
             
             # Try to get favorites from database, fallback to default stocks
-            stocks = favorite_repository.get_all_favorites()
+            stocks = await favorite_repository.get_all_favorites()
             
             # If no favorites found, use default stocks
             if not stocks:
