@@ -108,7 +108,7 @@ class TestCreateStrategy:
             dsl_definition=invalid_dsl
         )
         
-        with pytest.raises(ValueError, match="Invalid DSL"):
+        with pytest.raises(ValueError, match="DSL validation failed"):
             await strategy_use_cases.create_strategy(sample_user_id, request)
         
         mock_repository.create.assert_not_called()
@@ -205,7 +205,7 @@ class TestUpdateStrategy:
         
         request = StrategyUpdateRequest(name="New Name")
         
-        with pytest.raises(PermissionError, match="Cannot modify strategy"):
+        with pytest.raises(PermissionError, match="Cannot update strategy owned by another user"):
             await strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
@@ -236,7 +236,7 @@ class TestUpdateStrategy:
         
         request = StrategyUpdateRequest(dsl_definition=invalid_dsl)
         
-        with pytest.raises(ValueError, match="Invalid DSL"):
+        with pytest.raises(ValueError, match="DSL validation failed"):
             await strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
