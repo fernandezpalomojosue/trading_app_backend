@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship, Column
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy import String
 
 
@@ -303,3 +303,53 @@ class SignalStockSQLModel(SQLModel, table=True):
             reason=self.reason,
             created_at=self.created_at
         )
+
+
+class StrategyModel(SQLModel, table=True):
+    """SQLModel for Trading Strategy table"""
+    __tablename__ = "strategies"
+    
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        sa_column=Column(UUID(as_uuid=True), primary_key=True, unique=True),
+        description="Strategy unique ID (UUID)"
+    )
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), index=True),
+        description="User ID who owns this strategy"
+    )
+    name: str = Field(
+        sa_column=Column(String(100), index=True),
+        description="Strategy name"
+    )
+    description: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(500)),
+        description="Strategy description"
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Whether the strategy is active"
+    )
+    dsl_definition: dict = Field(
+        default_factory=dict,
+        sa_column=Column(JSONB),
+        description="DSL definition as JSONB"
+    )
+    version: int = Field(
+        default=1,
+        ge=1,
+        description="DSL version for backward compatibility"
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Strategy creation date"
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Strategy last update date"
+    )
+    
+    __table_args__ = (
+        {"sqlite_autoincrement": False},
+    )
