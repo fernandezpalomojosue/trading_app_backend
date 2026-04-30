@@ -78,7 +78,7 @@ async def get_signal(
     if result:
         return result
     
-    result = signal_repo.get_by_symbol(symbol)
+    result = await signal_repo.get_by_symbol(symbol)
     if result:
         cache_success = await cache.set(f"signal:{symbol}", result)
         if not cache_success:
