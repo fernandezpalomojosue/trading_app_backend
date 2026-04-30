@@ -1,83 +1,119 @@
 # app/domain/services/strategy_engine.py
 """
-Strategy Engine Placeholder
+Strategy Evaluation Engine
 
-Interface for future strategy evaluation engine.
-Implementation deferred to Sprint 2.
-
-This module defines the contract for:
-- DSL evaluation (recursive AST traversal)
-- Market context integration
-- Indicator calculation
-- Signal generation
+Evaluates Trading Strategy DSL against market context.
+Uses StrategyEvaluator for recursive AST evaluation.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from app.domain.entities.strategy import Strategy
 from app.domain.entities.strategy_dsl import StrategyDSL
+from app.domain.entities.market_context import MarketContext
+from app.domain.services.strategy_evaluator import StrategyEvaluator
 
 
 class StrategyEngine:
     """
-    Strategy Evaluation Engine - Placeholder.
+    Strategy Evaluation Engine.
     
-    This class will be implemented in Sprint 2 to:
-    1. Evaluate DSL conditions against market data
-    2. Generate trading signals
-    3. Support backtesting
+    Evaluates DSL conditions against market data to determine if strategy conditions are met.
+    Returns boolean - True if conditions met, False otherwise.
     
-    Current implementation raises NotImplementedError to prevent
-    accidental usage before full implementation.
+    Usage:
+        engine = StrategyEngine()
+        condition_met = engine.evaluate(strategy, context)
+        
+        if condition_met:
+            signal_action = strategy.dsl_definition.get("action", "buy")
+            # Generate signal with signal_action
     """
     
-    def evaluate(self, strategy: Strategy, context: Dict[str, Any] = None) -> None:
+    def __init__(self):
+        """Initialize StrategyEngine with evaluator."""
+        self._evaluator = StrategyEvaluator()
+    
+    def evaluate(self, strategy: Strategy, context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
         """
         Evaluate a strategy against market context.
         
         Args:
             strategy: Strategy entity with DSL definition
-            context: Market context with OHLCV data, indicators, etc.
+            context: MarketContext with OHLCV data, indicators, etc.
+            prev_context: Previous MarketContext for crossover detection (optional)
             
-        Raises:
-            NotImplementedError: Engine implementation in Sprint 2
+        Returns:
+            True if strategy conditions are met, False otherwise
+            
+        Example:
+            >>> engine = StrategyEngine()
+            >>> result = engine.evaluate(strategy, context)
+            >>> if result:
+            ...     print(f"Conditions met - generate {strategy.dsl_definition.get('action', 'buy')} signal")
         """
-        raise NotImplementedError(
-            "StrategyEngine.evaluate() implementation deferred to Sprint 2. "
-            "Current sprint focuses on DSL definition and validation only."
-        )
+        # Parse DSL from strategy entity
+        dsl_json = strategy.dsl_definition
+        
+        # Create StrategyDSL object
+        try:
+            dsl = StrategyDSL.model_validate(dsl_json)
+        except Exception as e:
+            raise ValueError(f"Invalid DSL definition: {e}")
+        
+        # Evaluate DSL against context
+        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
     
-    def evaluate_dsl(self, dsl: StrategyDSL, context: Dict[str, Any] = None) -> None:
+    def evaluate_dsl(self, dsl: StrategyDSL, context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
         """
         Evaluate a DSL definition directly.
         
         Args:
             dsl: StrategyDSL object
-            context: Market context with OHLCV data, indicators, etc.
+            context: MarketContext with OHLCV data, indicators, etc.
+            prev_context: Previous MarketContext for crossover detection (optional)
             
-        Raises:
-            NotImplementedError: Engine implementation in Sprint 2
+        Returns:
+            True if DSL conditions are met, False otherwise
         """
-        raise NotImplementedError(
-            "StrategyEngine.evaluate_dsl() implementation deferred to Sprint 2. "
-            "Current sprint focuses on DSL definition and validation only."
-        )
+        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
+    
+    def evaluate_json(self, dsl_json: Dict[str, Any], context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
+        """
+        Evaluate DSL from JSON dict.
+        
+        Args:
+            dsl_json: DSL definition as JSON dict
+            context: MarketContext with OHLCV data, indicators, etc.
+            prev_context: Previous MarketContext for crossover detection (optional)
+            
+        Returns:
+            True if DSL conditions are met, False otherwise
+        """
+        try:
+            dsl = StrategyDSL.model_validate(dsl_json)
+        except Exception as e:
+            raise ValueError(f"Invalid DSL definition: {e}")
+        
+        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
 
 
-class MarketContext:
+class StrategyResult:
     """
-    Market Context for Strategy Evaluation - Placeholder.
+    Result of strategy evaluation.
     
-    Will contain:
-    - OHLCV data for symbol(s)
-    - Calculated indicators
-    - Current timestamp
-    - Historical data window
-    
-    Implementation deferred to Sprint 2.
+    Contains evaluation result and metadata for signal generation.
     """
     
-    def __init__(self) -> None:
-        raise NotImplementedError(
-            "MarketContext implementation deferred to Sprint 2. "
-            "Current sprint focuses on DSL definition and validation only."
-        )
+    def __init__(self, condition_met: bool, action: str, strategy_name: str, strategy_id: Any):
+        self.condition_met = condition_met
+        self.action = action
+        self.strategy_name = strategy_name
+        self.strategy_id = strategy_id
+    
+    @property
+    def should_signal(self) -> bool:
+        """True if conditions met and action is not 'hold'."""
+        return self.condition_met and self.action != "hold"
+    
+    def __repr__(self) -> str:
+        return f"StrategyResult(condition_met={self.condition_met}, action='{self.action}', strategy='{self.strategy_name}')"

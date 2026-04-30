@@ -282,6 +282,39 @@ class StrategyUseCases:
         updated = await self._repository.update(entity)
         return self._to_response(updated)
     
+    async def get_user_active_strategies(self, user_id: uuid.UUID) -> List[Strategy]:
+        """
+        Get all active strategies for a user.
+        
+        Args:
+            user_id: User ID to fetch strategies for
+            
+        Returns:
+            List of active Strategy entities
+        """
+        # Fetch user's strategies with active filter
+        strategies = await self._repository.list_by_user(
+            user_id=user_id,
+            skip=0,
+            limit=1000,
+            active_only=True
+        )
+        return strategies
+    
+    async def get_default_strategy(self) -> Strategy:
+        """
+        Get the system default strategy.
+        
+        Returns:
+            Default Strategy entity (DSL-based, not hardcoded)
+            
+        Note:
+            This is used when a user has no custom strategies defined.
+            The default strategy is a DSL-based equivalent to the old hardcoded rules.
+        """
+        from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
+        return get_default_strategy_entity()
+    
     def _validate_dsl(self, dsl_definition: Dict[str, Any]) -> ValidationResult:
         """Validate DSL definition using DSLValidator"""
         return DSLValidator.validate_json(dsl_definition)

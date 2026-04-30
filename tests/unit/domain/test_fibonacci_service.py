@@ -69,11 +69,11 @@ class TestFibonacciService:
         service = FibonacciService()
         
         # Test price above all levels
-        support = await service.get_nearest_support_level(160.0, levels)
+        support = service.get_nearest_support_level(160.0, levels)
         assert support == 155.0  # 0.618
         
         # Test price below all levels
-        support = await service.get_nearest_support_level(140.0, levels)
+        support = service.get_nearest_support_level(140.0, levels)
         assert support is None
     
     async def test_get_nearest_resistance_level(self):
@@ -82,9 +82,9 @@ class TestFibonacciService:
         service = FibonacciService()
         
         # Test price below all levels
-        resistance = await service.get_nearest_resistance_level(140.0, levels)
+        resistance = service.get_nearest_resistance_level(140.0, levels)
         assert resistance == 145.0  # 0.236
         
         # Test price above all levels
-        resistance = await service.get_nearest_resistance_level(160.0, levels)
+        resistance = service.get_nearest_resistance_level(160.0, levels)
         assert resistance is None

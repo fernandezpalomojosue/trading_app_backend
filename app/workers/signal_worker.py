@@ -1,9 +1,11 @@
 from app.application.repositories.favorite_repository import FavoriteRepository
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
+from app.domain.use_cases.strategy_use_cases import StrategyUseCases
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.database.signal_repository import SQLSignalRepository
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
+from app.infrastructure.database.strategy_repository import SQLStrategyRepository
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.utils.date_utils import get_last_trading_day
@@ -33,6 +35,8 @@ async def run_signal_job():
         with SessionLocal() as session:
             signal_repository = SQLSignalRepository(session)
             favorite_repository = SQLFavoriteStockRepository(session)
+            strategy_repository = SQLStrategyRepository(session)
+            strategy_use_cases = StrategyUseCases(strategy_repository)
             
             # Get default stocks from environment or use fallback
             default_stocks = getattr(settings, 'DEFAULT_SIGNAL_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,NVDA')
@@ -47,12 +51,14 @@ async def run_signal_job():
             else:
                 logger.info(f"Using favorites from database: {stocks.symbols}")
             
+            # Create orchestrator with strategy_use_cases for DSL-based signal generation
             orchestration_service = SignalOrchestrator(
                 market_client,
                 indicator_service,
                 signal_engine,
                 cache_repository,
-                signal_repository
+                signal_repository,
+                strategy_use_cases=strategy_use_cases
             )
             
             for stock in stocks.symbols:
@@ -62,6 +68,8 @@ async def run_signal_job():
                     # Log before calling orchestration_service.generate_signal
                     logger.info(f"DEBUG: About to call orchestration_service.generate_signal for {stock}")
                     
+                    # Use legacy method which uses default strategy (system default DSL-based)
+                    # In the future, this can be changed to use generate_signals_for_user with specific user_id
                     signal = await orchestration_service.generate_signal(
                         stock, "day", "2026-01-01", get_last_trading_day()
                     )
