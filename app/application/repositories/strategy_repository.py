@@ -90,16 +90,3 @@ class StrategyRepository(ABC):
             True if deleted, False if not found
         """
         pass
-    
-    @abstractmethod
-    async def count_by_user(self, user_id: uuid.UUID) -> int:
-        """
-        Count total strategies for a user.
-        
-        Args:
-            user_id: User UUID
-            
-        Returns:
-            Total count
-        """
-        pass
