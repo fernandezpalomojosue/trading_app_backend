@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
@@ -8,8 +9,8 @@ class SignalStockEntity(BaseModel):
     symbol: str = Field(description="Stock symbol (e.g., AAPL, GOOGL)")
     signal: str = Field(description="Signal type: BUY, SELL, or HOLD")
     stop_loss_price: float = Field(description="Stop loss price")
-    strategy_id: UUID
     take_profit_price: float = Field(description="Take profit price")
     confidence: float = Field(description="Confidence level (0-1)")
     reason: str = Field(description="Reason for the signal")
+    strategy_id: Optional[UUID] = Field(default=None, description="ID of the strategy that generated this signal")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None), description="Creation timestamp")

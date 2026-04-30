@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship, Column
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy import String
+from sqlalchemy import String, func, Boolean, DateTime
 
 
 class UserSQLModel(SQLModel, table=True):
@@ -263,6 +263,11 @@ class SignalStockSQLModel(SQLModel, table=True):
     reason: str = Field(
         description="Reason for the signal"
     )
+    strategy_id: Optional[uuid.UUID] = Field(
+        default=None,
+        sa_column=Column(UUID(as_uuid=True), nullable=True, index=True),
+        description="ID of the strategy that generated this signal"
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
         description="Signal creation date"
@@ -287,6 +292,7 @@ class SignalStockSQLModel(SQLModel, table=True):
             take_profit=signal_entity.take_profit,
             confidence=signal_entity.confidence,
             reason=signal_entity.reason,
+            strategy_id=signal_entity.strategy_id,
             created_at=created_at
         )
     
@@ -301,6 +307,7 @@ class SignalStockSQLModel(SQLModel, table=True):
             take_profit=self.take_profit,
             confidence=self.confidence,
             reason=self.reason,
+            strategy_id=self.strategy_id,
             created_at=self.created_at
         )
 
@@ -329,6 +336,7 @@ class StrategyModel(SQLModel, table=True):
     )
     is_active: bool = Field(
         default=True,
+        sa_column=Column(Boolean, index=True),
         description="Whether the strategy is active"
     )
     dsl_definition: dict = Field(
@@ -336,20 +344,28 @@ class StrategyModel(SQLModel, table=True):
         sa_column=Column(JSONB),
         description="DSL definition as JSONB"
     )
+    dsl_hash: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String(64)),
+        description="Hash of DSL definition for change detection"
+    )
     version: int = Field(
         default=1,
         ge=1,
         description="DSL version for backward compatibility"
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now()
+        ),
         description="Strategy creation date"
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            onupdate=func.now()
+        ),
         description="Strategy last update date"
-    )
-    
-    __table_args__ = (
-        {"sqlite_autoincrement": False},
     )

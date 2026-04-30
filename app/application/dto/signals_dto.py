@@ -1,6 +1,7 @@
 #app/application/dto/signals_dto.py
 from typing import Optional
-from pydantic import BaseModel
+from uuid import UUID
+from pydantic import BaseModel, Field
 
 class SignalDataPoint(BaseModel):
     timestamp: int
@@ -10,3 +11,4 @@ class SignalDataPoint(BaseModel):
     take_profit: Optional[float] = None
     confidence: Optional[float] = None
     reason: Optional[str] = None
+    strategy_id: Optional[UUID] = Field(default=None, description="ID of the strategy that generated this signal")

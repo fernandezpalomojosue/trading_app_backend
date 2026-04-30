@@ -10,6 +10,10 @@ from typing import Any, Dict, List, Literal, Union
 from pydantic import BaseModel, Field, field_validator
 
 
+# Action type for strategies
+ActionType = Literal["buy", "sell", "hold"]
+
+
 # ==============================
 # Expression Types (Leaf Nodes)
 # ==============================
@@ -112,10 +116,17 @@ class StrategyDSL(BaseModel):
     Structure:
     {
         "version": 1,
+        "action": "buy",
         "root": { ...AST... }
     }
+    
+    Fields:
+    - version: DSL version for backward compatibility
+    - action: Signal to generate when conditions are met (buy/sell/hold)
+    - root: Root node of the AST
     """
     version: int = Field(default=1, ge=1, description="DSL version for backward compatibility")
+    action: ActionType = Field(default="buy", description="Signal action when conditions are met: buy, sell, or hold")
     root: Node = Field(description="Root node of the AST - must be a valid logical or condition node")
     
     @field_validator('root')
@@ -130,6 +141,7 @@ class StrategyDSL(BaseModel):
         json_schema_extra = {
             "example": {
                 "version": 1,
+                "action": "buy",
                 "root": {
                     "type": "AND",
                     "children": [
