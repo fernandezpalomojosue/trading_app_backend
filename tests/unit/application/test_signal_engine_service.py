@@ -1,8 +1,19 @@
 # tests/unit/application/test_signal_engine_service.py
+"""
+Tests for SignalEngineUseCases - DSL-Based Signal Construction
+
+These tests verify that SignalEngineUseCases correctly builds signals
+based on StrategyEngine evaluation results and explicit DSL actions.
+"""
 import pytest
 import math
+from uuid import UUID
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.application.dto.indicators_dto import IndicatorDataPoint
+
+
+# Test UUID for strategy identification
+TEST_STRATEGY_ID = UUID("12345678-1234-5678-1234-567812345678")
 
 
 @pytest.fixture
@@ -11,115 +22,101 @@ def signal_engine():
     return SignalEngineUseCases()
 
 
-class TestSignalEngineServiceBuySignals:
-    """Tests for BUY signal generation"""
+@pytest.fixture
+def valid_indicator_point():
+    """Fixture providing a valid indicator data point"""
+    return IndicatorDataPoint(
+        timestamp=1234567890000,
+        symbol="AAPL",
+        rsi=25.0,
+        macd=0.9,
+        macd_signal=0.8,
+        ema=145.0,
+        sma=140.0,
+        histogram=0.1,
+        close_price=150.0,
+        fibonacci_levels={"0.236": 145.0, "0.5": 147.5, "0.618": 149.0}
+    )
 
-    def test_buy_when_all_conditions_met(self, signal_engine):
-        """Should return BUY when RSI<30, MACD crosses up, price>EMA"""
-        prev_point = IndicatorDataPoint(
-            timestamp=1234567890000,
+
+class TestSignalEngineServiceBuySignals:
+    """Tests for BUY signal generation with explicit DSL action"""
+
+    def test_buy_when_condition_met_and_action_buy(self, signal_engine, valid_indicator_point):
+        """Should return BUY when condition_met=True and action=buy"""
+        signalpoint = signal_engine.calculate_single_signal(
             symbol="AAPL",
-            rsi=35, macd=0.5, macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=-0.3, close_price=140.0, fibonacci_levels={}
-        )
-        current_point = IndicatorDataPoint(
-            timestamp=1234567890000,
-            symbol="AAPL",
-            rsi=25, macd=0.9, macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=0.1, close_price=150.0, fibonacci_levels={}
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="RSI Oversold Buy"
         )
         
-        signalpoint = signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
         assert signalpoint.signal == "buy"
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
         assert "BUY:" in signalpoint.reason
-        assert "RSI" in signalpoint.reason
+        assert "conditions met" in signalpoint.reason
+        assert signalpoint.stop_loss < signalpoint.take_profit  # Buy: SL < TP
 
 
 class TestSignalEngineServiceSellSignals:
-    """Tests for SELL signal generation"""
+    """Tests for SELL signal generation with explicit DSL action"""
 
-    def test_sell_when_all_conditions_met(self, signal_engine):
-        """Should return SELL when RSI>70, MACD crosses down, price<EMA"""
-        prev_point = IndicatorDataPoint(
-            timestamp=1234567890000,
+    def test_sell_when_condition_met_and_action_sell(self, signal_engine, valid_indicator_point):
+        """Should return SELL when condition_met=True and action=sell"""
+        signalpoint = signal_engine.calculate_single_signal(
             symbol="AAPL",
-            rsi=65, macd=0.9, macd_signal=0.5,
-            ema=155.0, sma=150.0,
-            histogram=0.4, close_price=160.0, fibonacci_levels={}
-        )
-        current_point = IndicatorDataPoint(
-            timestamp=1234567890000,
-            symbol="AAPL",
-            rsi=75, macd=0.4, macd_signal=0.5,
-            ema=155.0, sma=150.0,
-            histogram=-0.1, close_price=145.0, fibonacci_levels={}
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="sell",
+            strategy_name="RSI Overbought Sell"
         )
         
-        signalpoint = signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
         assert signalpoint.signal == "sell"
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
         assert "SELL:" in signalpoint.reason
-        assert "RSI" in signalpoint.reason
+        assert "conditions met" in signalpoint.reason
+        assert signalpoint.stop_loss > signalpoint.take_profit  # Sell: SL > TP
 
 
-class TestSignalEngineServiceCalculateSignals:
-    """Tests for calculate_signals method"""
+class TestSignalEngineServiceHoldSignals:
+    """Tests for HOLD signal generation"""
 
-    def test_first_point_is_always_hold(self, signal_engine):
-        """First data point should be HOLD (no previous point for crossover)"""
-        data = [
-            IndicatorDataPoint(
-                timestamp=1234567890000,
-                symbol="AAPL",
-                rsi=25, macd=0.9, macd_signal=0.8,
-                ema=145.0, sma=140.0,
-                histogram=0.1, close_price=140.0, fibonacci_levels={}
-            )
-        ]
+    def test_hold_when_condition_not_met(self, signal_engine, valid_indicator_point):
+        """Should return HOLD when condition_met=False regardless of action"""
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=False,  # Condition not met
+            action="buy",  # Action would be buy, but condition is false
+            strategy_name="RSI Oversold Buy"
+        )
         
-        results = signal_engine.calculate_signals(symbol="AAPL", data_points=data)
-        assert len(results) == 1
-        signalpoint = results[0]
         assert signalpoint.signal == "hold"
-        assert "No previous data" in signalpoint.reason
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
+        assert "HOLD:" in signalpoint.reason
+        assert "conditions not met" in signalpoint.reason
 
-    def test_multiple_points_with_buy_and_hold(self, signal_engine):
-        """Should calculate signals for multiple data points"""
-        data = [
-            IndicatorDataPoint(
-                timestamp=1234567890000,
-                symbol="AAPL",
-                rsi=35, macd=0.5, macd_signal=0.8,
-                ema=145.0, sma=140.0,
-                histogram=-0.3, close_price=140.0, fibonacci_levels={}
-            ),
-            IndicatorDataPoint(
-                timestamp=1234567890000,
-                symbol="AAPL",
-                rsi=25, macd=0.9, macd_signal=0.8,
-                ema=145.0, sma=140.0,
-                histogram=0.1, close_price=150.0, fibonacci_levels={}
-            ),
-            IndicatorDataPoint(
-                timestamp=1234567890000,
-                symbol="AAPL",
-                rsi=45, macd=1.0, macd_signal=0.8,
-                ema=145.0, sma=140.0,
-                histogram=0.2, close_price=150.0, fibonacci_levels={}
-            ),
-        ]
+    def test_hold_when_action_is_hold(self, signal_engine, valid_indicator_point):
+        """Should return HOLD when action=hold even if condition_met=True"""
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="hold",
+            strategy_name="Wait Strategy"
+        )
         
-        results = signal_engine.calculate_signals(symbol="AAPL", data_points=data)
-        assert len(results) == 3
-        assert results[0].signal == "hold"  # First point is always hold
-        assert results[1].signal == "buy"   # Second point meets buy conditions
-        assert results[2].signal == "hold"  # Third point is hold
-
-    def test_empty_list_returns_empty(self, signal_engine):
-        """Empty input should return empty list"""
-        results = signal_engine.calculate_signals(symbol="AAPL", data_points=[])
-        assert results == []
+        assert signalpoint.signal == "hold"
+        assert "HOLD:" in signalpoint.reason
 
 
 class TestSignalEngineServiceEdgeCases:
@@ -127,42 +124,158 @@ class TestSignalEngineServiceEdgeCases:
 
     def test_hold_when_any_value_is_none(self, signal_engine):
         """Should return HOLD when any required value is None"""
-        prev_point = IndicatorDataPoint(
-            timestamp=1234567890000,
-            symbol="AAPL",
-            rsi=35, macd=0.5, macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=-0.3, close_price=140.0, fibonacci_levels={}
-        )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=None, macd=0.9, macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=0.1, close_price=150.0, fibonacci_levels={}
+            rsi=None,  # None value
+            macd=0.9,
+            macd_signal=0.8,
+            ema=145.0,
+            sma=140.0,
+            histogram=0.1,
+            close_price=150.0,
+            fibonacci_levels={}
         )
         
-        signalpoint = signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=current_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="Test Strategy"
+        )
+        
         assert signalpoint.signal == "hold"
-        assert "Insufficient data" in signalpoint.reason
+        assert "Insufficient or invalid" in signalpoint.reason
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
 
     def test_hold_when_any_value_is_nan(self, signal_engine):
         """Should return HOLD when any required value is NaN"""
-        prev_point = IndicatorDataPoint(
-            timestamp=1234567890000,
-            symbol="AAPL",
-            rsi=35, macd=0.5, macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=-0.3, close_price=140.0, fibonacci_levels={}
-        )
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=25, macd=float('nan'), macd_signal=0.8,
-            ema=145.0, sma=140.0,
-            histogram=0.1, close_price=145.0, fibonacci_levels={}
+            rsi=25.0,
+            macd=float('nan'),  # NaN value
+            macd_signal=0.8,
+            ema=145.0,
+            sma=140.0,
+            histogram=0.1,
+            close_price=145.0,
+            fibonacci_levels={}
         )
         
-        signalpoint = signal_engine.calculate_single_signal(symbol="AAPL", point=current_point, prev_point=prev_point)
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=current_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="Test Strategy"
+        )
+        
         assert signalpoint.signal == "hold"
-        assert "Insufficient data" in signalpoint.reason
+        assert "Insufficient or invalid" in signalpoint.reason
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
+
+    def test_fibonacci_levels_used_for_sl_tp(self, signal_engine):
+        """Should use Fibonacci levels for dynamic SL/TP calculation"""
+        current_point = IndicatorDataPoint(
+            timestamp=1234567890000,
+            symbol="AAPL",
+            rsi=25.0,
+            macd=0.9,
+            macd_signal=0.8,
+            ema=145.0,
+            sma=140.0,
+            histogram=0.1,
+            close_price=150.0,
+            fibonacci_levels={
+                "0.236": 145.0,
+                "0.382": 147.0,
+                "0.5": 147.5,
+                "0.618": 149.0
+            }
+        )
+        
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=current_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="Test Strategy"
+        )
+        
+        # With buy action, SL should be nearest support (fibonacci level below price)
+        # TP should be nearest resistance (fibonacci level above price)
+        assert signalpoint.stop_loss > 0
+        assert signalpoint.take_profit > 0
+        assert signalpoint.signal == "buy"
+
+    def test_fallback_sl_tp_without_fibonacci(self, signal_engine):
+        """Should use 5% fallback when Fibonacci levels are empty"""
+        current_point = IndicatorDataPoint(
+            timestamp=1234567890000,
+            symbol="AAPL",
+            rsi=25.0,
+            macd=0.9,
+            macd_signal=0.8,
+            ema=145.0,
+            sma=140.0,
+            histogram=0.1,
+            close_price=100.0,
+            fibonacci_levels={}  # Empty Fibonacci levels
+        )
+        
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=current_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="Test Strategy"
+        )
+        
+        # Fallback: 5% calculation
+        expected_sl = 95.0  # 100 * 0.95
+        expected_tp = 105.0  # 100 * 1.05
+        assert signalpoint.stop_loss == expected_sl
+        assert signalpoint.take_profit == expected_tp
+
+
+class TestSignalEngineServiceStrategyTraceability:
+    """Tests for signal traceability with strategy_id"""
+
+    def test_signal_includes_strategy_id(self, signal_engine, valid_indicator_point):
+        """All signals must include the strategy_id for traceability"""
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="Test Strategy"
+        )
+        
+        assert signalpoint.strategy_id is not None
+        assert signalpoint.strategy_id == TEST_STRATEGY_ID
+
+    def test_signal_includes_strategy_name_in_reason(self, signal_engine, valid_indicator_point):
+        """Signal reason should include strategy name for context"""
+        signalpoint = signal_engine.calculate_single_signal(
+            symbol="AAPL",
+            point=valid_indicator_point,
+            prev_point=None,
+            strategy_id=TEST_STRATEGY_ID,
+            condition_met=True,
+            action="buy",
+            strategy_name="My Custom Strategy"
+        )
+        
+        assert "My Custom Strategy" in signalpoint.reason

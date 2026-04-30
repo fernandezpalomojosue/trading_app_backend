@@ -80,7 +80,7 @@ class FibonacciService:
         
         return should_recalc
     
-    async def get_nearest_support_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
+    def get_nearest_support_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
         """
         Find the nearest Fibonacci support level below current price
         
@@ -98,7 +98,7 @@ class FibonacciService:
         
         return max(support_levels)  # Highest level below price
     
-    async def get_nearest_resistance_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
+    def get_nearest_resistance_level(self, current_price: float, fibonacci_levels: Dict[str, float]) -> Optional[float]:
         """
         Find the nearest Fibonacci resistance level above current price
         
