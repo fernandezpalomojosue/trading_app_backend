@@ -88,7 +88,8 @@ CRITICAL RULES:
 - dsl_definition MUST contain: version (number), root (object)
 
 VALID VALUES:
-- Indicators: RSI, SMA, EMA, MACD
+- Indicators: RSI, SMA, EMA, MACD (with optional offset: 0=current, -1=previous)
+- Price fields: open, high, low, close, volume (with optional offset: 0=current, 1=previous)
 - Operators: <, <=, >, >=, ==, !=, cross_above, cross_below
 - Actions: buy, sell, hold
 - Root node options:

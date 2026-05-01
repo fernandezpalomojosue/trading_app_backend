@@ -23,6 +23,8 @@ from app.domain.entities.strategy_dsl import (
     AndNode, OrNode, NotNode, Condition,
     Constant, Price, Indicator
 )
+
+# Note: Price and Indicator now support optional 'offset' field for historical access
 from app.domain.services.strategy_registry import StrategyRegistry
 
 

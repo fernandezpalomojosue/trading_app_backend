@@ -25,16 +25,26 @@ class Constant(BaseModel):
 
 
 class Price(BaseModel):
-    """Price field expression"""
+    """Price field expression with optional historical offset
+    
+    offset=0 (default): current candle
+    offset=1: previous candle, offset=2: two candles ago, etc.
+    """
     type: Literal["price"]
     field: Literal["open", "high", "low", "close", "volume"]
+    offset: int = Field(default=0, ge=0, le=100, description="Candles back from current (0=current, 1=previous)")
 
 
 class Indicator(BaseModel):
-    """Technical indicator expression"""
+    """Technical indicator expression with optional historical offset
+    
+    offset=0 (default): indicator value at current candle
+    offset=-1: previous candle's indicator value, etc.
+    """
     type: Literal["indicator"]
     name: Literal["RSI", "SMA", "EMA", "MACD"]
     params: Dict[str, Any] = Field(default_factory=dict)
+    offset: int = Field(default=0, ge=-100, le=0, description="Candles back from current (0=current, -1=previous)")
     
     @field_validator('params')
     @classmethod
