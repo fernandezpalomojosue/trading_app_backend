@@ -196,3 +196,87 @@ pytest tests/unit/domain/test_ai_response_parser.py tests/unit/domain/test_strat
 - `app/domain/services/strategy_registry.py` - Added `get_dsl_schema_json()` method
 - `app/presentation/api/v1/endpoints/routers.py` - Registered AI strategies router
 - `requirements.txt` - Added `openai>=1.0.0` dependency
+
+## DSL with Historical Offset
+
+The DSL now supports accessing historical data using the `offset` field:
+
+### Price Expressions
+```json
+{
+  "type": "price",
+  "field": "close",
+  "offset": 0   // Current candle (default)
+}
+
+{
+  "type": "price",
+  "field": "close",
+  "offset": 1   // Previous candle
+}
+```
+
+### Indicator Expressions
+```json
+{
+  "type": "indicator",
+  "name": "RSI",
+  "params": {"period": 14},
+  "offset": 0    // Current value (default)
+}
+
+{
+  "type": "indicator",
+  "name": "RSI",
+  "params": {"period": 14},
+  "offset": -1   // Previous candle's RSI value
+}
+```
+
+### Example: Price Change Strategy
+```json
+{
+  "name": "Price Rising",
+  "description": "Buy when price increased from last candle",
+  "action": "buy",
+  "dsl_definition": {
+    "version": 1,
+    "root": {
+      "type": "condition",
+      "left": {"type": "price", "field": "close", "offset": 0},
+      "operator": ">",
+      "right": {"type": "price", "field": "close", "offset": 1}
+    }
+  }
+}
+```
+
+### Example: Momentum Strategy (3 consecutive rising candles)
+```json
+{
+  "name": "Bullish Momentum",
+  "action": "buy",
+  "dsl_definition": {
+    "version": 1,
+    "root": {
+      "type": "AND",
+      "children": [
+        {
+          "type": "condition",
+          "left": {"type": "price", "field": "close", "offset": 0},
+          "operator": ">",
+          "right": {"type": "price", "field": "close", "offset": 1}
+        },
+        {
+          "type": "condition",
+          "left": {"type": "price", "field": "close", "offset": 1},
+          "operator": ">",
+          "right": {"type": "price", "field": "close", "offset": 2}
+        }
+      ]
+    }
+  }
+}
+```
+
+**Note:** Historical offset support in execution requires MarketContext with historical data access. Currently validated but execution with offset≠0 logs a warning.

@@ -229,6 +229,10 @@ class DSLValidator:
                 errors.append(f"Unknown price field: {expression.field}")
                 valid_fields = StrategyRegistry.PRICE_FIELDS
                 errors.append(f"Valid price fields are: {', '.join(sorted(valid_fields))}")
+            # Validate offset range (0 to 100, default 0 is current candle)
+            if hasattr(expression, 'offset') and expression.offset is not None:
+                if expression.offset < 0 or expression.offset > 100:
+                    errors.append(f"Price offset must be between 0 and 100, got {expression.offset}")
         
         elif isinstance(expression, Indicator):
             # Validate indicator name
@@ -243,6 +247,10 @@ class DSLValidator:
                     expression.params
                 )
                 errors.extend(param_errors)
+            # Validate offset range (-100 to 0, default 0 is current candle)
+            if hasattr(expression, 'offset') and expression.offset is not None:
+                if expression.offset < -100 or expression.offset > 0:
+                    errors.append(f"Indicator offset must be between -100 and 0, got {expression.offset}")
         
         else:
             errors.append(f"Unknown expression type: {type(expression).__name__}")
