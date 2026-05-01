@@ -46,7 +46,7 @@ class AppBaseSettings(BaseSettings):
     # AI Strategy Generation Configuration
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OPENROUTER_MODEL: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    OPENROUTER_MODEL: str ="meta-llama/llama-3.3-70b-instruct:free"
     AI_MAX_RETRIES: int = 2
     AI_TIMEOUT_SECONDS: int = 15
     AI_RATE_LIMIT_PER_MINUTE: int = 5
