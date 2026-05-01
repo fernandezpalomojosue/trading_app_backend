@@ -190,12 +190,20 @@ class StrategyEvaluator:
         
         Supports:
         - Constant: returns constant value
-        - Price: returns price field from context
-        - Indicator: returns indicator value from context
+        - Price: returns price field from context (with optional offset for historical)
+        - Indicator: returns indicator value from context (with optional offset for historical)
+        
+        Note: offset handling for historical data requires MarketContext with historical access.
+        Currently only offset=0 (current candle) is fully supported in execution.
         """
         if isinstance(expression, Constant):
             return float(expression.value)
         elif isinstance(expression, Price):
+            # TODO: Implement offset handling for historical price access
+            # For now, only current candle (offset=0 or None) is supported
+            offset = getattr(expression, 'offset', 0) or 0
+            if offset != 0:
+                logger.warning(f"Price offset={offset} not yet implemented in execution, using current candle")
             return context.get_value(expression.field)
         elif isinstance(expression, Indicator):
             return cls._evaluate_indicator(expression, context)
@@ -210,9 +218,18 @@ class StrategyEvaluator:
         
         Maps indicator name to context value.
         Supports: RSI, SMA, EMA, MACD
+        
+        Note: offset handling for historical indicator values requires MarketContext with historical access.
+        Currently only offset=0 (current candle) is fully supported in execution.
         """
         name = indicator.name
         params = indicator.params or {}
+        
+        # TODO: Implement offset handling for historical indicator access
+        # For now, only current candle (offset=0 or None) is supported
+        offset = getattr(indicator, 'offset', 0) or 0
+        if offset != 0:
+            logger.warning(f"Indicator offset={offset} not yet implemented in execution, using current candle")
         
         # Map indicator names to context fields
         indicator_map = {

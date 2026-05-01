@@ -48,7 +48,7 @@ class AppBaseSettings(BaseSettings):
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     OPENROUTER_MODEL: str = "openrouter/free"
     AI_MAX_RETRIES: int = 2
-    AI_TIMEOUT_SECONDS: int = 15
+    AI_TIMEOUT_SECONDS: int = 30
     AI_RATE_LIMIT_PER_MINUTE: int = 5
     AI_MAX_OUTPUT_TOKENS: int = 1200
     AI_MAX_INPUT_TOKENS: int = 2000

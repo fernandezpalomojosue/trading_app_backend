@@ -58,7 +58,7 @@ REQUIRED OUTPUT FORMAT:
 - Include ALL 4 top-level fields
 - dsl_definition contains only version and root (NOT action)
 - Root can be: single condition, OR logical nodes (AND/OR/NOT) wrapping conditions
-- Use logical nodes ONLY when combining multiple conditions
+- Use logical nodes ONLY when combining diferents conditions
 - Action is at strategy level, NOT inside dsl_definition
 
 Valid indicators: {', '.join(StrategyRegistry.get_all_indicators())}
@@ -135,6 +135,20 @@ CORRECTED OUTPUT (valid JSON only, no markdown, no explanations):"""
                         "child": {"type": "condition"}
                     }
                 ]
+            },
+            "expression_types": {
+                "constant": {"type": "number", "example": {"type": "constant", "value": 30}},
+                "price": {
+                    "type": "price field with optional historical offset",
+                    "example": {"type": "price", "field": "close", "offset": 0},
+                    "fields": ["open", "high", "low", "close", "volume"],
+                    "offset": "0=current, 1=previous candle, 2=two candles ago, etc."
+                },
+                "indicator": {
+                    "type": "technical indicator with optional historical offset",
+                    "example": {"type": "indicator", "name": "RSI", "params": {"period": 14}, "offset": 0},
+                    "offset": "0=current, -1=previous candle's value, -2=two candles ago, etc."
+                }
             }
         }
         return json.dumps(schema, indent=2)

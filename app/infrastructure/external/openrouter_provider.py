@@ -21,7 +21,7 @@ class OpenRouterProvider:
         api_key: str,
         base_url: str = "https://openrouter.ai/api/v1",
         model: str = "openrouter/free",
-        timeout: int = 15,
+        timeout: int = 30,
         max_tokens: int = 1200
     ):
         self.client = AsyncOpenAI(
@@ -88,7 +88,8 @@ CRITICAL RULES:
 - dsl_definition MUST contain: version (number), root (object)
 
 VALID VALUES:
-- Indicators: RSI, SMA, EMA, MACD
+- Indicators: RSI, SMA, EMA, MACD (with optional offset: 0=current, -1=previous)
+- Price fields: open, high, low, close, volume (with optional offset: 0=current, 1=previous)
 - Operators: <, <=, >, >=, ==, !=, cross_above, cross_below
 - Actions: buy, sell, hold
 - Root node options:
