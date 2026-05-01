@@ -5,11 +5,14 @@ Natural language → Strategy DSL via AI generation.
 Features rate limiting at endpoint level.
 """
 
+import logging
 import uuid
 from typing import Union
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlmodel import Session
+
+logger = logging.getLogger(__name__)
 
 from app.application.dto.ai_strategy_dto import (
     StrategyGenerateRequest,
@@ -106,9 +109,15 @@ async def generate_strategy(
         HTTPException 422: If AI fails to generate valid DSL after retries
         HTTPException 429: If rate limit exceeded
     """
+    logger.info(f"AI strategy generation request from user={current_user.id}, prompt='{request.prompt[:50]}...'")
+    
     # Rate limiting at ENDPOINT level (not inside service)
-    if not await rate_limiter.check_rate_limit(current_user.id):
+    remaining = await rate_limiter.check_rate_limit(current_user.id)
+    logger.debug(f"Rate limit check: remaining={remaining}")
+    
+    if not remaining:
         retry_after = rate_limiter.get_retry_after(current_user.id)
+        logger.warning(f"Rate limit exceeded for user={current_user.id}, retry_after={retry_after}s")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
@@ -120,8 +129,10 @@ async def generate_strategy(
     
     # Record request for rate limiting
     await rate_limiter.record_request(current_user.id)
+    logger.debug(f"Rate limit request recorded for user={current_user.id}")
     
     # Delegate to use cases (which delegates to AI service)
+    logger.info(f"Delegating to StrategyUseCases.generate_strategy_from_ai")
     result = await use_cases.generate_strategy_from_ai(
         user_id=current_user.id,
         prompt=request.prompt
@@ -129,6 +140,7 @@ async def generate_strategy(
     
     # Handle error response
     if isinstance(result, StrategyGenerationError):
+        logger.error(f"AI generation failed: {result.error_type} - {result.message}")
         # Map error types to status codes
         status_code_map = {
             "rate_limit": status.HTTP_429_TOO_MANY_REQUESTS,
@@ -153,6 +165,7 @@ async def generate_strategy(
         )
     
     # Return successful response
+    logger.info(f"AI generation successful: strategy='{result.name}', attempts={result.attempts_made}")
     return result
 
 
