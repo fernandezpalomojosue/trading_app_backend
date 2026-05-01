@@ -7,9 +7,13 @@ Integrates DSLValidator for validation before persistence.
 """
 
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Union
 
 from app.domain.entities.strategy import Strategy
+from app.application.dto.ai_strategy_dto import (
+    StrategyGenerateResponse,
+    StrategyGenerationError
+)
 from app.domain.entities.strategy_dsl import StrategyDSL
 from app.domain.services.strategy_validator import DSLValidator, ValidationResult
 from app.application.repositories.strategy_repository import StrategyRepository
@@ -32,6 +36,7 @@ class StrategyUseCases:
     
     def __init__(self, repository: StrategyRepository):
         self._repository = repository
+        self._strategy_ai_service = None  # Set via set_ai_service() for AI generation
     
     async def create_strategy(
         self, 
@@ -314,6 +319,73 @@ class StrategyUseCases:
         """
         from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
         return get_default_strategy_entity()
+    
+    async def generate_strategy_from_ai(
+        self,
+        user_id: uuid.UUID,
+        prompt: str
+    ) -> Union["StrategyGenerateResponse", "StrategyGenerationError"]:
+        """
+        Generate a strategy from natural language using AI.
+        
+        This is a SIMPLE DELEGATION to StrategyAIService.
+        All orchestration (retry, parse, validate) lives in the AI service.
+        
+        Args:
+            user_id: User requesting the generation
+            prompt: Natural language strategy description
+            
+        Returns:
+            StrategyGenerateResponse on success
+            StrategyGenerationError on failure
+            
+        Raises:
+            RuntimeError: If StrategyAIService not configured
+        """
+        from app.domain.services.strategy_ai_service import StrategyAIService
+        
+        # Check if AI service is configured
+        if self._strategy_ai_service is None:
+            return StrategyGenerationError(
+                error_type="ai_error",
+                message="AI strategy generation not configured"
+            )
+        
+        # Delegate to AI service - NO orchestration logic here
+        result = await self._strategy_ai_service.generate_strategy(
+            user_prompt=prompt,
+            user_id=user_id
+        )
+        
+        if result.is_valid:
+            return StrategyGenerateResponse(
+                name=result.name,
+                description=result.description,
+                action=result.action,
+                dsl_definition=result.dsl_definition,
+                is_valid=True,
+                validation_errors=[],
+                attempts_made=result.attempts_made
+            )
+        else:
+            return StrategyGenerationError(
+                error_type="validation_failed",
+                message=f"Failed to generate valid DSL after {result.attempts_made} attempts",
+                details={
+                    "validation_errors": result.validation_errors,
+                    "attempts_made": result.attempts_made,
+                    "raw_response_preview": result.raw_response[:500] if result.raw_response else None
+                }
+            )
+    
+    def set_ai_service(self, ai_service: 'StrategyAIService') -> None:
+        """
+        Set the AI service for strategy generation.
+        
+        Args:
+            ai_service: StrategyAIService instance with configured AIProvider
+        """
+        self._strategy_ai_service = ai_service
     
     def _validate_dsl(self, dsl_definition: Dict[str, Any]) -> ValidationResult:
         """Validate DSL definition using DSLValidator"""

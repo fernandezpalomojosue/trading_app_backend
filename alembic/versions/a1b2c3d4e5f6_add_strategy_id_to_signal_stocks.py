@@ -34,15 +34,15 @@ def upgrade() -> None:
     )
     
     # Create foreign key constraint (optional - if we want strict referential integrity)
-    # op.create_foreign_key(
-    #     'fk_signal_stocks_strategy_id',
-    #     'signal_stocks',
-    #     'strategies',
-    #     ['strategy_id'],
-    #     ['id'],
-    #     ondelete='SET NULL'
-    # )
-    # ### end Alembic commands ###
+    op.create_foreign_key(
+        'fk_signal_stocks_strategy_id',
+        'signal_stocks',
+        'strategies',
+        ['strategy_id'],
+        ['id'],
+        ondelete='SET NULL'
+    )
+    ### end Alembic commands ###
 
 
 def downgrade() -> None:

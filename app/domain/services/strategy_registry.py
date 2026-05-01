@@ -153,3 +153,120 @@ class StrategyRegistry:
                 errors.append(f"Unknown parameter '{param}' for {indicator}")
         
         return errors
+    
+    @classmethod
+    def get_dsl_schema_json(cls) -> str:
+        """
+        Export DSL schema as JSON string for AI prompts.
+        
+        Returns:
+            JSON string describing valid DSL structure
+        """
+        import json
+        
+        schema = {
+            "version": 1,
+            "description": "Root strategy definition",
+            "properties": {
+                "version": {"type": "integer", "minimum": 1},
+                "action": {"enum": ["buy", "sell", "hold"]},
+                "dsl_definition": {
+                    "type": "object",
+                    "properties": {
+                        "version": {"type": "integer", "minimum": 1},
+                        "root": {
+                            "type": "object",
+                            "oneOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"const": "AND"},
+                                        "children": {
+                                            "type": "array",
+                                            "items": {"$ref": "#/$defs/node"},
+                                            "minItems": 2,
+                                            "maxItems": 10
+                                        }
+                                    },
+                                    "required": ["type", "children"]
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"const": "OR"},
+                                        "children": {
+                                            "type": "array",
+                                            "items": {"$ref": "#/$defs/node"},
+                                            "minItems": 2,
+                                            "maxItems": 10
+                                        }
+                                    },
+                                    "required": ["type", "children"]
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"const": "NOT"},
+                                        "child": {"$ref": "#/$defs/node"}
+                                    },
+                                    "required": ["type", "child"]
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"const": "condition"},
+                                        "left": {"$ref": "#/$defs/expression"},
+                                        "operator": {"enum": list(cls.ALL_OPERATORS)},
+                                        "right": {"$ref": "#/$defs/expression"}
+                                    },
+                                    "required": ["type", "left", "operator", "right"]
+                                }
+                            ]
+                        }
+                    },
+                    "required": ["version", "root"]
+                }
+            },
+            "required": ["name", "description", "action", "dsl_definition"],
+            "$defs": {
+                "node": {
+                    "anyOf": [
+                        {"type": "object", "properties": {"type": {"const": "AND"}}},
+                        {"type": "object", "properties": {"type": {"const": "OR"}}},
+                        {"type": "object", "properties": {"type": {"const": "NOT"}}},
+                        {"type": "object", "properties": {"type": {"const": "condition"}}}
+                    ]
+                },
+                "expression": {
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "type": {"const": "constant"},
+                                "value": {"type": "number"}
+                            },
+                            "required": ["type", "value"]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "type": {"const": "price"},
+                                "field": {"enum": list(cls.PRICE_FIELDS)}
+                            },
+                            "required": ["type", "field"]
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "type": {"const": "indicator"},
+                                "name": {"enum": list(cls.INDICATORS.keys())},
+                                "params": {"type": "object"}
+                            },
+                            "required": ["type", "name"]
+                        }
+                    ]
+                }
+            }
+        }
+        
+        return json.dumps(schema, indent=2)
