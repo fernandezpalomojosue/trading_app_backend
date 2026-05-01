@@ -20,7 +20,7 @@ class OpenRouterProvider:
         self,
         api_key: str,
         base_url: str = "https://openrouter.ai/api/v1",
-        model: str = "meta-llama/llama-3.3-70b-instruct:free",
+        model: str = "openrouter/free",
         timeout: int = 15,
         max_tokens: int = 1200
     ):
@@ -91,7 +91,10 @@ VALID VALUES:
 - Indicators: RSI, SMA, EMA, MACD
 - Operators: <, <=, >, >=, ==, !=, cross_above, cross_below
 - Actions: buy, sell, hold
-- Logical nodes: AND, OR, NOT (wrap all conditions)
+- Root node options:
+  - Single condition (for simple 1-rule strategies)
+  - AND/OR nodes (for combining 2+ conditions)
+  - NOT node (for inverting a condition)
 - Max tree depth: 10 levels
 
 Any deviation from these rules causes immediate rejection."""
