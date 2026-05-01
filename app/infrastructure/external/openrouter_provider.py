@@ -20,7 +20,7 @@ class OpenRouterProvider:
         self,
         api_key: str,
         base_url: str = "https://openrouter.ai/api/v1",
-        model: str = "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        model: str = "meta-llama/llama-3.3-70b-instruct:free",
         timeout: int = 15,
         max_tokens: int = 1200
     ):
