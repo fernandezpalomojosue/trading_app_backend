@@ -4,7 +4,7 @@ OpenRouter AI Provider Implementation
 OpenAI-compatible provider for OpenRouter API.
 """
 
-from openai import AsyncOpenAI, Timeout
+from openai import AsyncOpenAI, APITimeoutError
 
 from app.application.services.ai_provider import AIProvider, AIProviderError
 
@@ -61,7 +61,7 @@ class OpenRouterProvider:
             
             return response.choices[0].message.content
             
-        except Timeout:
+        except APITimeoutError:
             raise TimeoutError(f"AI request timed out after {self.timeout}s")
         except Exception as e:
             raise AIProviderError(
