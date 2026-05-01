@@ -43,6 +43,16 @@ class AppBaseSettings(BaseSettings):
     # Signal Worker Configuration
     SIGNAL_WORKER_API_KEY: str = "your-secret-key-change-in-production"
     
+    # AI Strategy Generation Configuration
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "mistralai/mixtral-8x7b-instruct"
+    AI_MAX_RETRIES: int = 2
+    AI_TIMEOUT_SECONDS: int = 15
+    AI_RATE_LIMIT_PER_MINUTE: int = 5
+    AI_MAX_OUTPUT_TOKENS: int = 1200
+    AI_MAX_INPUT_TOKENS: int = 2000
+    
     def get_signal_worker_api_key(self) -> str:
         """Get signal worker API key from environment"""
         import os
