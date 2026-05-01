@@ -156,7 +156,7 @@ async def generate_strategy(
     return result
 
 
-@router.get("/ai-strategies/health")
+@router.get("/health")
 async def ai_service_health():
     """Check AI service availability."""
     is_configured = bool(settings.OPENROUTER_API_KEY)

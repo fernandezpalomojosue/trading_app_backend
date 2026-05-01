@@ -232,7 +232,7 @@ class TestAIRateLimiter:
 class TestAIServiceHealth:
     """Test AI service health endpoint."""
     
-    def test_health_endpoint_unconfigured(self, client):
+    def test_health_endpoint_unconfigured(self, client: TestClient):
         """Health check when AI not configured."""
         response = client.get("/api/v1/ai-strategies/health")
         
