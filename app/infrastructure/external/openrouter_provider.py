@@ -21,7 +21,7 @@ class OpenRouterProvider:
         api_key: str,
         base_url: str = "https://openrouter.ai/api/v1",
         model: str = "openrouter/free",
-        timeout: int = 15,
+        timeout: int = 30,
         max_tokens: int = 1200
     ):
         self.client = AsyncOpenAI(
