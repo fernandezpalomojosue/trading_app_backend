@@ -57,7 +57,8 @@ REQUIRED OUTPUT FORMAT:
 - Response must be VALID JSON (verified by json.loads)
 - Include ALL 4 top-level fields
 - dsl_definition contains only version and root (NOT action)
-- Use logical nodes to wrap conditions
+- Root can be: single condition, OR logical nodes (AND/OR/NOT) wrapping conditions
+- Use logical nodes ONLY when combining multiple conditions
 - Action is at strategy level, NOT inside dsl_definition
 
 Valid indicators: {', '.join(StrategyRegistry.get_all_indicators())}
@@ -110,22 +111,30 @@ CORRECTED OUTPUT (valid JSON only, no markdown, no explanations):"""
         schema = {
             "version": 1,
             "root": {
-                "type": "AND|OR|NOT|condition",
-                "children": [  # For AND/OR
+                "anyOf": [
                     {
                         "type": "condition",
-                        "left": {
-                            "type": "indicator|price|constant",
-                            "name": "RSI|SMA|EMA|MACD",  # for indicator
-                            "params": {"period": 14},  # indicator params
-                            "field": "close",  # for price
-                            "value": 30  # for constant
-                        },
+                        "description": "Single condition (for simple strategies)",
+                        "left": {"type": "indicator|price|constant"},
                         "operator": "<|<=|>|>=|==|!=|cross_above|cross_below",
-                        "right": {"type": "..."}  # same as left
+                        "right": {"type": "indicator|price|constant"}
+                    },
+                    {
+                        "type": "AND",
+                        "description": "Logical AND (requires 2+ conditions)",
+                        "children": [{"type": "condition"}]
+                    },
+                    {
+                        "type": "OR",
+                        "description": "Logical OR (requires 2+ conditions)",
+                        "children": [{"type": "condition"}]
+                    },
+                    {
+                        "type": "NOT",
+                        "description": "Logical NOT (inverts one condition)",
+                        "child": {"type": "condition"}
                     }
-                ],
-                "child": {}  # For NOT (single child)
+                ]
             }
         }
         return json.dumps(schema, indent=2)
