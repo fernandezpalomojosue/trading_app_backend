@@ -26,7 +26,7 @@ from app.infrastructure.rate_limiter.ai_rate_limiter import AIRateLimiter
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
 
-router = APIRouter(prefix="/ai-strategies", tags=["ai-strategies"])
+router = APIRouter()
 
 
 def get_strategy_repository(
@@ -156,7 +156,7 @@ async def generate_strategy(
     return result
 
 
-@router.get("/health")
+@router.get("/ai-strategies/health")
 async def ai_service_health():
     """Check AI service availability."""
     is_configured = bool(settings.OPENROUTER_API_KEY)
