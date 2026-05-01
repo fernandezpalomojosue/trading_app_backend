@@ -4,12 +4,9 @@ OpenRouter AI Provider Implementation
 OpenAI-compatible provider for OpenRouter API.
 """
 
-import logging
 from openai import AsyncOpenAI, APITimeoutError
 
 from app.application.services.ai_provider import AIProvider, AIProviderError
-
-logger = logging.getLogger(__name__)
 
 
 class OpenRouterProvider:
@@ -51,8 +48,7 @@ class OpenRouterProvider:
             TimeoutError: If request times out
             AIProviderError: For API errors
         """
-        logger.info(f"Sending request to OpenRouter with model={self.model}, max_tokens={self.max_tokens}")
-        logger.debug(f"Prompt length: {len(prompt)} chars")
+        print(f"[OPENROUTER] Request: model={self.model}, max_tokens={self.max_tokens}, prompt_len={len(prompt)}")
         
         try:
             response = await self.client.chat.completions.create(
@@ -66,16 +62,15 @@ class OpenRouterProvider:
             )
             
             content = response.choices[0].message.content
-            logger.info(f"OpenRouter response received: {len(content)} chars")
-            logger.debug(f"Response content preview: {content[:200]}...")
+            print(f"[OPENROUTER] Response: {len(content)} chars, preview={content[:200]}...")
             
             return content
             
         except APITimeoutError:
-            logger.error(f"OpenRouter request timed out after {self.timeout}s")
+            print(f"[OPENROUTER] TIMEOUT after {self.timeout}s")
             raise TimeoutError(f"AI request timed out after {self.timeout}s")
         except Exception as e:
-            logger.error(f"OpenRouter API error: {type(e).__name__}: {str(e)}")
+            print(f"[OPENROUTER] ERROR: {type(e).__name__}: {str(e)}")
             raise AIProviderError(
                 message=f"OpenRouter API error: {str(e)}",
                 details={"error_type": type(e).__name__}
