@@ -87,16 +87,31 @@ CRITICAL RULES:
 - All required fields MUST be present: name, description, action, dsl_definition
 - dsl_definition MUST contain: version (number), root (object)
 
-VALID VALUES:
-- Indicators: RSI, SMA, EMA, MACD (with optional offset: 0=current, -1=previous)
-- Price fields: open, high, low, close, volume (with optional offset: 0=current, 1=previous)
-- Operators: <, <=, >, >=, ==, !=, cross_above, cross_below
-- Actions: buy, sell, hold
-- Root node options:
-  - Single condition (for simple 1-rule strategies)
-  - AND/OR nodes (for combining 2+ conditions)
-  - NOT node (for inverting a condition)
-- Max tree depth: 10 levels
+VALID NODE TYPES AND EXACT FIELD NAMES:
+- Condition node: {"type": "condition", "left": {...}, "operator": "<|<=|>|>=|==|!=|cross_above|cross_below", "right": {...}}
+- AND node: {"type": "AND", "children": [{...}, {...}]}  
+- OR node: {"type": "OR", "children": [{...}, {...}]}
+- NOT node: {"type": "NOT", "child": {...}}
+
+EXPRESSION TYPES:
+- price: {"type": "price", "field": "close|open|high|low|volume", "offset": 0}
+- indicator: {"type": "indicator", "name": "RSI|SMA|EMA|MACD", "params": {}, "offset": 0}
+- constant: {"type": "constant", "value": 30}
+
+EXAMPLE 1 - Single condition:
+{"name": "RSI Oversold", "description": "Buy when RSI < 30", "action": "buy", "dsl_definition": {"version": 1, "root": {"type": "condition", "left": {"type": "indicator", "name": "RSI", "params": {"period": 14}}, "operator": "<", "right": {"type": "constant", "value": 30}}}}
+
+EXAMPLE 2 - AND with two conditions:
+{"name": "RSI and EMA", "description": "Buy when RSI < 30 AND price > EMA20", "action": "buy", "dsl_definition": {"version": 1, "root": {"type": "AND", "children": [{"type": "condition", "left": {"type": "indicator", "name": "RSI", "params": {"period": 14}}, "operator": "<", "right": {"type": "constant", "value": 30}}, {"type": "condition", "left": {"type": "price", "field": "close"}, "operator": ">", "right": {"type": "indicator", "name": "EMA", "params": {"period": 20}}}]} }}
+
+COMMON MISTAKES TO AVOID:
+- Use "children" array for AND/OR, NOT "conditions"
+- Use "child" object for NOT, NOT "children"
+- "condition" is the type for leaf conditions, NOT "indicator" or "CROSS"
+- Indicators go inside expressions with type "indicator", NOT as node types
+
+Actions: buy, sell, hold
+Max tree depth: 10 levels
 
 Any deviation from these rules causes immediate rejection."""
 
