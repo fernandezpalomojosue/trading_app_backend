@@ -12,7 +12,6 @@ NO rate limiting here (handled at endpoint level).
 NO database access (pure business logic).
 """
 
-import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -20,7 +19,6 @@ from uuid import UUID
 from app.application.services.ai_provider import AIProvider, AIProviderError
 from app.domain.services.ai_prompts import StrategyGenerationPrompts
 
-logger = logging.getLogger(__name__)
 from app.domain.services.ai_response_parser import AIResponseParser
 from app.domain.services.strategy_validator import DSLValidator
 
@@ -91,63 +89,63 @@ class StrategyAIService:
             - If successful: is_valid=True, dsl_definition populated
             - If failed: is_valid=False, validation_errors populated
         """
-        logger.info(f"Starting AI strategy generation for user={user_id}, prompt='{user_prompt[:50]}...'")
+        print(f"[AI_SERVICE] Starting generation for user={user_id}, prompt='{user_prompt[:50]}...'")
         
         # CORRECT calculation: initial + retries
         max_attempts = self.max_retries + 1
-        logger.debug(f"Max attempts: {max_attempts} (retries={self.max_retries})")
+        print(f"[AI_SERVICE] Max attempts: {max_attempts} (retries={self.max_retries})")
         
         last_response: Optional[str] = None
         last_errors: List[str] = []
         
         for attempt in range(1, max_attempts + 1):
-            logger.info(f"Attempt {attempt}/{max_attempts}")
+            print(f"[AI_SERVICE] Attempt {attempt}/{max_attempts}")
             
             # Build prompt (initial or retry with error feedback)
             if attempt == 1:
                 prompt = self.prompts.build_generation_prompt(user_prompt)
-                logger.debug(f"Built generation prompt ({len(prompt)} chars)")
+                print(f"[AI_SERVICE] Built generation prompt ({len(prompt)} chars)")
             else:
                 prompt = self.prompts.build_retry_prompt(
                     user_prompt=user_prompt,
                     previous_response=last_response or "",
                     errors=last_errors
                 )
-                logger.debug(f"Built retry prompt with {len(last_errors)} errors")
+                print(f"[AI_SERVICE] Built retry prompt with {len(last_errors)} errors")
             
             try:
                 # Call AI through provider abstraction
-                logger.info(f"Calling AI provider (attempt {attempt})...")
+                print(f"[AI_SERVICE] Calling AI provider (attempt {attempt})...")
                 raw_response = await self.provider.generate(prompt)
                 last_response = raw_response
-                logger.info(f"AI response received: {len(raw_response)} chars")
+                print(f"[AI_SERVICE] AI response received: {len(raw_response)} chars")
                 
                 # Parse JSON from response
                 dsl_json, parse_errors = AIResponseParser.parse(raw_response)
                 
                 if parse_errors:
-                    logger.warning(f"JSON parse failed: {parse_errors}")
+                    print(f"[AI_SERVICE] JSON parse failed: {parse_errors}")
                     last_errors = parse_errors
                     continue
                 
-                logger.debug(f"JSON parsed successfully. Keys: {list(dsl_json.keys())}")
+                print(f"[AI_SERVICE] JSON parsed. Keys: {list(dsl_json.keys())}")
                 
                 # Extract dsl_definition for validation
                 dsl_definition = dsl_json.get("dsl_definition")
                 
                 if not dsl_definition:
-                    logger.warning("Missing 'dsl_definition' field in AI response")
+                    print(f"[AI_SERVICE] Missing 'dsl_definition' field in AI response")
                     last_errors = ["Missing required field: 'dsl_definition'"]
                     continue
                 
-                logger.debug(f"dsl_definition keys: {list(dsl_definition.keys())}")
+                print(f"[AI_SERVICE] dsl_definition keys: {list(dsl_definition.keys())}")
                 
                 # Validate DSL structure (expects {version, root})
-                logger.info(f"Validating DSL structure...")
+                print(f"[AI_SERVICE] Validating DSL structure...")
                 validation = DSLValidator.validate_json(dsl_definition)
                 
                 if validation.is_valid:
-                    logger.info(f"DSL validation PASSED on attempt {attempt}")
+                    print(f"[AI_SERVICE] DSL validation PASSED on attempt {attempt}")
                     # SUCCESS - extract strategy fields
                     return AIGenerationResult(
                         name=dsl_json.get("name", "Generated Strategy"),
@@ -160,20 +158,20 @@ class StrategyAIService:
                         raw_response=raw_response if attempt > 1 else None  # Only keep if retried
                     )
                 else:
-                    logger.warning(f"DSL validation FAILED: {validation.errors}")
+                    print(f"[AI_SERVICE] DSL validation FAILED: {validation.errors}")
                     last_errors = validation.errors
                     continue
                     
             except TimeoutError:
-                logger.error(f"Timeout on attempt {attempt}")
+                print(f"[AI_SERVICE] Timeout on attempt {attempt}")
                 last_errors = ["AI request timed out"]
                 continue
             except AIProviderError as e:
-                logger.error(f"AIProviderError on attempt {attempt}: {e.message}")
+                print(f"[AI_SERVICE] AIProviderError on attempt {attempt}: {e.message}")
                 last_errors = [f"AI provider error: {e.message}"]
                 continue
             except Exception as e:
-                logger.error(f"Unexpected error on attempt {attempt}: {type(e).__name__}: {str(e)}", exc_info=True)
+                print(f"[AI_SERVICE] Unexpected error on attempt {attempt}: {type(e).__name__}: {str(e)}")
                 last_errors = [f"Unexpected error: {str(e)}"]
                 continue
         
