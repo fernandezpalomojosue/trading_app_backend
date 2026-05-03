@@ -44,7 +44,7 @@ class AppBaseSettings(BaseSettings):
     SIGNAL_WORKER_API_KEY: str = "your-secret-key-change-in-production"
     
     # AI Strategy Generation Configuration
-    AI_PROVIDER: str = "openrouter"  # "openrouter" or "bedrock"
+    AI_PROVIDER: str = "openrouter"  
     
     # OpenRouter Settings
     OPENROUTER_API_KEY: Optional[str] = None
@@ -54,9 +54,7 @@ class AppBaseSettings(BaseSettings):
     # AWS Bedrock Settings
     BEDROCK_BASE_URL: str = "https://bedrock-mantle.us-east-1.api.aws/v1"
     BEDROCK_MODEL: str = "openai.gpt-oss-120b"
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[str] = None
-    AWS_SESSION_TOKEN: Optional[str] = None
+    BEDROCK_API_KEY: Optional[str] = None
     
     # Common AI Settings
     AI_MAX_RETRIES: int = 2
