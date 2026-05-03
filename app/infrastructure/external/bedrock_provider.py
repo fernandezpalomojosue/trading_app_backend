@@ -1,7 +1,7 @@
 """
-OpenRouter AI Provider Implementation
+Amazon Bedrock AI Provider Implementation
 
-OpenAI-compatible provider for OpenRouter API.
+AWS Bedrock provider for strategy generation using OpenAI-compatible API.
 """
 
 from openai import AsyncOpenAI, APITimeoutError
@@ -9,34 +9,56 @@ from openai import AsyncOpenAI, APITimeoutError
 from app.application.services.ai_provider import AIProvider, AIProviderError
 
 
-class OpenRouterProvider(AIProvider):
+class BedrockProvider(AIProvider):
     """
-    OpenRouter implementation using OpenAI-compatible API.
+    Amazon Bedrock implementation using OpenAI-compatible API.
     
     Implements AIProvider protocol for strategy generation.
+    Uses the OpenAI SDK to connect to Bedrock's OpenAI-compatible endpoint.
     """
     
     def __init__(
         self,
-        api_key: str,
-        base_url: str = "https://openrouter.ai/api/v1",
-        model: str = "openrouter/free",
+        base_url: str = "https://bedrock-mantle.us-east-1.api.aws/v1",
+        model: str = "openai.gpt-oss-120b",
+        aws_access_key_id: str = None,
+        aws_secret_access_key: str = None,
+        aws_session_token: str = None,
         timeout: int = 30,
         max_tokens: int = 1200
     ):
-        self.client = AsyncOpenAI(
-            base_url=base_url,
-            api_key=api_key,
-            timeout=timeout
-        )
+        """
+        Initialize Bedrock provider using OpenAI-compatible API.
+        
+        Args:
+            base_url: Bedrock runtime endpoint with model path
+            model: Model identifier (e.g., openai.gpt-oss-120b, anthropic.claude-3-5-sonnet)
+            aws_access_key_id: AWS access key for authentication
+            aws_secret_access_key: AWS secret key for authentication
+            aws_session_token: AWS session token (optional, for temporary credentials)
+            timeout: Request timeout in seconds
+            max_tokens: Maximum tokens in response
+        """
         self.model = model
         self.timeout = timeout
         self.max_tokens = max_tokens
         self.system_prompt = self._build_system_prompt()
+        
+        # Build API key from AWS credentials if provided
+        # Bedrock OpenAI-compatible API uses AWS SigV4 authentication
+        api_key = None
+        if aws_access_key_id and aws_secret_access_key:
+            # Format: access_key:secret_key or with session token
+            if aws_session_token:
+                api_key = f"{aws_access_key_id}:{aws_secret_access_key}:{aws_session_token}"
+            else:
+                api_key = f"{aws_access_key_id}:{aws_secret_access_key}"
+        
+        self.client = AsyncOpenAI()
     
     async def generate(self, prompt: str) -> str:
         """
-        Send prompt to OpenRouter and return response.
+        Send prompt to Bedrock and return response.
         
         Args:
             prompt: User prompt with strategy description
@@ -48,12 +70,12 @@ class OpenRouterProvider(AIProvider):
             TimeoutError: If request times out
             AIProviderError: For API errors
         """
-        print(f"[OPENROUTER] Request: model={self.model}, max_tokens={self.max_tokens}, prompt_len={len(prompt)}")
+        print(f"[BEDROCK] Request: model={self.model}, max_tokens={self.max_tokens}, prompt_len={len(prompt)}")
         
         try:
-            response = await self.client.chat.completions.create(
+            response = await self.client.responses.create(
                 model=self.model,
-                messages=[
+                input=[
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
@@ -61,18 +83,18 @@ class OpenRouterProvider(AIProvider):
                 temperature=0.3  # Lower temperature for more deterministic JSON
             )
             
-            content = response.choices[0].message.content
-            print(f"[OPENROUTER] Response: {len(content)} chars, preview={content[:200]}...")
+            content = response.output_text
+            print(f"[BEDROCK] Response: {len(content)} chars, preview={content[:200]}...")
             
             return content
             
         except APITimeoutError:
-            print(f"[OPENROUTER] TIMEOUT after {self.timeout}s")
-            raise TimeoutError(f"AI request timed out after {self.timeout}s")
+            print(f"[BEDROCK] TIMEOUT after {self.timeout}s")
+            raise TimeoutError(f"Bedrock request timed out after {self.timeout}s")
         except Exception as e:
-            print(f"[OPENROUTER] ERROR: {type(e).__name__}: {str(e)}")
+            print(f"[BEDROCK] ERROR: {type(e).__name__}: {str(e)}")
             raise AIProviderError(
-                message=f"OpenRouter API error: {str(e)}",
+                message=f"Bedrock API error: {str(e)}",
                 details={"error_type": type(e).__name__}
             )
     

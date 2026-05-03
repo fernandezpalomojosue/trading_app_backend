@@ -5,10 +5,10 @@ Defines the interface for AI providers, enabling true provider-agnostic design.
 Implementations: OpenRouterProvider, AnthropicProvider, LocalModelProvider, etc.
 """
 
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 
-class AIProvider(Protocol):
+class AIProvider(ABC):
     """
     Protocol for AI providers - enables true swapability.
     
@@ -22,6 +22,7 @@ class AIProvider(Protocol):
     - Error propagation (raise on failure)
     """
     
+    @abstractmethod
     async def generate(self, prompt: str) -> str:
         """
         Send prompt to AI and return raw response string.
