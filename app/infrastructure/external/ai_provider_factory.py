@@ -86,11 +86,9 @@ def register_bedrock() -> None:
     
     def factory():
         return BedrockProvider(
+            api_key=settings.BEDROCK_API_KEY or "",
             base_url=settings.BEDROCK_BASE_URL,
             model=settings.BEDROCK_MODEL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            aws_session_token=settings.AWS_SESSION_TOKEN,
             timeout=settings.AI_TIMEOUT_SECONDS,
             max_tokens=settings.AI_MAX_OUTPUT_TOKENS
         )
