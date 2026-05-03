@@ -133,7 +133,7 @@ REQUIRED OUTPUT FORMAT:
 - Use logical nodes ONLY when combining multiple conditions
 - Action is at strategy level, NOT inside dsl_definition"""
     
-    def build_retry_prompt(self, user_prompt: str, errors: list) -> str:
+    def build_retry_prompt(self, user_prompt: str, errors: list, previous_response: str = "") -> str:
         """Build retry prompt with error feedback."""
         error_text = "\n".join(f"- {e}" for e in errors)
         return f"""Previous attempt was INVALID. Fix these errors and regenerate:
@@ -142,6 +142,9 @@ Validation Errors:
 {error_text}
 
 Original Description: {user_prompt}
+
+Previous Response (failed):
+{previous_response[:500] if previous_response else "N/A"}
 
 DSL Schema:
 {self.dsl_schema}
