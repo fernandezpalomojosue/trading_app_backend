@@ -53,20 +53,52 @@ def get_strategy_use_cases(
     Uses AIProviderFactory for extensible provider support.
     Available providers: openrouter, bedrock
     New providers can be added without modifying this code.
+    
+    Raises HTTPException 503 if AI service cannot be configured.
     """
     use_cases = StrategyUseCases(repository)
     
     # Configure AI service via factory (extensible)
     try:
+        print(f"[AI_PROVIDER] Configuring AI provider: {settings.AI_PROVIDER}")
         provider = AIProviderFactory.create()
         ai_service = StrategyAIService(
             provider=provider,
             max_retries=settings.AI_MAX_RETRIES
         )
         use_cases.set_ai_service(ai_service)
+        print(f"[AI_PROVIDER] AI service configured successfully")
+    except ValueError as e:
+        # Provider not registered or unknown
+        print(f"[AI_PROVIDER] Configuration error: {e}")
+        available = AIProviderFactory.list_providers()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error_type": "ai_configuration_error",
+                "message": f"AI provider '{settings.AI_PROVIDER}' not available",
+                "details": {
+                    "provider": settings.AI_PROVIDER,
+                    "available_providers": available,
+                    "error": str(e)
+                }
+            }
+        )
     except Exception as e:
-        print(f"[AI_PROVIDER] Failed to configure AI service: {e}")
-        print(f"[AI_PROVIDER] Available providers: {AIProviderFactory.list_providers()}")
+        # Other configuration errors (missing API keys, etc.)
+        print(f"[AI_PROVIDER] Failed to configure AI service: {type(e).__name__}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error_type": "ai_configuration_error",
+                "message": "Failed to configure AI service",
+                "details": {
+                    "provider": settings.AI_PROVIDER,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+            }
+        )
     
     return use_cases
 
