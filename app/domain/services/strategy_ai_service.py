@@ -158,7 +158,8 @@ class StrategyAIService:
                         raw_response=raw_response if attempt > 1 else None  # Only keep if retried
                     )
                 else:
-                    print(f"[AI_SERVICE] DSL validation FAILED: {validation.errors}")
+                    print(f"[AI_SERVICE] DSL validation FAILED on attempt {attempt}: {validation.errors}")
+                    print(f"[AI_SERVICE] Raw AI response that failed:\n{raw_response}")
                     last_errors = validation.errors
                     continue
                     

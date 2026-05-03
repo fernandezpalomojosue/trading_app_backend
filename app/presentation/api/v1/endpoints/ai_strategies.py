@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.db.base import get_session
 from app.domain.services.strategy_ai_service import StrategyAIService
 from app.domain.use_cases.strategy_use_cases import StrategyUseCases
-from app.infrastructure.external.openrouter_provider import OpenRouterProvider
+from app.infrastructure.external.ai_provider_factory import AIProviderFactory
 from app.infrastructure.rate_limiter.ai_rate_limiter import AIRateLimiter
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
@@ -50,24 +50,23 @@ def get_strategy_use_cases(
     """
     Dependency to get strategy use cases with AI service configured.
     
-    Only configures AI service if OPENROUTER_API_KEY is set.
+    Uses AIProviderFactory for extensible provider support.
+    Available providers: openrouter, bedrock
+    New providers can be added without modifying this code.
     """
     use_cases = StrategyUseCases(repository)
     
-    # Configure AI service if API key available
-    if settings.OPENROUTER_API_KEY:
-        provider = OpenRouterProvider(
-            api_key=settings.OPENROUTER_API_KEY,
-            base_url=settings.OPENROUTER_BASE_URL,
-            model=settings.OPENROUTER_MODEL,
-            timeout=settings.AI_TIMEOUT_SECONDS,
-            max_tokens=settings.AI_MAX_OUTPUT_TOKENS
-        )
+    # Configure AI service via factory (extensible)
+    try:
+        provider = AIProviderFactory.create()
         ai_service = StrategyAIService(
             provider=provider,
             max_retries=settings.AI_MAX_RETRIES
         )
         use_cases.set_ai_service(ai_service)
+    except Exception as e:
+        print(f"[AI_PROVIDER] Failed to configure AI service: {e}")
+        print(f"[AI_PROVIDER] Available providers: {AIProviderFactory.list_providers()}")
     
     return use_cases
 
