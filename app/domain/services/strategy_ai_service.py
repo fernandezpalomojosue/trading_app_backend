@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.application.services.ai_provider import AIProvider, AIProviderError
-from app.domain.services.ai_prompts import StrategyGenerationPrompts
+from app.application.dto.ai_prompts_dto import AIPromptsDTO
 
 from app.domain.services.ai_response_parser import AIResponseParser
 from app.domain.services.strategy_validator import DSLValidator
@@ -67,7 +67,7 @@ class StrategyAIService:
         """
         self.provider = provider
         self.max_retries = max_retries
-        self.prompts = StrategyGenerationPrompts()
+        self.prompts = AIPromptsDTO.default()
     
     async def generate_strategy(
         self,

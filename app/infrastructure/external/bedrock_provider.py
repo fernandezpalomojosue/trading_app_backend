@@ -7,6 +7,7 @@ OpenAI-compatible provider for OpenRouter API.
 from openai import AsyncOpenAI, APITimeoutError
 
 from app.application.services.ai_provider import AIProvider, AIProviderError
+from app.application.dto.ai_prompts_dto import AIPromptsDTO
 
 
 class BedrockProvider(AIProvider):
@@ -32,7 +33,7 @@ class BedrockProvider(AIProvider):
         self.model = model
         self.timeout = timeout
         self.max_tokens = max_tokens
-        self.system_prompt = self._build_system_prompt()
+        self.prompts = AIPromptsDTO.default()
     
     async def generate(self, prompt: str) -> str:
         """
@@ -54,7 +55,7 @@ class BedrockProvider(AIProvider):
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.system_prompt},
+                    {"role": "system", "content": self.prompts.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
@@ -76,41 +77,3 @@ class BedrockProvider(AIProvider):
                 details={"error_type": type(e).__name__}
             )
     
-    def _build_system_prompt(self) -> str:
-        """Build strict system prompt for JSON-only output."""
-        return """You are an expert trading strategy designer. Convert natural language descriptions into valid JSON DSL definitions.
-
-CRITICAL RULES:
-- Output ONLY valid JSON, no markdown, no code blocks, no explanations
-- If output is not valid JSON, it will be REJECTED
-- Do not include comments, trailing commas, or any non-JSON content
-- All required fields MUST be present: name, description, action, dsl_definition
-- dsl_definition MUST contain: version (number), root (object)
-
-VALID NODE TYPES AND EXACT FIELD NAMES:
-- Condition node: {"type": "condition", "left": {...}, "operator": "<|<=|>|>=|==|!=|cross_above|cross_below", "right": {...}}
-- AND node: {"type": "AND", "children": [{...}, {...}]}  
-- OR node: {"type": "OR", "children": [{...}, {...}]}
-- NOT node: {"type": "NOT", "child": {...}}
-
-EXPRESSION TYPES:
-- price: {"type": "price", "field": "close|open|high|low|volume", "offset": 0}
-- indicator: {"type": "indicator", "name": "RSI|SMA|EMA|MACD", "params": {}, "offset": 0}
-- constant: {"type": "constant", "value": 30}
-
-EXAMPLE 1 - Single condition:
-{"name": "RSI Oversold", "description": "Buy when RSI < 30", "action": "buy", "dsl_definition": {"version": 1, "root": {"type": "condition", "left": {"type": "indicator", "name": "RSI", "params": {"period": 14}}, "operator": "<", "right": {"type": "constant", "value": 30}}}}
-
-EXAMPLE 2 - AND with two conditions:
-{"name": "RSI and EMA", "description": "Buy when RSI < 30 AND price > EMA20", "action": "buy", "dsl_definition": {"version": 1, "root": {"type": "AND", "children": [{"type": "condition", "left": {"type": "indicator", "name": "RSI", "params": {"period": 14}}, "operator": "<", "right": {"type": "constant", "value": 30}}, {"type": "condition", "left": {"type": "price", "field": "close"}, "operator": ">", "right": {"type": "indicator", "name": "EMA", "params": {"period": 20}}}]} }}
-
-COMMON MISTAKES TO AVOID:
-- Use "children" array for AND/OR, NOT "conditions"
-- Use "child" object for NOT, NOT "children"
-- "condition" is the type for leaf conditions, NOT "indicator" or "CROSS"
-- Indicators go inside expressions with type "indicator", NOT as node types
-
-Actions: buy, sell, hold
-Max tree depth: 10 levels
-
-Any deviation from these rules causes immediate rejection."""
