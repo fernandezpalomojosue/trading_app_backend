@@ -40,6 +40,10 @@ class StrategyGenerateRequest(BaseModel):
 class StrategyGenerateResponse(BaseModel):
     """Successful strategy generation response."""
     
+    id: Optional[UUID] = Field(
+        default=None,
+        description="Strategy ID (assigned after saving to database)"
+    )
     name: str = Field(..., description="Generated strategy name")
     description: str = Field(..., description="Strategy description")
     action: Literal["buy", "sell", "hold"] = Field(
@@ -49,6 +53,10 @@ class StrategyGenerateResponse(BaseModel):
     dsl_definition: Dict[str, Any] = Field(
         ...,
         description="Generated DSL definition (validated)"
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Whether the strategy is active after saving"
     )
     is_valid: bool = Field(
         default=True,
@@ -63,6 +71,10 @@ class StrategyGenerateResponse(BaseModel):
         description="Number of AI attempts (1-3)",
         ge=1,
         le=3
+    )
+    saved: bool = Field(
+        default=False,
+        description="Whether the strategy was saved to the database"
     )
     
     class Config:

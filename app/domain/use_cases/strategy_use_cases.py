@@ -358,15 +358,45 @@ class StrategyUseCases:
         )
         
         if result.is_valid:
-            return StrategyGenerateResponse(
+            # Create and save the strategy to database
+            from app.application.dto.strategy_dto import StrategyCreateRequest
+            
+            create_request = StrategyCreateRequest(
                 name=result.name,
                 description=result.description,
-                action=result.action,
-                dsl_definition=result.dsl_definition,
-                is_valid=True,
-                validation_errors=[],
-                attempts_made=result.attempts_made
+                dsl_definition=result.dsl_definition
             )
+            
+            try:
+                saved_strategy = await self.create_strategy(user_id, create_request)
+                print(f"[AI_GENERATION] Strategy saved: id={saved_strategy.id}, name={saved_strategy.name}")
+                
+                return StrategyGenerateResponse(
+                    id=saved_strategy.id,
+                    name=result.name,
+                    description=result.description,
+                    action=result.action,
+                    dsl_definition=result.dsl_definition,
+                    is_active=True,
+                    is_valid=True,
+                    validation_errors=[],
+                    attempts_made=result.attempts_made,
+                    saved=True
+                )
+            except Exception as e:
+                print(f"[AI_GENERATION] WARNING: Strategy generated but failed to save: {e}")
+                # Return generated strategy even if save failed
+                return StrategyGenerateResponse(
+                    name=result.name,
+                    description=result.description,
+                    action=result.action,
+                    dsl_definition=result.dsl_definition,
+                    is_active=False,
+                    is_valid=True,
+                    validation_errors=[],
+                    attempts_made=result.attempts_made,
+                    saved=False
+                )
         else:
             return StrategyGenerationError(
                 error_type="validation_failed",
