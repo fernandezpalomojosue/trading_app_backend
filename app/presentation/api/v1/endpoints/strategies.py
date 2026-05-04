@@ -24,7 +24,7 @@ from app.application.dto.strategy_dto import (
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
 
-router = APIRouter(prefix="/strategies", tags=["strategies"])
+router = APIRouter()
 
 
 def get_strategy_repository(
