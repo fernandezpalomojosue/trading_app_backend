@@ -73,6 +73,7 @@ async def list_strategies(
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
 ):
+    print("Listing strategies for user:", current_user.id)
     """List all strategies for the current user"""
     return await use_cases.list_strategies(
         user_id=current_user.id,

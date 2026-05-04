@@ -219,6 +219,7 @@ class StrategyUseCases:
         Returns:
             List of strategy responses
         """
+        print("Retrieving strategies from database for user:", user_id)
         strategies = await self._repository.get_by_user(user_id, skip=skip, limit=limit)
         
         # Filter by active status if requested
