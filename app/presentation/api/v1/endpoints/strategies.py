@@ -65,7 +65,7 @@ async def create_strategy(
         )
 
 
-@router.get("", response_model=StrategyListResponse)
+@router.get("/user_list", response_model=StrategyListResponse)
 async def list_strategies(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
