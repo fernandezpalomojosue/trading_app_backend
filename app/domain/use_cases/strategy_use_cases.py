@@ -326,18 +326,23 @@ class StrategyUseCases:
         prompt: str
     ) -> Union["StrategyGenerateResponse", "StrategyGenerationError"]:
         """
-        Generate a strategy from natural language using AI.
+        Generate and save a strategy from natural language using AI.
         
-        This is a SIMPLE DELEGATION to StrategyAIService.
-        All orchestration (retry, parse, validate) lives in the AI service.
+        Flow:
+        1. Delegates generation to StrategyAIService (orchestration, retry, validation)
+        2. On successful generation, automatically saves to database via create_strategy()
+        3. Returns StrategyGenerateResponse with database-assigned id and saved=True
+        
+        If database save fails, returns StrategyGenerateResponse with saved=False
+        so the user still receives the generated DSL.
         
         Args:
-            user_id: User requesting the generation
+            user_id: User requesting the generation (owner of saved strategy)
             prompt: Natural language strategy description
             
         Returns:
-            StrategyGenerateResponse on success
-            StrategyGenerationError on failure
+            StrategyGenerateResponse with saved strategy (id, is_active, saved=True)
+            StrategyGenerationError on generation or validation failure
             
         Raises:
             RuntimeError: If StrategyAIService not configured

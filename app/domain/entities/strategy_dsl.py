@@ -42,7 +42,7 @@ class Indicator(BaseModel):
     offset=-1: previous candle's indicator value, etc.
     """
     type: Literal["indicator"]
-    name: Literal["RSI", "SMA", "EMA", "MACD"]
+    name: Literal["RSI", "SMA", "EMA", "MACD","price_change","price_percentage_change"]
     params: Dict[str, Any] = Field(default_factory=dict)
     offset: int = Field(default=0, ge=-100, le=0, description="Candles back from current (0=current, -1=previous)")
     
