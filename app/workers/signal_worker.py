@@ -8,6 +8,7 @@ from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepo
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
+from app.application.services.evaluation_target_service import EvaluationTargetService
 from app.utils.date_utils import get_last_trading_day
 from app.core.config import get_settings
 from app.db.base import SessionLocal, engine
@@ -40,6 +41,7 @@ async def run_signal_job():
             return
 
         logger.info("Signal job lock acquired ✅")
+        print(f"Lock value: {lock_value}")
 
         
         # Use session context manager for proper cleanup
@@ -49,18 +51,22 @@ async def run_signal_job():
             strategy_repository = SQLStrategyRepository(session)
             strategy_use_cases = StrategyUseCases(strategy_repository)
             
-            # Get default stocks from environment or use fallback
-            default_stocks = getattr(settings, 'DEFAULT_SIGNAL_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,NVDA')
+            # NEW: Create evaluation target service
+            target_service = EvaluationTargetService(
+                favorite_repository=favorite_repository,
+                settings=settings
+            )
             
-            # Try to get favorites from database, fallback to default stocks
-            stocks = await favorite_repository.get_all_favorites()
+            # NEW: Get evaluation targets (Phase 1: returns 1 target)
+            targets = await target_service.get_targets()
             
-            # If no favorites found, use default stocks
-            if not stocks:
-                stocks = default_stocks.split(',') if isinstance(default_stocks, str) else default_stocks
-                logger.info(f"No favorites found, using default stocks: {stocks}")
-            else:
-                logger.info(f"Using favorites from database: {stocks.symbols}")
+            if not targets:
+                logger.info("No evaluation targets found, skipping execution")
+                return
+            
+            logger.info(f"Generated {len(targets)} evaluation target(s)")
+            for i, target in enumerate(targets):
+                logger.info(f"Target {i+1}: {target.stock_count} stocks - {target.stocks[:5]}...")
             
             # Create orchestrator with strategy_use_cases for DSL-based signal generation
             orchestration_service = SignalOrchestrator(
@@ -72,26 +78,32 @@ async def run_signal_job():
                 strategy_use_cases=strategy_use_cases
             )
             
-            for stock in stocks.symbols:
-                try:
-                    logger.info(f"Generating signal for {stock}")
-                    
-                    # Log before calling orchestration_service.generate_signal
-                    logger.info(f"DEBUG: About to call orchestration_service.generate_signal for {stock}")
-                    
-                    # Use legacy method which uses default strategy (system default DSL-based)
-                    # In the future, this can be changed to use generate_signals_for_user with specific user_id
-                    signal = await orchestration_service.generate_signal(
-                        stock, "day", "2026-01-01", get_last_trading_day()
-                    )
-                    
-                    # Log after successful call
-                    logger.info(f"DEBUG: Successfully completed orchestration_service.generate_signal for {stock}")
-                    logger.info(f"Successfully generated signal for {stock}: {signal}")
-                except Exception as e:
-                    logger.error(f"Error generating signal for {stock}: {e}")
-                    import traceback
-                    logger.error(f"TRACEBACK: {traceback.format_exc()}")
+            # NEW: Iterate over targets, then stocks
+            for target_idx, target in enumerate(targets):
+                logger.info(f"[Target {target_idx+1}/{len(targets)}] Starting execution of {target.stock_count} stocks")
+                
+                for stock in target.stocks:
+                    try:
+                        logger.info(f"[Target {target_idx+1}] Generating signal for {stock}")
+                        
+                        # Log before calling orchestration_service.generate_signal
+                        logger.info(f"DEBUG: About to call orchestration_service.generate_signal for {stock}")
+                        
+                        # Still using legacy method which uses default strategy (system default DSL-based)
+                        # In future, this can be changed to use generate_signals_for_user with specific user_id
+                        signal = await orchestration_service.generate_signal(
+                            stock, "day", "2026-01-01", get_last_trading_day()
+                        )
+                        
+                        # Log after successful call
+                        logger.info(f"DEBUG: Successfully completed orchestration_service.generate_signal for {stock}")
+                        logger.info(f"Successfully generated signal for {stock}: {signal}")
+                    except Exception as e:
+                        logger.error(f"[Target {target_idx+1}] Error generating signal for {stock}: {e}")
+                        import traceback
+                        logger.error(f"TRACEBACK: {traceback.format_exc()}")
+                        
+                logger.info(f"[Target {target_idx+1}] Completed")
                     
     except Exception as e:
         logger.error(f"Critical error in signal job: {e}")
