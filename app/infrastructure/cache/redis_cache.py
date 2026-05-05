@@ -107,3 +107,8 @@ class RedisCache(CacheRepository):
             "hit_rate_percent": round(hit_rate, 2),
             "cache_type": "redis"
         }
+    
+    async def eval(self, script: str, numkeys: int, *args):
+        """Execute Lua script in Redis"""
+        redis_client = await self._get_redis()
+        return await redis_client.eval(script, numkeys, *args)
