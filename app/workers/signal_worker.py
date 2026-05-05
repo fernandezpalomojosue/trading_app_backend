@@ -31,11 +31,11 @@ async def run_signal_job():
         cache_repository = RedisCache(redis_url=settings.REDIS_URL)
         indicator_service = IndicatorsUseCases(cache_repository)
         signal_engine = SignalEngineUseCases()
-        lock = RedisLock(cache_repository, "signal_job_lock", ttl=180)
 
-        acquired = await lock.acquire()
+        lock_key = "signal_job_lock"
+        lock_value = await cache_repository.acquire_lock(lock_key, ttl=180)
 
-        if not acquired:
+        if not lock_value:
             logger.warning("Signal job already running, skipping...")
             return
 
@@ -98,5 +98,5 @@ async def run_signal_job():
         raise
     finally:
         logger.info("Signal generation job completed")
-        await lock.release()
+        await cache_repository.release_lock(lock_key, lock_value)
         logger.info("Signal job lock released 🔄")

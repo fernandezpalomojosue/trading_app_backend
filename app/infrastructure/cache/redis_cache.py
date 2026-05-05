@@ -3,7 +3,7 @@ import json
 import redis.asyncio as redis
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
-
+import uuid
 from app.application.repositories.cache_repository import CacheRepository
 
 
@@ -112,3 +112,62 @@ class RedisCache(CacheRepository):
         """Execute Lua script in Redis"""
         redis_client = await self._get_redis()
         return await redis_client.eval(script, numkeys, *args)
+    
+    def get_client(self):
+        """Get Redis client"""
+        return self._redis
+    
+    async def acquire_lock(self, key: str, ttl: int = 120) -> Optional[str]:
+        """
+        Try to acquire a distributed lock.
+        Returns lock value if acquired, None otherwise.
+        """
+        try:
+            redis_client = await self._get_redis()
+            lock_value = str(uuid.uuid4())
+
+            redis_key = self._make_key(key)
+
+            result = await redis_client.set(
+                redis_key,
+                lock_value,
+                nx=True,
+                ex=ttl
+            )
+
+            if result:
+                return lock_value
+            return None
+
+        except Exception as e:
+            print(f"Redis lock acquire error: {e}")
+            return None
+
+    async def release_lock(self, key: str, lock_value: str) -> bool:
+        """
+        Release lock only if owned by caller.
+        """
+        try:
+            redis_client = await self._get_redis()
+            redis_key = self._make_key(key)
+
+            script = """
+            if redis.call("get", KEYS[1]) == ARGV[1] then
+                return redis.call("del", KEYS[1])
+            else
+                return 0
+            end
+            """
+
+            result = await redis_client.eval(
+                script,
+                1,
+                redis_key,
+                lock_value
+            )
+
+            return result == 1
+
+        except Exception as e:
+            print(f"Redis lock release error: {e}")
+            return False
