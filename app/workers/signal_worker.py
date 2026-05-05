@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.db.base import SessionLocal, engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
+from app.infrastructure.cache.redis_lock import RedisLock
 
 import logging
 
@@ -30,6 +31,16 @@ async def run_signal_job():
         cache_repository = RedisCache(redis_url=settings.REDIS_URL)
         indicator_service = IndicatorsUseCases(cache_repository)
         signal_engine = SignalEngineUseCases()
+        lock = RedisLock(redis.client, "signal_job_lock", ttl=180)
+
+        acquired = await lock.acquire()
+
+        if not acquired:
+            logger.warning("Signal job already running, skipping...")
+            return
+
+        logger.info("Signal job lock acquired ✅")
+
         
         # Use session context manager for proper cleanup
         with SessionLocal() as session:
@@ -87,3 +98,5 @@ async def run_signal_job():
         raise
     finally:
         logger.info("Signal generation job completed")
+        await lock.release()
+        logger.info("Signal job lock released 🔄")

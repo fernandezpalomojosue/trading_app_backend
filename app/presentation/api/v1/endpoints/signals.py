@@ -67,6 +67,7 @@ async def run_signals(
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     await run_signal_job()
+    return {"status": "triggered"}
 
 @router.get("/{symbol}")
 async def get_signal(
