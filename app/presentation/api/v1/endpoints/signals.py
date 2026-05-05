@@ -104,5 +104,3 @@ async def get_signal(
         return signal
     else:
         return {"symbol": symbol, "status": "no_signal"}
-    
-    
