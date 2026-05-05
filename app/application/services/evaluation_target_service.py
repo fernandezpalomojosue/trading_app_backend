@@ -77,7 +77,7 @@ class EvaluationTargetService:
         favorites = await self._favorite_repo.get_all_favorites()
         
         if favorites and favorites.symbols:
-            return favorites.symbols
+            return [s.strip().upper() for s in favorites.symbols]
         
         # Fallback to environment defaults
         default_stocks = getattr(
@@ -89,4 +89,7 @@ class EvaluationTargetService:
         if isinstance(default_stocks, str):
             return [s.strip().upper() for s in default_stocks.split(',')]
         
-        return [s.upper() for s in default_stocks]
+        if default_stocks is None:
+            return []
+        
+        return [s.strip().upper() for s in default_stocks]
