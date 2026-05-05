@@ -31,7 +31,7 @@ async def run_signal_job():
         cache_repository = RedisCache(redis_url=settings.REDIS_URL)
         indicator_service = IndicatorsUseCases(cache_repository)
         signal_engine = SignalEngineUseCases()
-        lock = RedisLock(redis.client, "signal_job_lock", ttl=180)
+        lock = RedisLock(cache_repository, "signal_job_lock", ttl=180)
 
         acquired = await lock.acquire()
 
