@@ -13,7 +13,7 @@ from sqlmodel import Session, select
 
 from app.application.repositories.execution_plan_repository import ExecutionPlanRepository
 from app.domain.entities.execution_plan import ExecutionPlan
-from app.infrastructure.database.models.execution_plan_model import ExecutionPlanModel
+from app.infrastructure.database.db_models.execution_plan_model import ExecutionPlanModel
 
 
 class SQLExecutionPlanRepository(ExecutionPlanRepository):

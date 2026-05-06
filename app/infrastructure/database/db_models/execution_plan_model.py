@@ -1,4 +1,4 @@
-# app/infrastructure/database/models/execution_plan_model.py
+# app/infrastructure/database/db_models/execution_plan_model.py
 """
 ExecutionPlan SQLModel for Database Persistence
 
