@@ -3,8 +3,10 @@ Unit tests for domain entities - Pure business logic validation
 Tests focus on business rules, calculations, and invariants
 """
 import pytest
+import uuid
 from datetime import datetime, timezone
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
+from app.domain.entities.evaluation_target import EvaluationTarget
 
 
 class TestAsset:
@@ -256,5 +258,126 @@ class TestCandleStick:
         )
         
         assert candle.price_range == 8.0  # 105.0 - 97.0
+
+
+class TestEvaluationTarget:
+    """Test EvaluationTarget entity business logic"""
+    
+    def test_evaluation_target_creation_minimal(self):
+        """Should create evaluation target with minimal required fields."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["AAPL", "MSFT", "GOOGL"]
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks
+        )
+        
+        # Assert
+        assert target.strategy_id == strategy_id
+        assert target.stocks == stocks
+        assert target.timeframe == "day"  # Default value
+        assert target.stock_count == 3
+    
+    def test_evaluation_target_creation_full(self):
+        """Should create evaluation target with all fields specified."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["TSLA", "NVDA"]
+        timeframe = "hour"
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks,
+            timeframe=timeframe
+        )
+        
+        # Assert
+        assert target.strategy_id == strategy_id
+        assert target.stocks == stocks
+        assert target.timeframe == timeframe
+        assert target.stock_count == 2
+    
+    def test_evaluation_target_stock_count_property(self):
+        """Stock count should correctly calculate number of stocks."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA"]
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks
+        )
+        
+        # Assert
+        assert target.stock_count == 5
+        assert target.stock_count == len(stocks)
+    
+    def test_evaluation_target_empty_stocks_validation(self):
+        """Should validate that stocks list is not empty."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = []  # Empty list should fail validation
+        
+        # Act & Assert
+        with pytest.raises(ValueError) as exc_info:
+            EvaluationTarget(
+                strategy_id=strategy_id,
+                stocks=stocks
+            )
+        
+        assert "stocks" in str(exc_info.value).lower()
+    
+    def test_evaluation_target_timeframe_default(self):
+        """Timeframe should default to 'day' when not specified."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["AAPL", "MSFT"]
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks
+        )
+        
+        # Assert
+        assert target.timeframe == "day"
+    
+    def test_evaluation_target_timeframe_custom(self):
+        """Should accept custom timeframe value."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["AAPL", "MSFT"]
+        timeframe = "4hour"
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks,
+            timeframe=timeframe
+        )
+        
+        # Assert
+        assert target.timeframe == timeframe
+    
+    def test_evaluation_target_timeframe_none(self):
+        """Should accept None timeframe."""
+        # Arrange
+        strategy_id = uuid.uuid4()
+        stocks = ["AAPL", "MSFT"]
+        
+        # Act
+        target = EvaluationTarget(
+            strategy_id=strategy_id,
+            stocks=stocks,
+            timeframe=None
+        )
+        
+        # Assert
+        assert target.timeframe is None
 
 
