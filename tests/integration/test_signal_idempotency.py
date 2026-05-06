@@ -3,7 +3,7 @@ Integration tests for signal generation idempotency
 """
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
@@ -62,9 +62,17 @@ class TestSignalIdempotencyIntegration:
             {"timestamp": "2026-05-06", "open": 150, "high": 155, "low": 149, "close": 154, "volume": 1000000}
         ]
         
-        mock_orchestrator.indicator_service.get_indicators.return_value = [
-            {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3}
-        ]
+        # Mock indicator service to return sufficient data regardless of parameters
+        def mock_get_indicators(*args, **kwargs):
+            return [
+                {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3},
+                {"timestamp": "2026-05-05", "rsi": 50, "macd": 0.4, "signal": 0.2},
+                {"timestamp": "2026-05-04", "rsi": 45, "macd": 0.3, "signal": 0.1},
+                {"timestamp": "2026-05-03", "rsi": 40, "macd": 0.2, "signal": 0.0},
+                {"timestamp": "2026-05-02", "rsi": 35, "macd": 0.1, "signal": -0.1}
+            ]
+        
+        mock_orchestrator.indicator_service.get_indicators.side_effect = mock_get_indicators
         
         # Mock signal engine to return a signal
         mock_signal = MagicMock()
@@ -112,9 +120,17 @@ class TestSignalIdempotencyIntegration:
             {"timestamp": "2026-05-06", "open": 150, "high": 155, "low": 149, "close": 154, "volume": 1000000}
         ]
         
-        mock_orchestrator.indicator_service.get_indicators.return_value = [
-            {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3}
-        ]
+        # Mock indicator service to return sufficient data regardless of parameters
+        def mock_get_indicators(*args, **kwargs):
+            return [
+                {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3},
+                {"timestamp": "2026-05-05", "rsi": 50, "macd": 0.4, "signal": 0.2},
+                {"timestamp": "2026-05-04", "rsi": 45, "macd": 0.3, "signal": 0.1},
+                {"timestamp": "2026-05-03", "rsi": 40, "macd": 0.2, "signal": 0.0},
+                {"timestamp": "2026-05-02", "rsi": 35, "macd": 0.1, "signal": -0.1}
+            ]
+        
+        mock_orchestrator.indicator_service.get_indicators.side_effect = mock_get_indicators
         
         # Mock signal engine to return a signal
         mock_signal = MagicMock()
@@ -150,9 +166,17 @@ class TestSignalIdempotencyIntegration:
             {"timestamp": "2026-05-06", "open": 150, "high": 155, "low": 149, "close": 154, "volume": 1000000}
         ]
         
-        mock_orchestrator.indicator_service.get_indicators.return_value = [
-            {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3}
-        ]
+        # Mock indicator service to return sufficient data regardless of parameters
+        def mock_get_indicators(*args, **kwargs):
+            return [
+                {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3},
+                {"timestamp": "2026-05-05", "rsi": 50, "macd": 0.4, "signal": 0.2},
+                {"timestamp": "2026-05-04", "rsi": 45, "macd": 0.3, "signal": 0.1},
+                {"timestamp": "2026-05-03", "rsi": 40, "macd": 0.2, "signal": 0.0},
+                {"timestamp": "2026-05-02", "rsi": 35, "macd": 0.1, "signal": -0.1}
+            ]
+        
+        mock_orchestrator.indicator_service.get_indicators.side_effect = mock_get_indicators
         
         # Mock signal engine to return a signal
         mock_signal = MagicMock()
@@ -200,9 +224,17 @@ class TestSignalIdempotencyIntegration:
             {"timestamp": "2026-05-06", "open": 150, "high": 155, "low": 149, "close": 154, "volume": 1000000}
         ]
         
-        mock_orchestrator.indicator_service.get_indicators.return_value = [
-            {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3}
-        ]
+        # Mock indicator service to return sufficient data regardless of parameters
+        def mock_get_indicators(*args, **kwargs):
+            return [
+                {"timestamp": "2026-05-06", "rsi": 55, "macd": 0.5, "signal": 0.3},
+                {"timestamp": "2026-05-05", "rsi": 50, "macd": 0.4, "signal": 0.2},
+                {"timestamp": "2026-05-04", "rsi": 45, "macd": 0.3, "signal": 0.1},
+                {"timestamp": "2026-05-03", "rsi": 40, "macd": 0.2, "signal": 0.0},
+                {"timestamp": "2026-05-02", "rsi": 35, "macd": 0.1, "signal": -0.1}
+            ]
+        
+        mock_orchestrator.indicator_service.get_indicators.side_effect = mock_get_indicators
         
         # Mock signal engine to return a signal
         mock_signal = MagicMock()
