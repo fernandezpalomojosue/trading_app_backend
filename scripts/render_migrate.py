@@ -28,7 +28,10 @@ def main():
         from alembic.command import heads
         head_revisions = heads(alembic_cfg)
         
-        if len(head_revisions) > 1:
+        # heads() can return None when there's only one head
+        if head_revisions is None:
+            print("✅ Single migration head found")
+        elif len(head_revisions) > 1:
             print(f"⚠️  Found {len(head_revisions)} migration heads, merging...")
             from alembic.command import merge
             revision_ids = [rev.revision for rev in head_revisions]
