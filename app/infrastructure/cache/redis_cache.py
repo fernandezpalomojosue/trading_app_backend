@@ -143,6 +143,26 @@ class RedisCache(CacheRepository):
             print(f"Redis lock acquire error: {e}")
             return None
 
+    async def set_if_not_exists(self, key: str, value: Any = "1", ttl: int = 60) -> bool:
+        """
+        Set key only if it doesn't exist (NX semantics).
+        Returns True if key was set, False if key already existed.
+        """
+        try:
+            redis_client = await self._get_redis()
+            redis_key = self._make_key(key)
+            
+            result = await redis_client.set(
+                redis_key,
+                value,
+                nx=True,
+                ex=ttl
+            )
+            return bool(result)
+        except Exception as e:
+            print(f"Redis set_if_not_exists error: {e}")
+            return False
+
     async def release_lock(self, key: str, lock_value: str) -> bool:
         """
         Release lock only if owned by caller.

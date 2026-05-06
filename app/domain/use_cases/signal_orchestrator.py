@@ -47,6 +47,31 @@ class SignalOrchestrator:
         self.strategy_use_cases = strategy_use_cases
         self.strategy_engine = StrategyEngine()
     
+    def _get_time_bucket(self, timeframe: str) -> str:
+        """
+        Generate time bucket based on timeframe for idempotency.
+        
+        Args:
+            timeframe: Timeframe string (e.g., "day", "hour", "minute")
+            
+        Returns:
+            Time bucket string for cache key
+        """
+        from datetime import datetime, timezone
+        
+        now = datetime.now(timezone.utc)
+        
+        if timeframe == "day":
+            return now.strftime("%Y-%m-%d")
+        elif timeframe == "hour":
+            return now.strftime("%Y-%m-%d-%H")
+        elif timeframe == "minute":
+            minute_bucket = now.minute
+            return now.strftime(f"%Y-%m-%d-%H-{minute_bucket:02d}")
+        else:
+            # Default to hourly for unknown timeframes
+            return 3 * (now.minute // 3)
+    
     async def generate_signals_for_user(
         self,
         user_id: UUID,
@@ -318,6 +343,32 @@ class SignalOrchestrator:
     ) -> Optional[SignalDataPoint]:
         """Extract strategy evaluation logic into reusable method"""
         try:
+            # Generate idempotency key and check for duplicates
+            time_bucket = self._get_time_bucket(timeframe)
+            cache_key = f"signal:{strategy.id}:{symbol}:{time_bucket}"
+            
+            # Try to acquire idempotency lock
+            lock_acquired = await self.cache_client.set_if_not_exists(cache_key, ttl=60)
+            
+            if not lock_acquired:
+                self.logger.info(
+                    "Signal generation skipped - duplicate in progress",
+                    component="signal_orchestrator",
+                    strategy_id=str(strategy.id),
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    time_bucket=time_bucket
+                )
+                return None
+            
+            self.logger.debug(
+                "Idempotency lock acquired",
+                component="signal_orchestrator",
+                strategy_id=str(strategy.id),
+                symbol=symbol,
+                timeframe=timeframe,
+                time_bucket=time_bucket
+            )
             # Fetch market data
             data = await self.market_client.fetch_candlestick_data(
                 symbol, timeframe, 1, 100, start_date or "2026-01-01", end_date or get_last_trading_day()
@@ -398,6 +449,8 @@ class SignalOrchestrator:
                 component="signal_orchestrator",
                 symbol=symbol,
                 strategy_id=str(strategy.id),
+                timeframe=timeframe,
+                time_bucket=time_bucket,
                 error_type=type(e).__name__,
                 error_message=str(e)
             )
