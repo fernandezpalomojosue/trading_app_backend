@@ -286,7 +286,7 @@ class SignalOrchestrator:
         The existing generate_signal() method remains untouched for backward compatibility.
         """
         # Get strategy by ID
-        strategy = await self.strategy_use_cases.get_strategy_by_id(strategy_id)
+        strategy = await self.strategy_use_cases.get_strategy(strategy_id)
         if not strategy:
             self.logger.error(
                 "Strategy not found",
