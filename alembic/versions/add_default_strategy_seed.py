@@ -23,16 +23,15 @@ def upgrade() -> None:
     
     # Insert default strategy
     from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
-    from app.domain.entities.strategy import Strategy
     
     default_strategy = get_default_strategy_entity()
     
-    op.bulk_insert_mappings(
-        Strategy,
+    op.bulk_insert(
+        'strategies',
         [
             {
-                'id': default_strategy.id,
-                'user_id': default_strategy.user_id,
+                'id': str(default_strategy.id),
+                'user_id': str(default_strategy.user_id),
                 'name': default_strategy.name,
                 'description': default_strategy.description,
                 'is_active': default_strategy.is_active,
