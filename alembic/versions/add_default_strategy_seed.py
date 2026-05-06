@@ -26,22 +26,22 @@ def upgrade() -> None:
     
     default_strategy = get_default_strategy_entity()
     
-    op.bulk_insert(
-        'strategies',
-        [
-            {
-                'id': str(default_strategy.id),
-                'user_id': str(default_strategy.user_id),
-                'name': default_strategy.name,
-                'description': default_strategy.description,
-                'is_active': default_strategy.is_active,
-                'dsl_definition': default_strategy.dsl_definition,
-                'dsl_hash': default_strategy.dsl_hash,
-                'version': default_strategy.version,
-                'created_at': sa.func.now(),
-                'updated_at': sa.func.now()
-            }
-        ]
+    op.execute(
+        "INSERT INTO strategies (id, user_id, name, description, is_active, dsl_definition, dsl_hash, version, created_at, updated_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        "ON CONFLICT (id) DO NOTHING",
+        (
+            str(default_strategy.id),
+            str(default_strategy.user_id),
+            default_strategy.name,
+            default_strategy.description,
+            default_strategy.is_active,
+            default_strategy.dsl_definition,
+            default_strategy.dsl_hash,
+            default_strategy.version,
+            sa.func.now(),
+            sa.func.now()
+        )
     )
     
     # ### end Alembic commands ###
