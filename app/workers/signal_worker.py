@@ -6,6 +6,7 @@ from app.infrastructure.external.market_client import PolygonMarketClient
 from app.infrastructure.database.signal_repository import SQLSignalRepository
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
+from app.infrastructure.database.execution_plan_repository import SQLExecutionPlanRepository
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.domain.use_cases.signal_engine_use_cases import SignalEngineUseCases
 from app.application.services.evaluation_target_service import EvaluationTargetService
@@ -49,8 +50,12 @@ async def run_signal_job():
             strategy_repository = SQLStrategyRepository(session)
             strategy_use_cases = StrategyUseCases(strategy_repository)
             
+            # NEW: Create execution plan repository
+            execution_plan_repository = SQLExecutionPlanRepository(session)
+            
             # NEW: Create evaluation target service
             target_service = EvaluationTargetService(
+                execution_plan_repository=execution_plan_repository,
                 favorite_repository=favorite_repository,
                 settings=settings
             )
@@ -91,11 +96,12 @@ async def run_signal_job():
             # NEW: Iterate over targets, then stocks
             for target_idx, target in enumerate(targets):
                 logger.info(
-                    "Target execution started",
+                    "Processing evaluation target",
                     component="signal_worker",
                     target_index=target_idx+1,
-                    total_targets=len(targets),
-                    stock_count=target.stock_count
+                    strategy_id=str(target.strategy_id),
+                    stock_count=target.stock_count,
+                    timeframe=target.timeframe
                 )
                 
                 for stock in target.stocks:
@@ -104,13 +110,15 @@ async def run_signal_job():
                             "Signal generation started",
                             component="signal_worker",
                             target_index=target_idx+1,
+                            strategy_id=str(target.strategy_id),
                             symbol=stock
                         )
                         
-                        # Still using legacy method which uses default strategy (system default DSL-based)
-                        # In future, this can be changed to use generate_signals_for_user with specific user_id
-                        signal = await orchestration_service.generate_signal(
-                            stock, "day", "2026-01-01", get_last_trading_day()
+                        # NEW: Use strategy-specific method
+                        signal = await orchestration_service.generate_signal_for_strategy(
+                            symbol=stock,
+                            strategy_id=target.strategy_id,
+                            timeframe=target.timeframe or "day"
                         )
                         
                         logger.info(
@@ -125,6 +133,7 @@ async def run_signal_job():
                             "Signal generation failed",
                             component="signal_worker",
                             target_index=target_idx+1,
+                            strategy_id=str(target.strategy_id),
                             symbol=stock,
                             error_type=type(e).__name__,
                             error_message=str(e)

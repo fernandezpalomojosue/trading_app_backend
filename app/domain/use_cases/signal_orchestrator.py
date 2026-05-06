@@ -18,6 +18,7 @@ from app.domain.entities.strategy import Strategy
 from app.application.dto.signals_dto import SignalDataPoint
 from app.domain.use_cases.strategy_use_cases import StrategyUseCases
 from app.core.logging_config import get_logger
+from app.utils.date_utils import get_last_trading_day
 
 
 class SignalOrchestrator:
@@ -265,3 +266,139 @@ class SignalOrchestrator:
             await self.cache_client.set(f"signal_{symbol}", signal.model_dump(), ttl=60)
         
         return signal
+    
+    async def generate_signal_for_strategy(
+        self,
+        symbol: str,
+        strategy_id: UUID,
+        timeframe: str = "day",
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        indicators_window: int = 30,
+        indicators_fast: int = 12,
+        indicators_slow: int = 26,
+        indicators_signal: int = 9
+    ) -> Optional[SignalDataPoint]:
+        """
+        Generate signal for a specific strategy and symbol.
+        
+        This is the new method for Phase 2 - strategy-aware execution.
+        The existing generate_signal() method remains untouched for backward compatibility.
+        """
+        # Get strategy by ID
+        strategy = await self.strategy_use_cases.get_strategy_by_id(strategy_id)
+        if not strategy:
+            self.logger.error(
+                "Strategy not found",
+                component="signal_orchestrator",
+                symbol=symbol,
+                strategy_id=str(strategy_id)
+            )
+            return None
+        
+        if not strategy.is_active:
+            self.logger.warning(
+                "Strategy is inactive",
+                component="signal_orchestrator",
+                symbol=symbol,
+                strategy_id=str(strategy_id)
+            )
+            return None
+        
+        # Use existing evaluation logic with specific strategy
+        return await self._evaluate_strategy_for_symbol(symbol, strategy, timeframe, start_date, end_date)
+
+    async def _evaluate_strategy_for_symbol(
+        self, 
+        symbol: str, 
+        strategy: Strategy, 
+        timeframe: str,
+        start_date: Optional[str],
+        end_date: Optional[str]
+    ) -> Optional[SignalDataPoint]:
+        """Extract strategy evaluation logic into reusable method"""
+        try:
+            # Fetch market data
+            data = await self.market_client.fetch_candlestick_data(
+                symbol, timeframe, 1, 100, start_date or "2026-01-01", end_date or get_last_trading_day()
+            )
+            
+            # Calculate indicators
+            indicators = await self.indicator_service.get_indicators(
+                symbol,
+                data=data,
+                window=30,
+                fast=12,
+                slow=26,
+                signal=9,
+                timespan=timeframe,
+                start_date=start_date or "2026-01-01",
+                end_date=end_date or get_last_trading_day(),
+                limit=100
+            )
+            
+            if len(indicators) < 2:
+                self.logger.warning(
+                    "Insufficient indicator data",
+                    component="signal_orchestrator",
+                    symbol=symbol,
+                    strategy_id=str(strategy.id),
+                    indicator_count=len(indicators)
+                )
+                return None
+            
+            # Build MarketContext for current and previous points
+            current_point = indicators[-1]
+            prev_point = indicators[-2]
+            
+            context = MarketContext(
+                symbol=symbol,
+                timeframe=timeframe,
+                current=current_point,
+                previous=prev_point
+            )
+            
+            prev_context = MarketContext(
+                symbol=symbol,
+                timeframe=timeframe,
+                current=prev_point,
+                previous=indicators[-3] if len(indicators) > 2 else None
+            )
+            
+            # Evaluate strategy condition
+            condition_met = self.strategy_engine.evaluate_condition(
+                strategy.dsl_definition, context, prev_context
+            )
+            
+            # Determine action based on condition
+            action = strategy.dsl_definition.get("action", "hold")
+            if condition_met:
+                action = strategy.dsl_definition.get("action", "buy") if action == "hold" else action
+            
+            # Generate signal
+            signal = self.signal_engine_service.calculate_single_signal(
+                symbol=symbol,
+                point=current_point,
+                prev_point=prev_point,
+                strategy_id=strategy.id,
+                condition_met=condition_met,
+                action=action,
+                strategy_name=strategy.name
+            )
+            
+            if signal:
+                await self.signal_repository.save_signal(symbol, signal, strategy.id)
+                await self.cache_client.set(f"signal_{symbol}_{strategy.id}", signal.model_dump(), ttl=60)
+            
+            return signal
+            
+        except Exception as e:
+            self.logger.error(
+                "Strategy evaluation failed",
+                component="signal_orchestrator",
+                symbol=symbol,
+                strategy_id=str(strategy.id),
+                error_type=type(e).__name__,
+                error_message=str(e)
+            )
+            return None
