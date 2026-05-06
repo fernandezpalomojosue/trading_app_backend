@@ -29,7 +29,7 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
     async def get_active_plans(self) -> List[ExecutionPlan]:
         """Get all active execution plans."""
         stmt = select(ExecutionPlanModel).where(ExecutionPlanModel.is_active == True)
-        result = await self._session.exec(stmt)
+        result = self._session.exec(stmt)
         models = result.all()
         return [model.to_entity() for model in models]
     
@@ -44,7 +44,7 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
     async def update(self, plan: ExecutionPlan) -> ExecutionPlan:
         """Update an existing execution plan."""
         stmt = select(ExecutionPlanModel).where(ExecutionPlanModel.id == plan.id)
-        result = await self._session.exec(stmt)
+        result = self._session.exec(stmt)
         model = result.first()
         
         if not model:
@@ -65,21 +65,21 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
     async def get_by_id(self, plan_id: uuid.UUID) -> Optional[ExecutionPlan]:
         """Get execution plan by ID."""
         stmt = select(ExecutionPlanModel).where(ExecutionPlanModel.id == plan_id)
-        result = await self._session.exec(stmt)
+        result = self._session.exec(stmt)
         model = result.first()
         return model.to_entity() if model else None
     
     async def get_by_user_id(self, user_id: uuid.UUID) -> List[ExecutionPlan]:
         """Get all execution plans for a specific user."""
         stmt = select(ExecutionPlanModel).where(ExecutionPlanModel.user_id == user_id)
-        result = await self._session.exec(stmt)
+        result = self._session.exec(stmt)
         models = result.all()
         return [model.to_entity() for model in models]
     
     async def delete(self, plan_id: uuid.UUID) -> bool:
         """Delete an execution plan."""
         stmt = select(ExecutionPlanModel).where(ExecutionPlanModel.id == plan_id)
-        result = await self._session.exec(stmt)
+        result = self._session.exec(stmt)
         model = result.first()
         
         if not model:
