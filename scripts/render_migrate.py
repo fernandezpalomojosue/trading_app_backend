@@ -33,7 +33,6 @@ def main():
         if "already exists" in str(e):
             print("💡 Table already exists, marking current migration as applied...")
             try:
-                from alembic import command
                 command.stamp(alembic_cfg, "head")  # Current head revision
                 print("✅ Migration marked as current, deployment can continue")
                 return
