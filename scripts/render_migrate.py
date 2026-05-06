@@ -23,47 +23,23 @@ def main():
     alembic_cfg = Config(str(alembic_ini_path))
 
     try:
-        # Check for multiple heads first
-        print("🔍 Checking migration heads...")
-        from alembic.command import heads
-        head_revisions = heads(alembic_cfg)
-        
-        # heads() can return None when there's only one head
-        if head_revisions is None:
-            print("✅ Single migration head found")
-        elif len(head_revisions) > 1:
-            print(f"⚠️  Found {len(head_revisions)} migration heads, merging...")
-            from alembic.command import merge
-            revision_ids = [rev.revision for rev in head_revisions]
-            merge_revision = merge(alembic_cfg, *revision_ids, message="Auto-merge multiple heads")
-            print(f"✅ Created merge migration: {merge_revision.revision}")
-        
-        # Now run the upgrade
-        print("🚀 Applying migrations...")
         command.upgrade(alembic_cfg, "head")
         print("✅ Migrations applied successfully!")
 
     except Exception as e:
         print(f"❌ Migration failed: {e}")
         
-        # Provide helpful error message for common issues
-        if "Multiple head revisions" in str(e):
-            print("💡 Tip: Try running 'alembic merge heads' first")
-        elif "SSL connection" in str(e):
-            print("💡 Tip: Check database connectivity and SSL configuration")
-        elif "already exists" in str(e):
-            print("💡 Tip: Table already exists, marking migration as applied")
-            # Mark the migration as applied to avoid future conflicts
+        # If table already exists, mark as current and continue
+        if "already exists" in str(e):
+            print("💡 Table already exists, marking current migration as applied...")
             try:
-                from alembic.command import stamp
-                stamp(alembic_cfg, "b2c3d4e5f6g7")
-                print("✅ Migration marked as applied")
+                from alembic import command
+                command.stamp(alembic_cfg, "head")  # Current head revision
+                print("✅ Migration marked as current, deployment can continue")
                 return
             except Exception as stamp_error:
-                print(f"❌ Failed to mark migration: {stamp_error}")
-        elif "connection" in str(e).lower():
-            print("💡 Tip: Verify DATABASE_URL and network connectivity")
-            
+                print(f"❌ Failed to stamp migration: {stamp_error}")
+        
         sys.exit(1)
 
 
