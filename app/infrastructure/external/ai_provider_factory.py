@@ -8,6 +8,7 @@ New providers can be registered without modifying existing code.
 from typing import Dict, Type, Callable, Any
 from app.application.services.ai_provider import AIProvider
 from app.core.config import settings
+from app.core.logging_config import get_logger
 
 
 class AIProviderFactory:
@@ -19,6 +20,7 @@ class AIProviderFactory:
     """
     
     _providers: Dict[str, Callable[[], AIProvider]] = {}
+    _logger = get_logger(__name__)
     
     @classmethod
     def register(cls, name: str, factory_func: Callable[[], AIProvider]) -> None:
@@ -30,7 +32,11 @@ class AIProviderFactory:
             factory_func: Function that creates and returns provider instance
         """
         cls._providers[name] = factory_func
-        print(f"[AI_FACTORY] Registered provider: {name}")
+        cls._logger.info(
+            "AI provider registered",
+            component="ai_factory",
+            provider_name=name
+        )
     
     @classmethod
     def create(cls, provider_name: str = None) -> AIProvider:
@@ -55,7 +61,11 @@ class AIProviderFactory:
                 f"Available providers: {available}"
             )
         
-        print(f"[AI_FACTORY] Creating provider: {name}")
+        cls._logger.info(
+            "Creating AI provider instance",
+            component="ai_factory",
+            provider_name=name
+        )
         return cls._providers[name]()
     
     @classmethod

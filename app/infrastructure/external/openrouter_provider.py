@@ -8,6 +8,7 @@ from openai import AsyncOpenAI, APITimeoutError
 
 from app.application.services.ai_provider import AIProvider, AIProviderError
 from app.application.dto.ai_prompts_dto import AIPromptsDTO
+from app.core.logging_config import get_logger
 
 
 class OpenRouterProvider(AIProvider):
@@ -25,6 +26,7 @@ class OpenRouterProvider(AIProvider):
         timeout: int = 30,
         max_tokens: int = 1200
     ):
+        self.logger = get_logger(__name__)
         self.client = AsyncOpenAI(
             base_url=base_url,
             api_key=api_key,
@@ -49,7 +51,13 @@ class OpenRouterProvider(AIProvider):
             TimeoutError: If request times out
             AIProviderError: For API errors
         """
-        print(f"[OPENROUTER] Request: model={self.model}, max_tokens={self.max_tokens}, prompt_len={len(prompt)}")
+        self.logger.info(
+            "OpenRouter API request initiated",
+            component="openrouter_provider",
+            model=self.model,
+            max_tokens=self.max_tokens,
+            prompt_length=len(prompt)
+        )
         
         try:
             response = await self.client.chat.completions.create(
@@ -63,17 +71,31 @@ class OpenRouterProvider(AIProvider):
             )
             
             content = response.choices[0].message.content
-            print(f"[OPENROUTER] Response: {len(content)} chars, preview={content[:200]}...")
+            self.logger.info(
+                "OpenRouter API response received",
+                component="openrouter_provider",
+                response_length=len(content),
+                response_preview=content[:200]
+            )
             
             return content
             
         except APITimeoutError:
-            print(f"[OPENROUTER] TIMEOUT after {self.timeout}s")
+            self.logger.error(
+                "OpenRouter API request timeout",
+                component="openrouter_provider",
+                timeout_seconds=self.timeout
+            )
             raise TimeoutError(f"AI request timed out after {self.timeout}s")
         except Exception as e:
-            print(f"[OPENROUTER] ERROR: {type(e).__name__}: {str(e)}")
+            self.logger.error(
+                "OpenRouter API request failed",
+                component="openrouter_provider",
+                error_type=type(e).__name__,
+                error_message=str(e),
+                model=self.model
+            )
             raise AIProviderError(
                 message=f"OpenRouter API error: {str(e)}",
-                details={"error_type": type(e).__name__}
+                details={"error_type": type(e).__name__, "model": self.model}
             )
-    

@@ -9,6 +9,7 @@ from sqlmodel import Session
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 import logging
 from app.infrastructure.external.market_client import PolygonMarketClient
+from app.core.logging_config import get_logger
 from app.application.repositories.market_repository import MarketRepository
 from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.services.indicators_service import IndicatorsService
@@ -16,7 +17,7 @@ from app.application.services.signal_engine_service import SignalEngineService
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.workers.signal_worker import run_signal_job
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -83,7 +84,11 @@ async def get_signal(
     if result:
         cache_success = await cache.set(f"signal:{symbol}", result)
         if not cache_success:
-            print(f"Warning: Failed to cache signal for {symbol}")
+            logger.warning(
+                "Failed to cache signal",
+                component="signals",
+                symbol=symbol
+            )
         return result
     
     orchestrator = SignalOrchestrator(
@@ -100,7 +105,11 @@ async def get_signal(
     if signal:
         cache_success = await cache.set(f"signal:{symbol}", signal)
         if not cache_success:
-            print(f"Warning: Failed to cache signal for {symbol}")
+            logger.warning(
+                "Failed to cache generated signal",
+                component="signals",
+                symbol=symbol
+            )
         return signal
     else:
         return {"symbol": symbol, "status": "no_signal"}
