@@ -442,9 +442,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.activate_strategy(
-            sample_user_id, sample_strategy_id
-        )
+        result = await strategy_use_cases.activate_strategy(sample_strategy_id)
         
         assert result.is_active is True
         mock_repository.update.assert_called_once()
@@ -465,9 +463,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.deactivate_strategy(
-            sample_user_id, sample_strategy_id
-        )
+        result = await strategy_use_cases.deactivate_strategy(sample_strategy_id)
         
         assert result.is_active is False
         mock_repository.update.assert_called_once()
