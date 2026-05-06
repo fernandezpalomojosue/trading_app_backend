@@ -5,7 +5,16 @@ Revises: 16e47539e731
 Create Date: 2026-05-06 19:10:00.000000
 
 """
+from typing import Sequence, Union
+
 from alembic import op
+import sqlalchemy as sa
+
+# revision identifiers, used by Alembic.
+revision: str = 'add_default_strategy_seed'
+down_revision: Union[str, None] = '16e47539e731'
+branch_labels: Union[str, Sequence[str]] = None
+depends_on: Union[str, Sequence[str]] = None
 
 def upgrade() -> None:
     op.execute("""
@@ -27,7 +36,33 @@ def upgrade() -> None:
         'Default Strategy',
         'System default strategy',
         true,
-        '{"conditions":[{"indicator":"rsi","operator":"<","value":30}],"action":"buy"}'::jsonb,
+        '{
+    "version": 1,
+    "action": "buy",
+    "root": {
+        "type": "AND",
+        "children": [
+            {
+                "type": "condition",
+                "left": {"type": "indicator", "name": "RSI", "params": {"period": 14}},
+                "operator": "<",
+                "right": {"type": "constant", "value": 30}
+            },
+            {
+                "type": "condition",
+                "left": {"type": "indicator", "name": "MACD", "params": {"fast": 12, "slow": 26, "signal": 9}},
+                "operator": "cross_above",
+                "right": {"type": "indicator", "name": "MACD", "params": {"fast": 12, "slow": 26, "signal": 9}}
+            },
+            {
+                "type": "condition",
+                "left": {"type": "price", "field": "close"},
+                "operator": ">",
+                "right": {"type": "indicator", "name": "EMA", "params": {"period": 20}}
+            }
+        ]
+    }
+}'::jsonb,
         NULL,
         1,
         now(),
