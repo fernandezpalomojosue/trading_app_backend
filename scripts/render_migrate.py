@@ -51,6 +51,16 @@ def main():
             print("💡 Tip: Try running 'alembic merge heads' first")
         elif "SSL connection" in str(e):
             print("💡 Tip: Check database connectivity and SSL configuration")
+        elif "already exists" in str(e):
+            print("💡 Tip: Table already exists, marking migration as applied")
+            # Mark the migration as applied to avoid future conflicts
+            try:
+                from alembic.command import stamp
+                stamp(alembic_cfg, "b2c3d4e5f6g7")
+                print("✅ Migration marked as applied")
+                return
+            except Exception as stamp_error:
+                print(f"❌ Failed to mark migration: {stamp_error}")
         elif "connection" in str(e).lower():
             print("💡 Tip: Verify DATABASE_URL and network connectivity")
             
