@@ -252,11 +252,10 @@ class StrategyUseCases:
     
     async def activate_strategy(
         self,
-        user_id: uuid.UUID,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Activate a strategy"""
-        strategy = await self.get_strategy(user_id, strategy_id)
+        strategy = await self.get_strategy(strategy_id)
         
         # Get full entity
         entity = await self._repository.get_by_id(strategy_id)
@@ -267,11 +266,10 @@ class StrategyUseCases:
     
     async def deactivate_strategy(
         self,
-        user_id: uuid.UUID,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Deactivate a strategy"""
-        strategy = await self.get_strategy(user_id, strategy_id)
+        strategy = await self.get_strategy(strategy_id)
         
         # Get full entity
         entity = await self._repository.get_by_id(strategy_id)
