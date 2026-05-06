@@ -65,12 +65,15 @@ class SignalOrchestrator:
             return now.strftime("%Y-%m-%d")
         elif timeframe == "hour":
             return now.strftime("%Y-%m-%d-%H")
+        elif timeframe == "4hour":
+            hour_bucket = now.hour // 4
+            return now.strftime(f"%Y-%m-%d-{hour_bucket:02d}")
         elif timeframe == "minute":
-            minute_bucket = now.minute
+            minute_bucket = now.minute // 3  # Group minutes into 3-minute buckets
             return now.strftime(f"%Y-%m-%d-%H-{minute_bucket:02d}")
         else:
             # Default to hourly for unknown timeframes
-            return 3 * (now.minute // 3)
+            return now.strftime("%Y-%m-%d-%H")
     
     async def generate_signals_for_user(
         self,

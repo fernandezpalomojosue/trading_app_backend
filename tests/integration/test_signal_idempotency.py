@@ -45,8 +45,9 @@ class TestSignalIdempotencyIntegration:
             signal_repository=mock_signal_repository
         )
         
-        # Mock the strategy engine evaluation
-        orchestrator.strategy_engine.evaluate.return_value = True
+        # Mock strategy engine evaluation
+        from unittest.mock import MagicMock
+        orchestrator.strategy_engine.evaluate = MagicMock(return_value=True)
         
         return orchestrator
     
