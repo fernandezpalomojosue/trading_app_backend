@@ -173,14 +173,12 @@ class StrategyUseCases:
     
     async def get_strategy(
         self,
-        user_id: uuid.UUID,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """
         Get a strategy by ID.
         
         Args:
-            user_id: Owner of the strategy (for verification)
             strategy_id: Strategy to retrieve
             
         Returns:
@@ -188,16 +186,10 @@ class StrategyUseCases:
             
         Raises:
             ValueError: If strategy not found
-            PermissionError: If user doesn't own the strategy
         """
         strategy = await self._repository.get_by_id(strategy_id)
         if not strategy:
             raise ValueError(f"Strategy not found: {strategy_id}")
-        
-        # Verify ownership
-        if strategy.user_id != user_id:
-            raise PermissionError("Cannot access strategy owned by another user")
-        
         return self._to_response(strategy)
     
     async def list_strategies(
@@ -260,11 +252,10 @@ class StrategyUseCases:
     
     async def activate_strategy(
         self,
-        user_id: uuid.UUID,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Activate a strategy"""
-        strategy = await self.get_strategy(user_id, strategy_id)
+        strategy = await self.get_strategy(strategy_id)
         
         # Get full entity
         entity = await self._repository.get_by_id(strategy_id)
@@ -275,11 +266,10 @@ class StrategyUseCases:
     
     async def deactivate_strategy(
         self,
-        user_id: uuid.UUID,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Deactivate a strategy"""
-        strategy = await self.get_strategy(user_id, strategy_id)
+        strategy = await self.get_strategy(strategy_id)
         
         # Get full entity
         entity = await self._repository.get_by_id(strategy_id)

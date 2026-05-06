@@ -306,7 +306,7 @@ class TestGetStrategy:
         self, strategy_use_cases, mock_repository, 
         sample_user_id, sample_strategy_id, valid_dsl_json
     ):
-        """Should return strategy for correct owner"""
+        """Should return strategy by ID (Phase 2: no ownership check)"""
         existing_strategy = Strategy(
             id=sample_strategy_id,
             user_id=sample_user_id,
@@ -316,29 +316,26 @@ class TestGetStrategy:
         )
         mock_repository.get_by_id.return_value = existing_strategy
         
-        result = await strategy_use_cases.get_strategy(
-            sample_user_id, sample_strategy_id
-        )
+        result = await strategy_use_cases.get_strategy(sample_strategy_id)
         
         assert result.name == "Test"
         assert result.id == sample_strategy_id
     
     async def test_get_strategy_not_found(
-        self, strategy_use_cases, mock_repository, sample_user_id, sample_strategy_id
+        self, strategy_use_cases, mock_repository, sample_strategy_id
     ):
         """Should raise error when strategy not found"""
         mock_repository.get_by_id.return_value = None
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            await strategy_use_cases.get_strategy(
-                sample_user_id, sample_strategy_id
-            )
+            await strategy_use_cases.get_strategy(sample_strategy_id)
     
-    async def test_get_strategy_wrong_owner(
+    async def test_get_strategy_by_id_only(
         self, strategy_use_cases, mock_repository, 
-        sample_user_id, sample_strategy_id, valid_dsl_json
+        sample_strategy_id, valid_dsl_json
     ):
-        """Should raise permission error for wrong owner"""
+        """Should get strategy by ID without user ownership check (Phase 2 change)"""
+        # Strategy owned by different user, but should still be accessible
         wrong_user_id = uuid.uuid4()
         existing_strategy = Strategy(
             id=sample_strategy_id,
@@ -349,10 +346,11 @@ class TestGetStrategy:
         )
         mock_repository.get_by_id.return_value = existing_strategy
         
-        with pytest.raises(PermissionError, match="Cannot access strategy"):
-            await strategy_use_cases.get_strategy(
-                sample_user_id, sample_strategy_id
-            )
+        # Phase 2: No user_id parameter, no ownership check
+        result = await strategy_use_cases.get_strategy(sample_strategy_id)
+        
+        assert result.name == "Test"
+        assert result.id == sample_strategy_id
 
 
 class TestListStrategies:
@@ -444,9 +442,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.activate_strategy(
-            sample_user_id, sample_strategy_id
-        )
+        result = await strategy_use_cases.activate_strategy(sample_strategy_id)
         
         assert result.is_active is True
         mock_repository.update.assert_called_once()
@@ -467,9 +463,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.deactivate_strategy(
-            sample_user_id, sample_strategy_id
-        )
+        result = await strategy_use_cases.deactivate_strategy(sample_strategy_id)
         
         assert result.is_active is False
         mock_repository.update.assert_called_once()
