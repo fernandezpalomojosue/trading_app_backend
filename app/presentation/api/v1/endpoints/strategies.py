@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session
 
 from app.db.base import get_session
+from app.core.logging_config import get_logger
 from app.domain.use_cases.strategy_use_cases import StrategyUseCases
 from app.application.repositories.strategy_repository import StrategyRepository
 from app.application.dto.strategy_dto import (
@@ -23,6 +24,8 @@ from app.application.dto.strategy_dto import (
 )
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.infrastructure.database.strategy_repository import SQLStrategyRepository
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -73,7 +76,14 @@ async def list_strategies(
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
 ):
-    print("Listing strategies for user:", current_user.id)
+    logger.info(
+        "Listing strategies for user",
+        component="strategies",
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        active_only=active_only
+    )
     """List all strategies for the current user"""
     return await use_cases.list_strategies(
         user_id=current_user.id,

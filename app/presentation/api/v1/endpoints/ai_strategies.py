@@ -10,6 +10,7 @@ from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlmodel import Session
+from app.core.logging_config import get_logger, get_request_logger
 
 from app.application.dto.ai_strategy_dto import (
     StrategyGenerateRequest,
@@ -58,20 +59,37 @@ def get_strategy_use_cases(
     """
     use_cases = StrategyUseCases(repository)
     
+    logger = get_logger(__name__)
+    
     # Configure AI service via factory (extensible)
     try:
-        print(f"[AI_PROVIDER] Configuring AI provider: {settings.AI_PROVIDER}")
+        logger.info(
+            "AI provider configuration started",
+            component="ai_strategies",
+            provider=settings.AI_PROVIDER
+        )
         provider = AIProviderFactory.create()
         ai_service = StrategyAIService(
             provider=provider,
             max_retries=settings.AI_MAX_RETRIES
         )
         use_cases.set_ai_service(ai_service)
-        print(f"[AI_PROVIDER] AI service configured successfully")
+        logger.info(
+            "AI service configured successfully",
+            component="ai_strategies",
+            provider=settings.AI_PROVIDER,
+            max_retries=settings.AI_MAX_RETRIES
+        )
     except ValueError as e:
         # Provider not registered or unknown
-        print(f"[AI_PROVIDER] Configuration error: {e}")
         available = AIProviderFactory.list_providers()
+        logger.error(
+            "AI provider configuration failed - unknown provider",
+            component="ai_strategies",
+            provider=settings.AI_PROVIDER,
+            available_providers=available,
+            error=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
@@ -86,16 +104,22 @@ def get_strategy_use_cases(
         )
     except Exception as e:
         # Other configuration errors (missing API keys, etc.)
-        print(f"[AI_PROVIDER] Failed to configure AI service: {type(e).__name__}: {e}")
+        logger.error(
+            "AI service configuration failed - general error",
+            component="ai_strategies",
+            provider=settings.AI_PROVIDER,
+            error_type=type(e).__name__,
+            error=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "error_type": "ai_configuration_error",
-                "message": "Failed to configure AI service",
+                "message": "AI service configuration failed",
                 "details": {
                     "provider": settings.AI_PROVIDER,
-                    "error": str(e),
-                    "error_type": type(e).__name__
+                    "error_type": type(e).__name__,
+                    "error": str(e)
                 }
             }
         )
@@ -137,15 +161,40 @@ async def generate_strategy(
         HTTPException 422: If AI fails to generate valid DSL after retries
         HTTPException 429: If rate limit exceeded
     """
-    print(f"[AI_ENDPOINT] Request from user={current_user.id}, prompt='{request.prompt[:50]}...'")
+    request_logger = get_request_logger()
+    request_id = str(uuid.uuid4())
+    request_logger.set_request_context(
+        request_id=request_id,
+        user_id=str(current_user.id),
+        endpoint="ai_strategies_generate"
+    )
+    
+    request_logger.info(
+        "AI strategy generation request received",
+        component="ai_strategies",
+        user_id=current_user.id,
+        prompt_preview=request.prompt[:50],
+        prompt_length=len(request.prompt)
+    )
     
     # Rate limiting at ENDPOINT level (not inside service)
     remaining = await rate_limiter.check_rate_limit(current_user.id)
-    print(f"[AI_ENDPOINT] Rate limit: remaining={remaining}")
+    
+    request_logger.info(
+        "Rate limit check completed",
+        component="ai_strategies",
+        remaining_requests=remaining
+    )
     
     if not remaining:
         retry_after = rate_limiter.get_retry_after(current_user.id)
-        print(f"[AI_ENDPOINT] Rate limit EXCEEDED for user={current_user.id}, retry_after={retry_after}s")
+        request_logger.warning(
+            "Rate limit exceeded",
+            component="ai_strategies",
+            user_id=current_user.id,
+            retry_after_seconds=retry_after,
+            limit_per_minute=settings.AI_RATE_LIMIT_PER_MINUTE
+        )
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
@@ -157,10 +206,20 @@ async def generate_strategy(
     
     # Record request for rate limiting
     await rate_limiter.record_request(current_user.id)
-    print(f"[AI_ENDPOINT] Rate limit recorded for user={current_user.id}")
+    
+    request_logger.info(
+        "Rate limit request recorded",
+        component="ai_strategies",
+        user_id=current_user.id
+    )
     
     # Delegate to use cases (which delegates to AI service)
-    print(f"[AI_ENDPOINT] Delegating to StrategyUseCases.generate_strategy_from_ai")
+    request_logger.info(
+        "Delegating to strategy generation use case",
+        component="ai_strategies",
+        user_id=current_user.id
+    )
+    
     result = await use_cases.generate_strategy_from_ai(
         user_id=current_user.id,
         prompt=request.prompt
@@ -168,32 +227,45 @@ async def generate_strategy(
     
     # Handle error response
     if isinstance(result, StrategyGenerationError):
-        print(f"[AI_ENDPOINT] FAILED: {result.error_type} - {result.message}")
+        request_logger.error(
+            "Strategy generation failed",
+            component="ai_strategies",
+            user_id=current_user.id,
+            error_type=result.error_type,
+            error_message=result.message
+        )
         # Map error types to status codes
         status_code_map = {
             "rate_limit": status.HTTP_429_TOO_MANY_REQUESTS,
-            "timeout": status.HTTP_504_GATEWAY_TIMEOUT,
-            "invalid_json": status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "validation_failed": status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "ai_error": status.HTTP_503_SERVICE_UNAVAILABLE
+            "ai_error": status.HTTP_503_SERVICE_UNAVAILABLE,
+            "validation_error": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "unknown_error": status.HTTP_500_INTERNAL_SERVER_ERROR
         }
         
-        http_status = status_code_map.get(
-            result.error_type,
-            status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        status_code = status_code_map.get(result.error_type, status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         raise HTTPException(
-            status_code=http_status,
+            status_code=status_code,
             detail={
                 "error_type": result.error_type,
                 "message": result.message,
-                "details": result.details
+                "details": result.details if hasattr(result, 'details') else {}
             }
         )
     
     # Return successful response
-    print(f"[AI_ENDPOINT] SUCCESS: strategy='{result.name}', attempts={result.attempts_made}")
+    request_logger.info(
+        "Strategy generation completed successfully",
+        component="ai_strategies",
+        user_id=current_user.id,
+        strategy_name=result.name,
+        attempts_made=result.attempts_made,
+        strategy_saved=result.saved
+    )
+    
+    # Clear request context
+    request_logger.clear_context()
+    
     return result
 
 

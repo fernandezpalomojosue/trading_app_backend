@@ -11,6 +11,9 @@ from app.core.config import get_settings
 from app.infrastructure.security.auth_dependencies import get_current_user_dependency
 from app.application.repositories.market_repository import MarketRepository
 from app.infrastructure.external.market_client import PolygonMarketClient
+from app.core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -63,7 +66,7 @@ async def get_indicators(
         end_date,
         limit
     )
-    print(limit)
+    logger.debug("Indicator data limit applied", component="indicators", limit=limit)
 
     return data[-limit:]
 

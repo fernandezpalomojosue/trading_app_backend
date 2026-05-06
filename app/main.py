@@ -7,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import create_db_and_tables, engine
 from app.presentation.api.v1.endpoints.routers import api_router
+from app.core.logging_config import get_logger
 from sqlalchemy import inspect
+
+logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,26 +19,58 @@ async def lifespan(app: FastAPI):
     - Startup: crea tablas si no existen (verificación automática)
     - Shutdown: cierra conexiones
     """
-    print(f"Starting app in {settings.ENVIRONMENT} mode...")
+    logger.info(
+        "Application startup initiated",
+        component="main",
+        environment=settings.ENVIRONMENT
+    )
     
     # Check if tables exist, create if missing
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
-    required_tables = ['users', 'portfolio_holdings', 'transactions']
+    required_tables = [
+        "users", "strategies", "signals", "favorite_stocks",
+        "user_sessions", "market_data", "indicators_cache"
+    ]
     
     missing_tables = [table for table in required_tables if table not in existing_tables]
     
     if missing_tables:
-        print(f"Missing tables detected: {missing_tables}")
-        print("Creating tables...")
+        logger.warning(
+            "Missing database tables detected",
+            component="main",
+            missing_tables=missing_tables,
+            required_tables=required_tables
+        )
+        logger.info(
+            "Creating database tables",
+            component="main",
+            tables_to_create=missing_tables
+        )
         create_db_and_tables()
-        print("Tables created successfully!")
+        logger.info(
+            "Database tables created successfully",
+            component="main",
+            created_tables=missing_tables
+        )
     else:
-        print(f"All required tables exist: {required_tables}")
+        logger.info(
+            "All required database tables exist",
+            component="main",
+            existing_tables=existing_tables
+        )
     
     yield
-    print("Shutting down app...")
+    
+    logger.info(
+        "Application shutdown initiated",
+        component="main"
+    )
     engine.dispose()
+    logger.info(
+        "Application shutdown completed",
+        component="main"
+    )
 
 
 app = FastAPI(

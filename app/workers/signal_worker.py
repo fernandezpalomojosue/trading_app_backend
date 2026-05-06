@@ -16,15 +16,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
 from app.infrastructure.cache.redis_lock import RedisLock
 
-import logging
+from app.core.logging_config import get_logger, log_operation
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 SessionLocal = sessionmaker(class_=Session, autocommit=False, autoflush=False, bind=engine)
 
 async def run_signal_job():
     """Run signal generation job for all default stocks"""
-    print("Signal worker started")
-    logger.info("Signal generation job started")
+    logger.info("Signal generation job started", component="signal_worker")
     
     try:
         market_client = PolygonMarketClient()
@@ -37,11 +36,10 @@ async def run_signal_job():
         lock_value = await cache_repository.acquire_lock(lock_key, ttl=180)
 
         if not lock_value:
-            logger.warning("Signal job already running, skipping...")
+            logger.warning("Signal job already running, skipping...", lock_key=lock_key)
             return
 
-        logger.info("Signal job lock acquired ✅")
-        print(f"Lock value: {lock_value}")
+        logger.info("Signal job lock acquired", lock_key=lock_key, lock_value=lock_value)
 
         
         # Use session context manager for proper cleanup
@@ -61,12 +59,24 @@ async def run_signal_job():
             targets = await target_service.get_targets()
             
             if not targets:
-                logger.info("No evaluation targets found, skipping execution")
+                logger.info("No evaluation targets found, skipping execution", component="signal_worker")
                 return
             
-            logger.info(f"Generated {len(targets)} evaluation target(s)")
+            logger.info(
+                "Evaluation targets generated",
+                component="signal_worker",
+                target_count=len(targets),
+                total_stocks=sum(t.stock_count for t in targets)
+            )
+            
             for i, target in enumerate(targets):
-                logger.info(f"Target {i+1}: {target.stock_count} stocks - {target.stocks[:5]}...")
+                logger.info(
+                    "Target details",
+                    component="signal_worker",
+                    target_index=i+1,
+                    stock_count=target.stock_count,
+                    sample_stocks=target.stocks[:5]
+                )
             
             # Create orchestrator with strategy_use_cases for DSL-based signal generation
             orchestration_service = SignalOrchestrator(
@@ -80,14 +90,22 @@ async def run_signal_job():
             
             # NEW: Iterate over targets, then stocks
             for target_idx, target in enumerate(targets):
-                logger.info(f"[Target {target_idx+1}/{len(targets)}] Starting execution of {target.stock_count} stocks")
+                logger.info(
+                    "Target execution started",
+                    component="signal_worker",
+                    target_index=target_idx+1,
+                    total_targets=len(targets),
+                    stock_count=target.stock_count
+                )
                 
                 for stock in target.stocks:
                     try:
-                        logger.info(f"[Target {target_idx+1}] Generating signal for {stock}")
-                        
-                        # Log before calling orchestration_service.generate_signal
-                        logger.info(f"DEBUG: About to call orchestration_service.generate_signal for {stock}")
+                        logger.debug(
+                            "Signal generation started",
+                            component="signal_worker",
+                            target_index=target_idx+1,
+                            symbol=stock
+                        )
                         
                         # Still using legacy method which uses default strategy (system default DSL-based)
                         # In future, this can be changed to use generate_signals_for_user with specific user_id
@@ -95,20 +113,38 @@ async def run_signal_job():
                             stock, "day", "2026-01-01", get_last_trading_day()
                         )
                         
-                        # Log after successful call
-                        logger.info(f"DEBUG: Successfully completed orchestration_service.generate_signal for {stock}")
-                        logger.info(f"Successfully generated signal for {stock}: {signal}")
+                        logger.info(
+                            "Signal generated successfully",
+                            component="signal_worker",
+                            target_index=target_idx+1,
+                            symbol=stock,
+                            signal_generated=True
+                        )
                     except Exception as e:
-                        logger.error(f"[Target {target_idx+1}] Error generating signal for {stock}: {e}")
-                        import traceback
-                        logger.error(f"TRACEBACK: {traceback.format_exc()}")
+                        logger.error(
+                            "Signal generation failed",
+                            component="signal_worker",
+                            target_index=target_idx+1,
+                            symbol=stock,
+                            error_type=type(e).__name__,
+                            error_message=str(e)
+                        )
                         
-                logger.info(f"[Target {target_idx+1}] Completed")
+                logger.info(
+                    "Target execution completed",
+                    component="signal_worker",
+                    target_index=target_idx+1
+                )
                     
     except Exception as e:
-        logger.error(f"Critical error in signal job: {e}")
+        logger.error(
+            "Critical error in signal job",
+            component="signal_worker",
+            error_type=type(e).__name__,
+            error_message=str(e)
+        )
         raise
     finally:
-        logger.info("Signal generation job completed")
+        logger.info("Signal generation job completed", component="signal_worker")
         await cache_repository.release_lock(lock_key, lock_value)
-        logger.info("Signal job lock released 🔄")
+        logger.info("Signal job lock released", component="signal_worker", lock_key=lock_key)
