@@ -17,6 +17,7 @@ from app.domain.services.strategy_engine import StrategyEngine
 from app.domain.entities.strategy import Strategy
 from app.application.dto.signals_dto import SignalDataPoint
 from app.domain.use_cases.strategy_use_cases import StrategyUseCases
+from app.core.logging_config import get_logger
 
 
 class SignalOrchestrator:
@@ -36,6 +37,7 @@ class SignalOrchestrator:
         signal_repository: SignalRepository,
         strategy_use_cases: Optional[StrategyUseCases] = None
     ):
+        self.logger = get_logger(__name__)
         self.market_client = market_client
         self.indicator_service = indicator_service
         self.signal_engine_service = signal_engine_service
@@ -190,13 +192,24 @@ class SignalOrchestrator:
                 strategy_name=strategy.name
             )
             
-            print(f"DEBUG: Generated signal: {signal.signal} for strategy '{strategy.name}'")
+            self.logger.debug(
+                "Signal generated",
+                component="signal_orchestrator",
+                symbol=symbol,
+                strategy_name=strategy.name,
+                signal_generated=signal.signal
+            )
             return signal
             
         except Exception as e:
-            print(f"ERROR: Failed to evaluate strategy '{strategy.name}' for {symbol}: {e}")
-            import traceback
-            print(f"TRACEBACK: {traceback.format_exc()}")
+            self.logger.error(
+                "Strategy evaluation failed",
+                component="signal_orchestrator",
+                symbol=symbol,
+                strategy_name=strategy.name,
+                error_type=type(e).__name__,
+                error_message=str(e)
+            )
             return None
     
     async def generate_signal(
@@ -217,7 +230,11 @@ class SignalOrchestrator:
         """
         from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
         
-        print(f"DEBUG: Starting generate_signal for {symbol} (legacy method)")
+        self.logger.debug(
+            "Legacy generate_signal method started",
+            component="signal_orchestrator",
+            symbol=symbol
+        )
         
         # Fetch data
         data = await self.market_client.fetch_candlestick_data(symbol, timespan, 1, 100, start_date, end_date)
