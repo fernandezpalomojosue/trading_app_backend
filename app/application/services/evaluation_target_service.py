@@ -85,22 +85,22 @@ class EvaluationTargetService:
         )
         return await self._fallback_to_favorites()
 
-async def _fallback_to_favorites(self) -> List[EvaluationTarget]:
-    """Fallback method using existing favorites logic"""
-    stocks = await self._get_stock_universe()
-    
-    if not stocks:
-        return []
-    
-    # Use default strategy for fallback
-    from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
-    default_strategy = get_default_strategy_entity()
-    
-    return [EvaluationTarget(
-        strategy_id=default_strategy.id,
-        stocks=stocks,
-        timeframe="day"
-    )]
+    async def _fallback_to_favorites(self) -> List[EvaluationTarget]:
+        """Fallback method using existing favorites logic"""
+        stocks = await self._get_stock_universe()
+        
+        if not stocks:
+            return []
+        
+        # Use default strategy for fallback
+        from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
+        default_strategy = get_default_strategy_entity()
+        
+        return [EvaluationTarget(
+            strategy_id=default_strategy.id,
+            stocks=stocks,
+            timeframe="day"
+        )]
     
     async def _get_stock_universe(self) -> List[str]:
         """
@@ -112,10 +112,10 @@ async def _fallback_to_favorites(self) -> List[EvaluationTarget]:
         """
         # Try favorites first
         favorites = await self._favorite_repo.get_all_favorites()
-        
+    
         if favorites and favorites.symbols:
             return [s.strip().upper() for s in favorites.symbols]
-        
+            
         # Fallback to environment defaults
         default_stocks = getattr(
             self._settings, 
@@ -125,7 +125,7 @@ async def _fallback_to_favorites(self) -> List[EvaluationTarget]:
         
         if isinstance(default_stocks, str):
             return [s.strip().upper() for s in default_stocks.split(',')]
-        
+            
         if default_stocks is None:
             return []
         
