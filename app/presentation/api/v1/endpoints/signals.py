@@ -58,13 +58,11 @@ async def run_signals(
     
     expected_key = settings.get_signal_worker_api_key()
     
-    logger.info("Received API key: %s", x_api_key)
-    logger.info("Expected API key: %s", expected_key)
+    logger.info("API key received", component="signals", received_key=x_api_key)
+    logger.info("Expected API key", component="signals", expected_key=expected_key)
     
     if x_api_key != expected_key:
-        logger.error("API key mismatch!")
-        logger.error("Received: %s", x_api_key)
-        logger.error("Expected: %s", expected_key)
+        logger.error("API key mismatch", component="signals", received_key=x_api_key, expected_key=expected_key)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     await run_signal_job()
