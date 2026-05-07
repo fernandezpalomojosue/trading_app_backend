@@ -132,7 +132,7 @@ class TestSignalEngineServiceEdgeCases:
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=25.0,
+            rsi=None,  # None value to trigger hold signal
             macd=0.9,
             macd_signal=0.8,
             ema=145.0,
