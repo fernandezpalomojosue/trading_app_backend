@@ -199,12 +199,34 @@ class StrategyEvaluator:
         if isinstance(expression, Constant):
             return float(expression.value)
         elif isinstance(expression, Price):
-            # TODO: Implement offset handling for historical price access
-            # For now, only current candle (offset=0 or None) is supported
+            # Implement offset handling for historical price access
             offset = getattr(expression, 'offset', 0) or 0
-            if offset != 0:
-                logger.warning(f"Price offset={offset} not yet implemented in execution, using current candle")
-            return context.get_value(expression.field)
+            
+            if offset == 0:
+                # Current candle - use context directly
+                return context.get_value(expression.field)
+            else:
+                # Historical candle - access from MarketSnapshot if available
+                if hasattr(context, '_market_snapshot') and context._market_snapshot:
+                    snapshot = context._market_snapshot
+                    indicators = snapshot.indicators
+                    
+                    # Calculate index for historical data
+                    # offset=1 means previous candle, offset=2 means 2 candles back, etc.
+                    if offset <= len(indicators):
+                        historical_index = -(offset)  # Negative index from end
+                        historical_point = indicators[historical_index]
+                        
+                        # Create temporary context from historical point
+                        from app.domain.entities.market_context import MarketContext
+                        historical_context = MarketContext.from_indicator_point(historical_point)
+                        return historical_context.get_value(expression.field)
+                    else:
+                        logger.warning(f"Price offset={offset} exceeds available historical data ({len(indicators)} candles), using current candle")
+                        return context.get_value(expression.field)
+                else:
+                    logger.warning(f"Price offset={offset} not available (no MarketSnapshot), using current candle")
+                    return context.get_value(expression.field)
         elif isinstance(expression, Indicator):
             return cls._evaluate_indicator(expression, context)
         else:
