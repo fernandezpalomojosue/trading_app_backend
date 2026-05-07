@@ -37,8 +37,8 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
         """Create a new execution plan."""
         model = ExecutionPlanModel.from_entity(plan)
         self._session.add(model)
-        await self._session.commit()
-        await self._session.refresh(model)
+        self._session.commit()
+        self._session.refresh(model)
         return model.to_entity()
     
     async def update(self, plan: ExecutionPlan) -> ExecutionPlan:
@@ -58,8 +58,8 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
         model.is_active = plan.is_active
         model.updated_at = plan.updated_at
         
-        await self._session.commit()
-        await self._session.refresh(model)
+        self._session.commit()
+        self._session.refresh(model)
         return model.to_entity()
     
     async def get_by_id(self, plan_id: uuid.UUID) -> Optional[ExecutionPlan]:
@@ -85,6 +85,6 @@ class SQLExecutionPlanRepository(ExecutionPlanRepository):
         if not model:
             return False
         
-        await self._session.delete(model)
-        await self._session.commit()
+        self._session.delete(model)
+        self._session.commit()
         return True
