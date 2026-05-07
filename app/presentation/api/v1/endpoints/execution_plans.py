@@ -111,7 +111,7 @@ async def create_execution_plan(
             use_cases_strategy_repo_type=type(use_cases.strategy_repo).__name__ if use_cases.strategy_repo else "None"
         )
         
-        strategy = await use_cases.strategy_repo.get_by_id(plan.strategy_id)
+        strategy = use_cases.strategy_repo.get_by_id(plan.strategy_id)
         logger.debug(
             "Strategy retrieved",
             component="execution_plans_api",
@@ -361,7 +361,7 @@ async def update_execution_plan(
         plan = await use_cases.update_plan(plan_id, dto, current_user.id)
         
         # Get strategy name for response
-        strategy = await use_cases.strategy_repo.get_by_id(plan.strategy_id)
+        strategy = use_cases.strategy_repo.get_by_id(plan.strategy_id)
         strategy_name = strategy.name if strategy else "Unknown"
         
         logger.info(
