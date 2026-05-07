@@ -548,7 +548,7 @@ class SignalOrchestrator:
                     timeframe=snapshot.timeframe,
                     strategy_id=str(strategy.id),
                     time_bucket=time_bucket,
-                    signal_action=signal.action,
+                    signal_action=signal.signal,
                     signal_confidence=signal.confidence
                 )
             
