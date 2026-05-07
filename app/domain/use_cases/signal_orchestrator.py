@@ -13,6 +13,7 @@ from app.application.services.signal_engine_service import SignalEngineService
 from app.application.repositories.signal_repository import SignalRepository
 from app.application.repositories.cache_repository import CacheRepository
 from app.domain.entities.market_context import MarketContext
+from app.domain.entities.market_snapshot import MarketSnapshot
 from app.domain.services.strategy_engine import StrategyEngine
 from app.domain.entities.strategy import Strategy
 from app.application.dto.signals_dto import SignalDataPoint
@@ -443,6 +444,116 @@ class SignalOrchestrator:
                 strategy_id=str(strategy.id),
                 timeframe=timeframe,
                 time_bucket=time_bucket,
+                error_type=type(e).__name__,
+                error_message=str(e)
+            )
+    
+    async def generate_signal_from_snapshot(
+        self,
+        strategy: Strategy,
+        snapshot: MarketSnapshot
+    ) -> Optional[SignalDataPoint]:
+        """
+        Generate signal using precomputed market snapshot.
+        
+        Phase 4 optimized method that uses precomputed MarketSnapshot
+        instead of fetching market data and computing indicators.
+        
+        Args:
+            strategy: Strategy entity with DSL definition
+            snapshot: Precomputed MarketSnapshot with indicator data
+            
+        Returns:
+            SignalDataPoint if conditions met, None otherwise
+        """
+        try:
+            # Validate snapshot has sufficient data
+            if not snapshot.has_valid_data():
+                self.logger.warning(
+                    "invalid_snapshot_for_evaluation",
+                    component="signal_orchestrator",
+                    symbol=snapshot.symbol,
+                    timeframe=snapshot.timeframe,
+                    strategy_id=str(strategy.id),
+                    reason="insufficient_data"
+                )
+                return None
+            
+            # Get time bucket for idempotency
+            time_bucket = self._get_time_bucket(snapshot.timeframe)
+            
+            # Apply idempotency lock using Redis NX semantics
+            idempotency_key = f"signal:{strategy.id}:{snapshot.symbol}:{time_bucket}"
+            lock_acquired = await self.cache_client.set_if_not_exists(
+                idempotency_key, 
+                "1", 
+                ttl=60
+            )
+            
+            if not lock_acquired:
+                self.logger.info(
+                    "signal_already_generated",
+                    component="signal_orchestrator",
+                    symbol=snapshot.symbol,
+                    timeframe=snapshot.timeframe,
+                    strategy_id=str(strategy.id),
+                    time_bucket=time_bucket,
+                    idempotency_key=idempotency_key
+                )
+                return None
+            
+            # Build MarketContext objects from snapshot
+            context, prev_context = snapshot.get_evaluation_context()
+            
+            # Evaluate strategy condition
+            condition_met = self.strategy_engine.evaluate(
+                strategy, context, prev_context
+            )
+            
+            # Determine action based on condition
+            action = strategy.dsl_definition.get("action", "hold")
+            if condition_met:
+                action = strategy.dsl_definition.get("action", "buy") if action == "hold" else action
+            
+            # Generate signal
+            signal = self.signal_engine_service.calculate_single_signal(
+                symbol=snapshot.symbol,
+                current_point=context,
+                previous_point=prev_context,
+                action=action,
+                strategy_name=strategy.name
+            )
+            
+            if signal:
+                await self.signal_repository.save_signal(
+                    snapshot.symbol, signal, strategy.id
+                )
+                await self.cache_client.set(
+                    f"signal_{snapshot.symbol}_{strategy.id}", 
+                    signal.model_dump(), 
+                    ttl=60
+                )
+                
+                self.logger.info(
+                    "signal_generated_from_snapshot",
+                    component="signal_orchestrator",
+                    symbol=snapshot.symbol,
+                    timeframe=snapshot.timeframe,
+                    strategy_id=str(strategy.id),
+                    time_bucket=time_bucket,
+                    signal_action=signal.action,
+                    signal_confidence=signal.confidence
+                )
+            
+            return signal
+            
+        except Exception as e:
+            self.logger.error(
+                "snapshot_signal_generation_failed",
+                component="signal_orchestrator",
+                symbol=snapshot.symbol,
+                timeframe=snapshot.timeframe,
+                strategy_id=str(strategy.id),
                 error_type=type(e).__name__,
                 error_message=str(e)
             )
