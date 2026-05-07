@@ -88,22 +88,10 @@ class TestPhase4Optimization:
     
     @pytest.fixture
     def mock_indicator_data(self):
-        """Create mock indicator data points"""
+        """Create mock indicator data points in chronological order"""
         return [
             IndicatorDataPoint(
-                timestamp=1654281600000,  # 2022-06-03
-                symbol="AAPL",
-                ema=150.0,
-                sma=148.0,
-                rsi=25.0,  # Low RSI for buy signal
-                macd=0.5,
-                macd_signal=0.3,
-                histogram=0.2,
-                close_price=151.0,
-                fibonacci_levels={}
-            ),
-            IndicatorDataPoint(
-                timestamp=1654195200000,  # 2022-06-02
+                timestamp=1654195200000,  # 2022-06-02 (older)
                 symbol="AAPL",
                 ema=148.0,
                 sma=146.0,
@@ -112,6 +100,18 @@ class TestPhase4Optimization:
                 macd_signal=0.2,
                 histogram=0.1,
                 close_price=149.0,
+                fibonacci_levels={}
+            ),
+            IndicatorDataPoint(
+                timestamp=1654281600000,  # 2022-06-03 (newer)
+                symbol="AAPL",
+                ema=150.0,
+                sma=148.0,
+                rsi=25.0,  # Low RSI for buy signal
+                macd=0.5,
+                macd_signal=0.3,
+                histogram=0.2,
+                close_price=151.0,
                 fibonacci_levels={}
             )
         ]
@@ -225,11 +225,11 @@ class TestPhase4Optimization:
         """Test that SnapshotPrecomputationService groups correctly"""
         # Mock market data fetch
         mock_market_data = [
-            {"t": 1654281600000, "c": 151.0, "h": 152.0, "l": 149.0, "o": 150.0, "v": 1000000},
-            {"t": 1654195200000, "c": 149.0, "h": 150.0, "l": 148.0, "o": 149.0, "v": 950000}
+            {"t": 1654195200000, "c": 149.0, "h": 150.0, "l": 148.0, "o": 149.0, "v": 950000},
+            {"t": 1654281600000, "c": 151.0, "h": 152.0, "l": 149.0, "o": 150.0, "v": 1000000}
         ]
         
-        mock_snapshot_service.market_service.fetch_candlestick_data.return_value = mock_market_data
+        mock_snapshot_service.market_service.get_candlestick_data.return_value = mock_market_data
         mock_snapshot_service.indicator_service.get_indicators.return_value = mock_indicator_data
         
         # Build snapshots
@@ -257,13 +257,13 @@ class TestPhase4Optimization:
         # Mock slow operations
         async def slow_fetch(*args, **kwargs):
             await asyncio.sleep(0.1)  # Simulate API latency
-            return [{"t": 1654281600000, "c": 151.0}]
+            return [{"t": 1654195200000, "c": 149.0}, {"t": 1654281600000, "c": 151.0}]
         
         async def slow_indicators(*args, **kwargs):
             await asyncio.sleep(0.05)  # Simulate computation time
             return mock_indicator_data
         
-        mock_snapshot_service.market_service.fetch_candlestick_data.side_effect = slow_fetch
+        mock_snapshot_service.market_service.get_candlestick_data.side_effect = slow_fetch
         mock_snapshot_service.indicator_service.get_indicators.side_effect = slow_indicators
         
         # Time the operation
@@ -349,6 +349,9 @@ class TestPhase4Optimization:
             signal_repository=signal_repository,
             strategy_use_cases=strategy_use_cases
         )
+        
+        # Mock strategy engine evaluation properly
+        orchestrator.strategy_engine.evaluate = MagicMock()
         
         # Mock cache lock to fail (already exists)
         cache_client.set_if_not_exists.return_value = False
