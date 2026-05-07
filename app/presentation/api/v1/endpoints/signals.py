@@ -15,7 +15,7 @@ from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.services.indicators_service import IndicatorsService
 from app.application.services.signal_engine_service import SignalEngineService
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
-from app.workers.signal_worker import run_signal_job
+from app.workers.signal_worker import run_signal_job, run_signal_job_phase4
 
 logger = get_logger(__name__)
 
@@ -62,7 +62,7 @@ async def run_signals(
         logger.error("API key mismatch", component="signals", received_key=x_api_key)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
-    await run_signal_job()
+    await run_signal_job_phase4()
     return {"status": "triggered"}
 
 @router.get("/{symbol}")
