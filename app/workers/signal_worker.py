@@ -188,6 +188,7 @@ async def run_signal_job_phase4():
             signal_repository = SQLSignalRepository(session)
             strategy_repository = SQLStrategyRepository(session)
             execution_plan_repository = SQLExecutionPlanRepository(session)
+            favorite_repository = SQLFavoriteStockRepository(session)
             strategy_use_cases = StrategyUseCases(strategy_repository)
             
             # Create services
@@ -216,7 +217,84 @@ async def run_signal_job_phase4():
             plans = await execution_plan_repository.get_active_plans()
             
             if not plans:
-                logger.info("No active execution plans found", component="signal_worker")
+                logger.info("No active execution plans found, falling back to legacy signal generation", component="signal_worker")
+                
+                # Fallback to legacy signal generation using favorites
+                target_service = EvaluationTargetService(
+                    execution_plan_repository=execution_plan_repository,
+                    favorite_repository=favorite_repository,
+                    settings=settings
+                )
+                
+                targets = await target_service.get_targets()
+                
+                if not targets:
+                    logger.info("No evaluation targets found even after fallback, skipping execution", component="signal_worker")
+                    return
+                
+                logger.info(
+                    "Using fallback targets for legacy signal generation",
+                    component="signal_worker",
+                    target_count=len(targets),
+                    total_stocks=sum(t.stock_count for t in targets)
+                )
+                
+                # Use original orchestrator for legacy signal generation
+                for target_idx, target in enumerate(targets):
+                    logger.info(
+                        "Processing fallback target",
+                        component="signal_worker",
+                        target_index=target_idx+1,
+                        strategy_id=str(target.strategy_id),
+                        stock_count=target.stock_count,
+                        timeframe=target.timeframe
+                    )
+                    
+                    for stock in target.stocks:
+                        try:
+                            logger.debug(
+                                "Legacy signal generation started",
+                                component="signal_worker",
+                                target_index=target_idx+1,
+                                strategy_id=str(target.strategy_id),
+                                symbol=stock
+                            )
+                            
+                            # Use legacy method for backward compatibility
+                            signal = await orchestration_service.generate_signal_for_strategy(
+                                symbol=stock,
+                                strategy_id=target.strategy_id,
+                                timeframe=target.timeframe or "day"
+                            )
+                            
+                            if signal:
+                                logger.info(
+                                    "Legacy signal generated successfully",
+                                    component="signal_worker",
+                                    target_index=target_idx+1,
+                                    symbol=stock,
+                                    signal_action=signal.action
+                                )
+                            else:
+                                logger.debug(
+                                    "No legacy signal generated",
+                                    component="signal_worker",
+                                    target_index=target_idx+1,
+                                    symbol=stock
+                                )
+                                
+                        except Exception as e:
+                            logger.error(
+                                "Legacy signal generation failed",
+                                component="signal_worker",
+                                target_index=target_idx+1,
+                                strategy_id=str(target.strategy_id),
+                                symbol=stock,
+                                error_type=type(e).__name__,
+                                error_message=str(e)
+                            )
+                
+                logger.info("Legacy fallback signal generation completed", component="signal_worker")
                 return
             
             logger.info(
