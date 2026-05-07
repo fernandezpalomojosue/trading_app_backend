@@ -49,15 +49,52 @@ class SQLStrategyRepository(StrategyRepository):
     
     async def get_by_id(self, strategy_id: uuid.UUID) -> Optional[Strategy]:
         """Get strategy by ID"""
+        from app.core.logging_config import get_logger
         from app.infrastructure.database.models import StrategyModel
         
+        logger = get_logger(__name__)
+        
+        logger.debug(
+            "SQLStrategyRepository.get_by_id started",
+            component="strategy_repository",
+            strategy_id=str(strategy_id),
+            session_is_none=self._session is None,
+            session_type=type(self._session).__name__ if self._session else "None"
+        )
+        
         statement = select(StrategyModel).where(StrategyModel.id == strategy_id)
+        logger.debug(
+            "Executing database query",
+            component="strategy_repository",
+            statement=str(statement)
+        )
+        
         result = self._session.exec(statement).first()
+        logger.debug(
+            "Database query executed",
+            component="strategy_repository",
+            result_is_none=result is None,
+            result_type=type(result).__name__ if result else "None"
+        )
         
         if result is None:
+            logger.debug(
+                "Strategy not found in database",
+                component="strategy_repository",
+                strategy_id=str(strategy_id)
+            )
             return None
         
-        return self._to_entity(result)
+        strategy = self._to_entity(result)
+        logger.debug(
+            "Strategy converted to entity",
+            component="strategy_repository",
+            strategy_id=str(strategy_id),
+            strategy_name=strategy.name if strategy else "None",
+            strategy_type=type(strategy).__name__
+        )
+        
+        return strategy
     
     async def get_by_user(
         self, 

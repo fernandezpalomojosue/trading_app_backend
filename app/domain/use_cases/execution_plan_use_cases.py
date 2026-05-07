@@ -46,9 +46,39 @@ class ExecutionPlanUseCases:
         Raises:
             ValueError: If strategy doesn't exist or validation fails
         """
+        from app.core.logging_config import get_logger
+        logger = get_logger(__name__)
+        
+        logger.debug(
+            "ExecutionPlanUseCases.create_plan started",
+            component="execution_plan_use_cases",
+            user_id=str(user_id),
+            strategy_id=str(dto.strategy_id),
+            strategy_repo_is_none=self.strategy_repo is None,
+            strategy_repo_type=type(self.strategy_repo).__name__ if self.strategy_repo else "None"
+        )
+        
         # Validate strategy exists (skip ownership validation per requirement)
+        logger.debug(
+            "Validating strategy exists",
+            component="execution_plan_use_cases",
+            strategy_id=str(dto.strategy_id)
+        )
+        
         strategy = await self.strategy_repo.get_by_id(dto.strategy_id)
+        logger.debug(
+            "Strategy validation result",
+            component="execution_plan_use_cases",
+            strategy_is_none=strategy is None,
+            strategy_type=type(strategy).__name__ if strategy else "None"
+        )
+        
         if not strategy:
+            logger.error(
+                "Strategy not found during validation",
+                component="execution_plan_use_cases",
+                strategy_id=str(dto.strategy_id)
+            )
             raise ValueError("Strategy not found")
         
         # Create execution plan
