@@ -273,7 +273,7 @@ async def run_signal_job_phase4():
                                     component="signal_worker",
                                     target_index=target_idx+1,
                                     symbol=stock,
-                                    signal_action=signal.action
+                                    signal_action=signal.signal
                                 )
                             else:
                                 logger.debug(
