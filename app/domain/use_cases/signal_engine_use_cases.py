@@ -11,9 +11,10 @@ from app.application.dto.indicators_dto import IndicatorDataPoint
 from app.application.dto.signals_dto import SignalDataPoint
 from datetime import datetime
 from app.domain.services.fibonacci_service import FibonacciService
+from app.application.services.signal_engine_service import SignalEngineService
 
 
-class SignalEngineUseCases:
+class SignalEngineUseCases(SignalEngineService):
     """
     Signal construction layer - NO hardcoded trading rules.
     
