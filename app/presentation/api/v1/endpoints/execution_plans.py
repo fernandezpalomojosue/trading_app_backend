@@ -38,9 +38,21 @@ def get_execution_plan_use_cases(db: Session = Depends(get_session)) -> Executio
     Returns:
         Configured ExecutionPlanUseCases instance
     """
+    logger.debug("Creating execution plan use cases", component="execution_plans_api")
     execution_plan_repo = SQLExecutionPlanRepository(db)
     strategy_repo = SQLStrategyRepository(db)
-    return ExecutionPlanUseCases(execution_plan_repo, strategy_repo)
+    
+    logger.debug(
+        "Repositories created", 
+        component="execution_plans_api",
+        execution_plan_repo=type(execution_plan_repo).__name__,
+        strategy_repo=type(strategy_repo).__name__,
+        strategy_repo_is_none=strategy_repo is None
+    )
+    
+    use_cases = ExecutionPlanUseCases(execution_plan_repo, strategy_repo)
+    logger.debug("Execution plan use cases created successfully", component="execution_plans_api")
+    return use_cases
 
 
 @router.post("/execution-plans", response_model=ExecutionPlanResponseDTO, status_code=status.HTTP_201_CREATED)
@@ -73,11 +85,46 @@ async def create_execution_plan(
     )
     
     try:
+        logger.debug(
+            "Starting execution plan creation",
+            component="execution_plans_api",
+            user_id=str(current_user.id),
+            strategy_id=str(dto.strategy_id),
+            stocks_count=len(dto.stocks),
+            timeframe=dto.timeframe.value
+        )
+        
         plan = await use_cases.create_plan(dto, current_user.id)
+        logger.debug(
+            "Execution plan created successfully",
+            component="execution_plans_api",
+            plan_id=str(plan.id),
+            plan_strategy_id=str(plan.strategy_id)
+        )
         
         # Get strategy name for response
+        logger.debug(
+            "Getting strategy name for response",
+            component="execution_plans_api",
+            plan_strategy_id=str(plan.strategy_id),
+            use_cases_strategy_repo_is_none=use_cases.strategy_repo is None,
+            use_cases_strategy_repo_type=type(use_cases.strategy_repo).__name__ if use_cases.strategy_repo else "None"
+        )
+        
         strategy = await use_cases.strategy_repo.get_by_id(plan.strategy_id)
+        logger.debug(
+            "Strategy retrieved",
+            component="execution_plans_api",
+            strategy_is_none=strategy is None,
+            strategy_type=type(strategy).__name__ if strategy else "None"
+        )
+        
         strategy_name = strategy.name if strategy else "Unknown"
+        logger.debug(
+            "Strategy name extracted",
+            component="execution_plans_api",
+            strategy_name=strategy_name
+        )
         
         logger.info(
             "execution_plan_created_successfully",
