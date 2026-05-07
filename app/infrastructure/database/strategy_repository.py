@@ -24,7 +24,7 @@ class SQLStrategyRepository(StrategyRepository):
     def __init__(self, session: Session):
         self._session = session
     
-    async def create(self, strategy: Strategy) -> Strategy:
+    def create(self, strategy: Strategy) -> Strategy:
         """Create a new strategy"""
         from app.infrastructure.database.models import StrategyModel
         
@@ -47,7 +47,7 @@ class SQLStrategyRepository(StrategyRepository):
         
         return self._to_entity(db_strategy)
     
-    async def get_by_id(self, strategy_id: uuid.UUID) -> Optional[Strategy]:
+    def get_by_id(self, strategy_id: uuid.UUID) -> Optional[Strategy]:
         """Get strategy by ID"""
         from app.core.logging_config import get_logger
         from app.infrastructure.database.models import StrategyModel
@@ -96,7 +96,7 @@ class SQLStrategyRepository(StrategyRepository):
         
         return strategy
     
-    async def get_by_user(
+    def get_by_user(
         self, 
         user_id: uuid.UUID, 
         skip: int = 0, 
@@ -116,7 +116,7 @@ class SQLStrategyRepository(StrategyRepository):
         results = self._session.exec(statement).all()
         return [self._to_entity(r) for r in results]
     
-    async def update(self, strategy: Strategy) -> Strategy:
+    def update(self, strategy: Strategy) -> Strategy:
         """Update an existing strategy"""
         from app.infrastructure.database.models import StrategyModel
         
@@ -139,7 +139,7 @@ class SQLStrategyRepository(StrategyRepository):
         
         return self._to_entity(db_strategy)
     
-    async def delete(self, strategy_id: uuid.UUID) -> bool:
+    def delete(self, strategy_id: uuid.UUID) -> bool:
         """Delete a strategy"""
         from app.infrastructure.database.models import StrategyModel
         
