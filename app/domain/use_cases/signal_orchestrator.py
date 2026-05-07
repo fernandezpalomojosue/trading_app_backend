@@ -505,6 +505,11 @@ class SignalOrchestrator:
             # Build MarketContext objects from snapshot
             context, prev_context = snapshot.get_evaluation_context()
             
+            # Add MarketSnapshot reference to context for offset support
+            context._market_snapshot = snapshot
+            if prev_context:
+                prev_context._market_snapshot = snapshot
+            
             # Evaluate strategy condition
             condition_met = self.strategy_engine.evaluate(
                 strategy, context, prev_context
@@ -520,6 +525,8 @@ class SignalOrchestrator:
                 symbol=snapshot.symbol,
                 point=context,
                 prev_point=prev_context,
+                strategy_id=strategy.id,
+                condition_met=condition_met,
                 action=action,
                 strategy_name=strategy.name
             )
