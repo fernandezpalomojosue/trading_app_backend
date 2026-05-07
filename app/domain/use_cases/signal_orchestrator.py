@@ -212,7 +212,7 @@ class SignalOrchestrator:
             print(f"DEBUG: Strategy '{strategy.name}' - condition_met={condition_met}, action={action}")
             
             # Build signal using SignalEngineUseCases
-            signal = self.signal_engine_service.calculate_single_signal(
+            signal = await self.signal_engine_service.calculate_single_signal(
                 symbol=symbol,
                 point=current_point,
                 prev_point=prev_point,

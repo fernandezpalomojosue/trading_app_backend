@@ -31,7 +31,7 @@ class SignalEngineUseCases(SignalEngineService):
     def __init__(self):
         self.fibonacci_service = FibonacciService()
     
-    def calculate_single_signal(
+    async def calculate_single_signal(
         self, 
         symbol: str,
         point: IndicatorDataPoint,

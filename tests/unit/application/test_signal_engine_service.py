@@ -42,9 +42,10 @@ def valid_indicator_point():
 class TestSignalEngineServiceBuySignals:
     """Tests for BUY signal generation with explicit DSL action"""
 
-    def test_buy_when_condition_met_and_action_buy(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_buy_when_condition_met_and_action_buy(self, signal_engine, valid_indicator_point):
         """Should return BUY when condition_met=True and action=buy"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
@@ -64,9 +65,10 @@ class TestSignalEngineServiceBuySignals:
 class TestSignalEngineServiceSellSignals:
     """Tests for SELL signal generation with explicit DSL action"""
 
-    def test_sell_when_condition_met_and_action_sell(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_sell_when_condition_met_and_action_sell(self, signal_engine, valid_indicator_point):
         """Should return SELL when condition_met=True and action=sell"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
@@ -86,9 +88,10 @@ class TestSignalEngineServiceSellSignals:
 class TestSignalEngineServiceHoldSignals:
     """Tests for HOLD signal generation"""
 
-    def test_hold_when_condition_not_met(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_hold_when_condition_not_met(self, signal_engine, valid_indicator_point):
         """Should return HOLD when condition_met=False regardless of action"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
@@ -103,9 +106,10 @@ class TestSignalEngineServiceHoldSignals:
         assert "HOLD:" in signalpoint.reason
         assert "conditions not met" in signalpoint.reason
 
-    def test_hold_when_action_is_hold(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_hold_when_action_is_hold(self, signal_engine, valid_indicator_point):
         """Should return HOLD when action=hold even if condition_met=True"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
@@ -122,22 +126,23 @@ class TestSignalEngineServiceHoldSignals:
 class TestSignalEngineServiceEdgeCases:
     """Tests for edge cases"""
 
-    def test_hold_when_any_value_is_none(self, signal_engine):
+    @pytest.mark.asyncio
+    async def test_hold_when_any_value_is_none(self, signal_engine):
         """Should return HOLD when any required value is None"""
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
             symbol="AAPL",
-            rsi=None,  # None value
+            rsi=None,  # None value to trigger hold signal
             macd=0.9,
             macd_signal=0.8,
             ema=145.0,
             sma=140.0,
             histogram=0.1,
             close_price=150.0,
-            fibonacci_levels={}
+            fibonacci_levels={"0.236": 145.0, "0.5": 147.5, "0.618": 149.0}
         )
         
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=current_point,
             prev_point=None,
@@ -151,7 +156,8 @@ class TestSignalEngineServiceEdgeCases:
         assert "Insufficient or invalid" in signalpoint.reason
         assert signalpoint.strategy_id == TEST_STRATEGY_ID
 
-    def test_hold_when_any_value_is_nan(self, signal_engine):
+    @pytest.mark.asyncio
+    async def test_hold_when_any_value_is_nan(self, signal_engine):
         """Should return HOLD when any required value is NaN"""
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
@@ -166,7 +172,7 @@ class TestSignalEngineServiceEdgeCases:
             fibonacci_levels={}
         )
         
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=current_point,
             prev_point=None,
@@ -180,7 +186,8 @@ class TestSignalEngineServiceEdgeCases:
         assert "Insufficient or invalid" in signalpoint.reason
         assert signalpoint.strategy_id == TEST_STRATEGY_ID
 
-    def test_fibonacci_levels_used_for_sl_tp(self, signal_engine):
+    @pytest.mark.asyncio
+    async def test_fibonacci_levels_used_for_sl_tp(self, signal_engine):
         """Should use Fibonacci levels for dynamic SL/TP calculation"""
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
@@ -200,7 +207,7 @@ class TestSignalEngineServiceEdgeCases:
             }
         )
         
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=current_point,
             prev_point=None,
@@ -216,7 +223,8 @@ class TestSignalEngineServiceEdgeCases:
         assert signalpoint.take_profit > 0
         assert signalpoint.signal == "buy"
 
-    def test_fallback_sl_tp_without_fibonacci(self, signal_engine):
+    @pytest.mark.asyncio
+    async def test_fallback_sl_tp_without_fibonacci(self, signal_engine):
         """Should use 5% fallback when Fibonacci levels are empty"""
         current_point = IndicatorDataPoint(
             timestamp=1234567890000,
@@ -231,7 +239,7 @@ class TestSignalEngineServiceEdgeCases:
             fibonacci_levels={}  # Empty Fibonacci levels
         )
         
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=current_point,
             prev_point=None,
@@ -251,9 +259,10 @@ class TestSignalEngineServiceEdgeCases:
 class TestSignalEngineServiceStrategyTraceability:
     """Tests for signal traceability with strategy_id"""
 
-    def test_signal_includes_strategy_id(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_signal_includes_strategy_id(self, signal_engine, valid_indicator_point):
         """All signals must include the strategy_id for traceability"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
@@ -266,9 +275,10 @@ class TestSignalEngineServiceStrategyTraceability:
         assert signalpoint.strategy_id is not None
         assert signalpoint.strategy_id == TEST_STRATEGY_ID
 
-    def test_signal_includes_strategy_name_in_reason(self, signal_engine, valid_indicator_point):
+    @pytest.mark.asyncio
+    async def test_signal_includes_strategy_name_in_reason(self, signal_engine, valid_indicator_point):
         """Signal reason should include strategy name for context"""
-        signalpoint = signal_engine.calculate_single_signal(
+        signalpoint = await signal_engine.calculate_single_signal(
             symbol="AAPL",
             point=valid_indicator_point,
             prev_point=None,
