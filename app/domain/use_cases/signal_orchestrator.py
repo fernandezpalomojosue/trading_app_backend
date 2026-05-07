@@ -409,8 +409,8 @@ class SignalOrchestrator:
             prev_context = MarketContext.from_indicator_point(prev_point)
             
             # Evaluate strategy condition
-            condition_met = self.strategy_engine.evaluate_condition(
-                strategy.dsl_definition, context, prev_context
+            condition_met = self.strategy_engine.evaluate(
+                strategy, context, prev_context
             )
             
             # Determine action based on condition
