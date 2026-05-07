@@ -65,7 +65,7 @@ class ExecutionPlanUseCases:
             strategy_id=str(dto.strategy_id)
         )
         
-        strategy = await self.strategy_repo.get_by_id(dto.strategy_id)
+        strategy = self.strategy_repo.get_by_id(dto.strategy_id)
         logger.debug(
             "Strategy validation result",
             component="execution_plan_use_cases",
@@ -201,7 +201,7 @@ class ExecutionPlanUseCases:
             return None
         
         # Get strategy name for response enrichment
-        strategy = await self.strategy_repo.get_by_id(plan.strategy_id)
+        strategy = self.strategy_repo.get_by_id(plan.strategy_id)
         strategy_name = strategy.name if strategy else "Unknown"
         
         return plan, strategy_name
@@ -221,7 +221,7 @@ class ExecutionPlanUseCases:
         result = []
         for plan in plans:
             # Get strategy name for each plan
-            strategy = await self.strategy_repo.get_by_id(plan.strategy_id)
+            strategy = self.strategy_repo.get_by_id(plan.strategy_id)
             strategy_name = strategy.name if strategy else "Unknown"
             result.append((plan, strategy_name))
         
