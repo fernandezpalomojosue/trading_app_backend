@@ -405,19 +405,8 @@ class SignalOrchestrator:
             current_point = indicators[-1]
             prev_point = indicators[-2]
             
-            context = MarketContext(
-                symbol=symbol,
-                timeframe=timeframe,
-                current=current_point,
-                previous=prev_point
-            )
-            
-            prev_context = MarketContext(
-                symbol=symbol,
-                timeframe=timeframe,
-                current=prev_point,
-                previous=indicators[-3] if len(indicators) > 2 else None
-            )
+            context = MarketContext.from_indicator_point(current_point)
+            prev_context = MarketContext.from_indicator_point(prev_point)
             
             # Evaluate strategy condition
             condition_met = self.strategy_engine.evaluate_condition(
