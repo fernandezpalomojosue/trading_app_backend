@@ -248,7 +248,7 @@ class SnapshotPrecomputationService:
         # Fetch sufficient data for indicator calculations
         limit = 100  # Default limit for indicator calculations
         
-        data = await self.market_service.get_candlestick_data(
+        data = await self.market_service.fetch_candlestick_data(
             symbol=symbol,
             timespan=timespan,
             multiplier=multiplier,
