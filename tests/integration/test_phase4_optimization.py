@@ -229,7 +229,7 @@ class TestPhase4Optimization:
             {"t": 1654281600000, "c": 151.0, "h": 152.0, "l": 149.0, "o": 150.0, "v": 1000000}
         ]
         
-        mock_snapshot_service.market_service.get_candlestick_data.return_value = mock_market_data
+        mock_snapshot_service.market_service.fetch_candlestick_data.return_value = mock_market_data
         mock_snapshot_service.indicator_service.get_indicators.return_value = mock_indicator_data
         
         # Build snapshots
@@ -263,7 +263,7 @@ class TestPhase4Optimization:
             await asyncio.sleep(0.05)  # Simulate computation time
             return mock_indicator_data
         
-        mock_snapshot_service.market_service.get_candlestick_data.side_effect = slow_fetch
+        mock_snapshot_service.market_service.fetch_candlestick_data.side_effect = slow_fetch
         mock_snapshot_service.indicator_service.get_indicators.side_effect = slow_indicators
         
         # Time the operation
