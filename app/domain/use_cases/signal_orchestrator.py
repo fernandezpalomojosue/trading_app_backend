@@ -521,7 +521,7 @@ class SignalOrchestrator:
                 action = strategy.dsl_definition.get("action", "buy") if action == "hold" else action
             
             # Generate signal
-            signal = await self.signal_engine_service.calculate_single_signal(
+            signal = self.signal_engine_service.calculate_single_signal(
                 symbol=snapshot.symbol,
                 point=context,
                 prev_point=prev_context,
