@@ -164,8 +164,8 @@ class TestPhase4Optimization:
         assert current_context.timestamp > prev_context.timestamp
         
         # Test property accessors
-        assert snapshot.current_point == mock_indicator_data[0]
-        assert snapshot.previous_point == mock_indicator_data[1]
+        assert snapshot.current_point == mock_indicator_data[1]  # Most recent (last in list)
+        assert snapshot.previous_point == mock_indicator_data[0]  # Previous (second to last)
     
     @pytest.mark.asyncio
     async def test_market_snapshot_invalid_data(self):
