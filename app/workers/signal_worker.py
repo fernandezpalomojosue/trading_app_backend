@@ -261,7 +261,7 @@ async def run_signal_job_phase4():
                             )
                             
                             # Use legacy method for backward compatibility
-                            signal = await orchestration_service.generate_signal_for_strategy(
+                            signal = await orchestrator.generate_signal_for_strategy(
                                 symbol=stock,
                                 strategy_id=target.strategy_id,
                                 timeframe=target.timeframe or "day"
