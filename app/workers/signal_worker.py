@@ -380,7 +380,7 @@ async def run_signal_job_phase4():
                                     symbol=stock,
                                     timeframe=plan.timeframe,
                                     strategy_id=str(strategy.id),
-                                    signal_action=signal.action
+                                    signal_action=signal.signal
                                 )
                             else:
                                 logger.debug(
