@@ -169,7 +169,7 @@ class TestUpdateStrategy:
             dsl_definition=new_dsl
         )
         
-        result = strategy_use_cases.update_strategy(
+        result = await strategy_use_cases.update_strategy(
             sample_user_id, sample_strategy_id, request
         )
         
@@ -184,7 +184,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(name="New Name")
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            strategy_use_cases.update_strategy(
+            await strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
     
@@ -206,7 +206,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(name="New Name")
         
         with pytest.raises(PermissionError, match="Cannot update strategy owned by another user"):
-            strategy_use_cases.update_strategy(
+            await strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
     
@@ -237,7 +237,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(dsl_definition=invalid_dsl)
         
         with pytest.raises(ValueError, match="DSL validation failed"):
-            strategy_use_cases.update_strategy(
+            await strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
 
@@ -316,7 +316,7 @@ class TestGetStrategy:
         )
         mock_repository.get_by_id.return_value = existing_strategy
         
-        result = strategy_use_cases.get_strategy(sample_strategy_id)
+        result = await strategy_use_cases.get_strategy(sample_strategy_id)
         
         assert result.name == "Test"
         assert result.id == sample_strategy_id
@@ -328,7 +328,7 @@ class TestGetStrategy:
         mock_repository.get_by_id.return_value = None
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            strategy_use_cases.get_strategy(sample_strategy_id)
+            await strategy_use_cases.get_strategy(sample_strategy_id)
     
     async def test_get_strategy_by_id_only(
         self, strategy_use_cases, mock_repository, 
@@ -347,7 +347,7 @@ class TestGetStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         
         # Phase 2: No user_id parameter, no ownership check
-        result = strategy_use_cases.get_strategy(sample_strategy_id)
+        result = await strategy_use_cases.get_strategy(sample_strategy_id)
         
         assert result.name == "Test"
         assert result.id == sample_strategy_id
@@ -374,7 +374,7 @@ class TestListStrategies:
         ]
         mock_repository.get_by_user.return_value = strategies
         
-        result = strategy_use_cases.list_strategies(sample_user_id)
+        result = await strategy_use_cases.list_strategies(sample_user_id)
         
         assert len(result.items) == 3
         assert result.total == 3
@@ -404,7 +404,7 @@ class TestListStrategies:
         ]
         mock_repository.get_by_user.return_value = strategies
         
-        result = strategy_use_cases.list_strategies(
+        result = await strategy_use_cases.list_strategies(
             sample_user_id, active_only=True
         )
         
@@ -417,7 +417,7 @@ class TestListStrategies:
         """Should return empty list when no strategies"""
         mock_repository.get_by_user.return_value = []
         
-        result = strategy_use_cases.list_strategies(sample_user_id)
+        result = await strategy_use_cases.list_strategies(sample_user_id)
         
         assert len(result.items) == 0
         assert result.total == 0
@@ -442,7 +442,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = strategy_use_cases.activate_strategy(sample_strategy_id)
+        result = await strategy_use_cases.activate_strategy(sample_strategy_id)
         
         assert result.is_active is True
         mock_repository.update.assert_called_once()
@@ -463,7 +463,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = strategy_use_cases.deactivate_strategy(sample_strategy_id)
+        result = await strategy_use_cases.deactivate_strategy(sample_strategy_id)
         
         assert result.is_active is False
         mock_repository.update.assert_called_once()
@@ -476,7 +476,7 @@ class TestValidateDSL:
         self, strategy_use_cases, valid_dsl_json
     ):
         """Should return success for valid DSL"""
-        result = strategy_use_cases.validate_dsl(valid_dsl_json)
+        result = await strategy_use_cases.validate_dsl(valid_dsl_json)
         
         assert result.is_valid is True
         assert len(result.errors) == 0
@@ -495,7 +495,7 @@ class TestValidateDSL:
             }
         }
         
-        result = strategy_use_cases.validate_dsl(invalid_dsl)
+        result = await strategy_use_cases.validate_dsl(invalid_dsl)
         
         assert result.is_valid is False
         assert len(result.errors) > 0
@@ -507,6 +507,6 @@ class TestValidateDSL:
         dsl_without_version = valid_dsl_json.copy()
         del dsl_without_version["version"]
         
-        result = strategy_use_cases.validate_dsl(dsl_without_version)
+        result = await strategy_use_cases.validate_dsl(dsl_without_version)
         
         assert result.is_valid is False
