@@ -25,7 +25,7 @@ from app.application.dto.strategy_dto import (
 @pytest.fixture
 def mock_repository():
     """Create mock strategy repository"""
-    return AsyncMock()
+    return Mock()
 
 
 @pytest.fixture
