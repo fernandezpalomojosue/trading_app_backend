@@ -20,7 +20,7 @@ class StrategyRepository(ABC):
     """
     
     @abstractmethod
-    async def create(self, strategy: Strategy) -> Strategy:
+    def create(self, strategy: Strategy) -> Strategy:
         """
         Create a new strategy.
         
@@ -33,7 +33,7 @@ class StrategyRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_by_id(self, strategy_id: uuid.UUID) -> Optional[Strategy]:
+    def get_by_id(self, strategy_id: uuid.UUID) -> Optional[Strategy]:
         """
         Get a strategy by ID.
         
@@ -46,7 +46,7 @@ class StrategyRepository(ABC):
         pass
     
     @abstractmethod
-    async def get_by_user(
+    def get_by_user(
         self, 
         user_id: uuid.UUID, 
         skip: int = 0, 
@@ -66,7 +66,7 @@ class StrategyRepository(ABC):
         pass
     
     @abstractmethod
-    async def update(self, strategy: Strategy) -> Strategy:
+    def update(self, strategy: Strategy) -> Strategy:
         """
         Update an existing strategy.
         
@@ -79,7 +79,7 @@ class StrategyRepository(ABC):
         pass
     
     @abstractmethod
-    async def delete(self, strategy_id: uuid.UUID) -> bool:
+    def delete(self, strategy_id: uuid.UUID) -> bool:
         """
         Delete a strategy.
         
