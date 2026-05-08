@@ -255,10 +255,10 @@ class StrategyUseCases:
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Activate a strategy"""
-        strategy = await self.get_strategy(strategy_id)
+        strategy = self.get_strategy(strategy_id)
         
         # Get full entity
-        entity = await self._repository.get_by_id(strategy_id)
+        entity = self._repository.get_by_id(strategy_id)
         entity.activate()
         
         updated = await self._repository.update(entity)
@@ -269,10 +269,10 @@ class StrategyUseCases:
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Deactivate a strategy"""
-        strategy = await self.get_strategy(strategy_id)
+        strategy = self.get_strategy(strategy_id)
         
         # Get full entity
-        entity = await self._repository.get_by_id(strategy_id)
+        entity = self._repository.get_by_id(strategy_id)
         entity.deactivate()
         
         updated = await self._repository.update(entity)
@@ -289,7 +289,7 @@ class StrategyUseCases:
             List of active Strategy entities
         """
         # Fetch user's strategies with active filter
-        strategies = await self._repository.list_by_user(
+        strategies = self._repository.list_by_user(
             user_id=user_id,
             skip=0,
             limit=1000,
@@ -348,7 +348,7 @@ class StrategyUseCases:
             )
         
         # Delegate to AI service - NO orchestration logic here
-        result = await self._strategy_ai_service.generate_strategy(
+        result = self._strategy_ai_service.generate_strategy(
             user_prompt=prompt,
             user_id=user_id
         )
@@ -364,7 +364,7 @@ class StrategyUseCases:
             )
             
             try:
-                saved_strategy = await self.create_strategy(user_id, create_request)
+                saved_strategy = self.create_strategy(user_id, create_request)
                 print(f"[AI_GENERATION] Strategy saved: id={saved_strategy.id}, name={saved_strategy.name}")
                 
                 return StrategyGenerateResponse(
