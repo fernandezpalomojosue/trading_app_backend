@@ -5,7 +5,7 @@ Tests for business logic with mocked repository
 import uuid
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 from app.domain.entities.strategy import Strategy
 from app.domain.entities.strategy_dsl import (
