@@ -250,7 +250,7 @@ class StrategyUseCases:
             warnings=result.warnings
         )
     
-    async def activate_strategy(
+    def activate_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
@@ -264,7 +264,7 @@ class StrategyUseCases:
         updated = self._repository.update(entity)
         return self._to_response(updated)
     
-    async def deactivate_strategy(
+    def deactivate_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
