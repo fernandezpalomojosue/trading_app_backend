@@ -171,7 +171,7 @@ class StrategyUseCases:
         
         return await self._repository.delete(strategy_id)
     
-    async def get_strategy(
+    def get_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
@@ -187,7 +187,7 @@ class StrategyUseCases:
         Raises:
             ValueError: If strategy not found
         """
-        strategy = await self._repository.get_by_id(strategy_id)
+        strategy = self._repository.get_by_id(strategy_id)
         if not strategy:
             raise ValueError(f"Strategy not found: {strategy_id}")
         return self._to_response(strategy)

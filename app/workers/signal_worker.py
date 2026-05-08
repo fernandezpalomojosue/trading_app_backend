@@ -328,7 +328,7 @@ async def run_signal_job_phase4():
             for plan in plans:
                 try:
                     # Get strategy for this plan
-                    strategy = await strategy_use_cases.get_strategy(plan.strategy_id)
+                    strategy = strategy_use_cases.get_strategy(plan.strategy_id)
                     
                     if not strategy:
                         logger.warning(
