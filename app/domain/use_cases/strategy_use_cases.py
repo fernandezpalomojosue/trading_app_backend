@@ -74,7 +74,7 @@ class StrategyUseCases:
         )
         
         # Persist
-        created = await self._repository.create(strategy)
+        created = self._repository.create(strategy)
         
         return self._to_response(created)
     
@@ -100,7 +100,7 @@ class StrategyUseCases:
             PermissionError: If user doesn't own the strategy
         """
         # Get existing strategy
-        existing = await self._repository.get_by_id(strategy_id)
+        existing = self._repository.get_by_id(strategy_id)
         if not existing:
             raise ValueError(f"Strategy not found: {strategy_id}")
         
@@ -137,7 +137,7 @@ class StrategyUseCases:
         existing.update(**update_data)
         
         # Persist
-        updated = await self._repository.update(existing)
+        updated = self._repository.update(existing)
         
         return self._to_response(updated)
     
@@ -161,7 +161,7 @@ class StrategyUseCases:
             PermissionError: If user doesn't own the strategy
         """
         # Get existing strategy
-        existing = await self._repository.get_by_id(strategy_id)
+        existing = self._repository.get_by_id(strategy_id)
         if not existing:
             raise ValueError(f"Strategy not found: {strategy_id}")
         
@@ -169,9 +169,9 @@ class StrategyUseCases:
         if existing.user_id != user_id:
             raise PermissionError("Cannot delete strategy owned by another user")
         
-        return await self._repository.delete(strategy_id)
+        return self._repository.delete(strategy_id)
     
-    async def get_strategy(
+    def get_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
@@ -187,7 +187,7 @@ class StrategyUseCases:
         Raises:
             ValueError: If strategy not found
         """
-        strategy = await self._repository.get_by_id(strategy_id)
+        strategy = self._repository.get_by_id(strategy_id)
         if not strategy:
             raise ValueError(f"Strategy not found: {strategy_id}")
         return self._to_response(strategy)
@@ -212,7 +212,7 @@ class StrategyUseCases:
             List of strategy responses
         """
         print("Retrieving strategies from database for user:", user_id)
-        strategies = await self._repository.get_by_user(user_id, skip=skip, limit=limit)
+        strategies = self._repository.get_by_user(user_id, skip=skip, limit=limit)
         
         # Filter by active status if requested
         if active_only:
@@ -250,32 +250,32 @@ class StrategyUseCases:
             warnings=result.warnings
         )
     
-    async def activate_strategy(
+    def activate_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Activate a strategy"""
-        strategy = await self.get_strategy(strategy_id)
+        strategy = self.get_strategy(strategy_id)
         
         # Get full entity
-        entity = await self._repository.get_by_id(strategy_id)
+        entity = self._repository.get_by_id(strategy_id)
         entity.activate()
         
-        updated = await self._repository.update(entity)
+        updated = self._repository.update(entity)
         return self._to_response(updated)
     
-    async def deactivate_strategy(
+    def deactivate_strategy(
         self,
         strategy_id: uuid.UUID
     ) -> StrategyResponse:
         """Deactivate a strategy"""
-        strategy = await self.get_strategy(strategy_id)
+        strategy = self.get_strategy(strategy_id)
         
         # Get full entity
-        entity = await self._repository.get_by_id(strategy_id)
+        entity = self._repository.get_by_id(strategy_id)
         entity.deactivate()
         
-        updated = await self._repository.update(entity)
+        updated = self._repository.update(entity)
         return self._to_response(updated)
     
     async def get_user_active_strategies(self, user_id: uuid.UUID) -> List[Strategy]:
@@ -289,7 +289,7 @@ class StrategyUseCases:
             List of active Strategy entities
         """
         # Fetch user's strategies with active filter
-        strategies = await self._repository.list_by_user(
+        strategies = self._repository.list_by_user(
             user_id=user_id,
             skip=0,
             limit=1000,
@@ -348,7 +348,7 @@ class StrategyUseCases:
             )
         
         # Delegate to AI service - NO orchestration logic here
-        result = await self._strategy_ai_service.generate_strategy(
+        result = self._strategy_ai_service.generate_strategy(
             user_prompt=prompt,
             user_id=user_id
         )
@@ -364,7 +364,7 @@ class StrategyUseCases:
             )
             
             try:
-                saved_strategy = await self.create_strategy(user_id, create_request)
+                saved_strategy = self.create_strategy(user_id, create_request)
                 print(f"[AI_GENERATION] Strategy saved: id={saved_strategy.id}, name={saved_strategy.name}")
                 
                 return StrategyGenerateResponse(

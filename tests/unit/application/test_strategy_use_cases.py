@@ -5,7 +5,7 @@ Tests for business logic with mocked repository
 import uuid
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 from app.domain.entities.strategy import Strategy
 from app.domain.entities.strategy_dsl import (
@@ -25,7 +25,7 @@ from app.application.dto.strategy_dto import (
 @pytest.fixture
 def mock_repository():
     """Create mock strategy repository"""
-    return AsyncMock()
+    return Mock()
 
 
 @pytest.fixture
@@ -302,7 +302,7 @@ class TestDeleteStrategy:
 class TestGetStrategy:
     """Test strategy retrieval use case"""
     
-    async def test_get_strategy_success(
+    def test_get_strategy_success(
         self, strategy_use_cases, mock_repository, 
         sample_user_id, sample_strategy_id, valid_dsl_json
     ):
@@ -316,21 +316,21 @@ class TestGetStrategy:
         )
         mock_repository.get_by_id.return_value = existing_strategy
         
-        result = await strategy_use_cases.get_strategy(sample_strategy_id)
+        result = strategy_use_cases.get_strategy(sample_strategy_id)
         
         assert result.name == "Test"
         assert result.id == sample_strategy_id
     
-    async def test_get_strategy_not_found(
+    def test_get_strategy_not_found(
         self, strategy_use_cases, mock_repository, sample_strategy_id
     ):
         """Should raise error when strategy not found"""
         mock_repository.get_by_id.return_value = None
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            await strategy_use_cases.get_strategy(sample_strategy_id)
+            strategy_use_cases.get_strategy(sample_strategy_id)
     
-    async def test_get_strategy_by_id_only(
+    def test_get_strategy_by_id_only(
         self, strategy_use_cases, mock_repository, 
         sample_strategy_id, valid_dsl_json
     ):
@@ -347,7 +347,7 @@ class TestGetStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         
         # Phase 2: No user_id parameter, no ownership check
-        result = await strategy_use_cases.get_strategy(sample_strategy_id)
+        result = strategy_use_cases.get_strategy(sample_strategy_id)
         
         assert result.name == "Test"
         assert result.id == sample_strategy_id
@@ -426,7 +426,7 @@ class TestListStrategies:
 class TestActivateDeactivateStrategy:
     """Test strategy activation/deactivation use cases"""
     
-    async def test_activate_strategy(
+    def test_activate_strategy(
         self, strategy_use_cases, mock_repository, 
         sample_user_id, sample_strategy_id, valid_dsl_json
     ):
@@ -442,12 +442,12 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.activate_strategy(sample_strategy_id)
+        result = strategy_use_cases.activate_strategy(sample_strategy_id)
         
         assert result.is_active is True
         mock_repository.update.assert_called_once()
     
-    async def test_deactivate_strategy(
+    def test_deactivate_strategy(
         self, strategy_use_cases, mock_repository, 
         sample_user_id, sample_strategy_id, valid_dsl_json
     ):
@@ -463,7 +463,7 @@ class TestActivateDeactivateStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.update.return_value = existing_strategy
         
-        result = await strategy_use_cases.deactivate_strategy(sample_strategy_id)
+        result = strategy_use_cases.deactivate_strategy(sample_strategy_id)
         
         assert result.is_active is False
         mock_repository.update.assert_called_once()
