@@ -8,6 +8,7 @@ from app.db.base import get_session
 from sqlmodel import Session
 from app.infrastructure.database.favorite_repository import SQLFavoriteStockRepository
 import logging
+import json
 from app.infrastructure.external.market_client import PolygonMarketClient
 from app.core.logging_config import get_logger
 from app.application.repositories.market_repository import MarketRepository
@@ -18,6 +19,7 @@ from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
 from app.workers.signal_worker import run_signal_job
 from app.domain.entities.user import UserEntity
 from app.core.security import get_current_user
+from app.application.dto.signals_dto import SignalDataPoint
 
 logger = get_logger(__name__)
 
@@ -76,11 +78,26 @@ async def get_signal(
 ):
     result = await cache.get(f"signal:{symbol}")
     if result:
-        return result
+        # Convert cached string back to SignalDataPoint if it's a serialized signal
+        if isinstance(result, str):
+            try:
+                import json
+                signal_data = json.loads(result)
+                return SignalDataPoint(**signal_data)
+            except (json.JSONDecodeError, TypeError):
+                # If deserialization fails, fetch from database
+                logger.warning(
+                    "Failed to deserialize cached signal",
+                    component="signals",
+                    symbol=symbol
+                )
+                result = None
+        else:
+            return result
     
     result = await signal_repo.get_by_symbol(symbol)
     if result:
-        cache_success = await cache.set(f"signal:{symbol}", result)
+        cache_success = await cache.set(f"signal:{symbol}", result.model_dump())
         if not cache_success:
             logger.warning(
                 "Failed to cache signal",
