@@ -236,7 +236,7 @@ async def list_execution_plans(
         )
 
 
-@router.get("/execution-plans/{plan_id}", response_model=ExecutionPlanResponseDTO)
+@router.get("/{plan_id}", response_model=ExecutionPlanResponseDTO)
 async def get_execution_plan(
     plan_id: UUID,
     current_user: UserEntity = Depends(get_current_user_dependency),
