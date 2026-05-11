@@ -136,11 +136,8 @@ class SignalEngineUseCases(SignalEngineService):
             Tuple of (stop_loss, take_profit)
         """
         if not fibonacci_levels:
-            # Fallback to static 5% calculation
-            if signal == "sell":
-                return current_price * 1.05, current_price * 0.95
-            else:  # buy or hold
-                return current_price * 0.95, current_price * 1.05
+            # Return None if no Fibonacci levels available
+            return None, None
         
         if signal == "buy":
             # For buy: use nearest support below for SL, nearest resistance above for TP

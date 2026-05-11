@@ -242,60 +242,6 @@ class SignalOrchestrator:
             )
             return None
     
-    async def generate_signal(
-        self,
-        symbol: str,
-        timespan: str,
-        start_date: str,
-        end_date: str,
-        indicators_window=30,
-        indicators_fast=12,
-        indicators_slow=26,
-        indicators_signal=9
-    ):
-        """
-        Legacy method for backward compatibility.
-        
-        Uses default strategy (system default).
-        """
-        from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
-        
-        self.logger.debug(
-            "Legacy generate_signal method started",
-            component="signal_orchestrator",
-            symbol=symbol
-        )
-        
-        # Fetch data
-        data = await self.market_client.fetch_candlestick_data(symbol, timespan, 1, 100, start_date, end_date)
-        indicators = await self.indicator_service.get_indicators(
-            symbol, data=data, window=indicators_window, fast=indicators_fast,
-            slow=indicators_slow, signal=indicators_signal, timespan=timespan,
-            start_date=start_date, end_date=end_date, limit=100
-        )
-        
-        if len(indicators) < 2:
-            print(f"WARNING: Insufficient data for {symbol}")
-            return None
-        
-        # Use default strategy
-        default_strategy = get_default_strategy_entity()
-        
-        # Build contexts
-        context = MarketContext.from_indicator_point(indicators[-1])
-        prev_context = MarketContext.from_indicator_point(indicators[-2])
-        
-        # Evaluate and generate signal
-        signal = await self._evaluate_strategy(
-            default_strategy, symbol, indicators[-1], indicators[-2], context, prev_context
-        )
-        
-        if signal:
-            await self.signal_repository.save_signal(symbol, signal, default_strategy.id)
-            await self.cache_client.set(f"signal_{symbol}", signal.model_dump(), ttl=60)
-        
-        return signal
-    
     async def generate_signal_for_strategy(
         self,
         symbol: str,
@@ -310,9 +256,6 @@ class SignalOrchestrator:
     ) -> Optional[SignalDataPoint]:
         """
         Generate signal for a specific strategy and symbol.
-        
-        This is the new method for Phase 2 - strategy-aware execution.
-        The existing generate_signal() method remains untouched for backward compatibility.
         """
         # Get strategy by ID
         strategy = await self.strategy_use_cases.get_strategy(strategy_id)

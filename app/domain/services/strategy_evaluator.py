@@ -247,7 +247,7 @@ class StrategyEvaluator:
         name = indicator.name
         params = indicator.params or {}
         
-        # TODO: Implement offset handling for historical indicator access
+        # Offset handling for historical indicator access
         # For now, only current candle (offset=0 or None) is supported
         offset = getattr(indicator, 'offset', 0) or 0
         if offset != 0:
