@@ -6,7 +6,6 @@ import pytest
 import uuid
 from datetime import datetime, timezone
 from app.domain.entities.market import Asset, MarketType, MarketSummary, CandleStick
-from app.domain.entities.evaluation_target import EvaluationTarget
 
 
 class TestAsset:
