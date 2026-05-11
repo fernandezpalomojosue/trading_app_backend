@@ -55,7 +55,7 @@ def get_execution_plan_use_cases(db: Session = Depends(get_session)) -> Executio
     return use_cases
 
 
-@router.post("/execution-plans", response_model=ExecutionPlanResponseDTO, status_code=status.HTTP_201_CREATED)
+@router.post("/create", response_model=ExecutionPlanResponseDTO, status_code=status.HTTP_201_CREATED)
 async def create_execution_plan(
     dto: CreateExecutionPlanDTO,
     current_user: UserEntity = Depends(get_current_user_dependency),
@@ -175,7 +175,7 @@ async def create_execution_plan(
         )
 
 
-@router.get("/execution-plans", response_model=List[ExecutionPlanResponseDTO])
+@router.get("/user_list", response_model=List[ExecutionPlanResponseDTO])
 async def list_execution_plans(
     current_user: UserEntity = Depends(get_current_user_dependency),
     use_cases: ExecutionPlanUseCases = Depends(get_execution_plan_use_cases)
@@ -327,7 +327,7 @@ async def get_execution_plan(
         )
 
 
-@router.patch("/execution-plans/{plan_id}", response_model=ExecutionPlanResponseDTO)
+@router.patch("/{plan_id}", response_model=ExecutionPlanResponseDTO)
 async def update_execution_plan(
     plan_id: UUID,
     dto: UpdateExecutionPlanDTO,
@@ -427,7 +427,7 @@ async def update_execution_plan(
         )
 
 
-@router.delete("/execution-plans/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_execution_plan(
     plan_id: UUID,
     current_user: UserEntity = Depends(get_current_user_dependency),
