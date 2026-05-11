@@ -81,6 +81,36 @@ class ExecutionPlanUseCases:
             )
             raise ValueError("Strategy not found")
         
+        # Check for duplicate execution plan
+        logger.debug(
+            "Checking for duplicate execution plan",
+            component="execution_plan_use_cases",
+            user_id=str(user_id),
+            strategy_id=str(dto.strategy_id),
+            stocks=dto.stocks,
+            timeframe=dto.timeframe.value
+        )
+        
+        existing_plans = await self.execution_plan_repo.get_by_user_id(user_id)
+        
+        # Check if identical plan already exists (same user, strategy, stocks, timeframe)
+        for existing_plan in existing_plans:
+            if (existing_plan.strategy_id == dto.strategy_id and 
+                existing_plan.stocks == dto.stocks and 
+                existing_plan.timeframe == dto.timeframe.value and
+                existing_plan.is_active):
+                
+                logger.warning(
+                    "Duplicate execution plan detected",
+                    component="execution_plan_use_cases",
+                    user_id=str(user_id),
+                    strategy_id=str(dto.strategy_id),
+                    existing_plan_id=str(existing_plan.id),
+                    stocks=dto.stocks,
+                    timeframe=dto.timeframe.value
+                )
+                raise ValueError("An identical execution plan already exists for this user")
+        
         # Create execution plan
         plan = ExecutionPlan(
             user_id=user_id,
