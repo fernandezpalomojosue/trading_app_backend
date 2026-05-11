@@ -1,6 +1,6 @@
 """Add cascade delete to execution_plans.strategy_id
 
-Revision ID: add_cascade_delete_to_execution_plans_strategy_id
+Revision ID: add_cascade_delete_exec_plans
 Revises: b2c3d4e5f6g7_add_execution_plans_table
 Create Date: 2026-05-11 14:38:00.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'add_cascade_delete_to_execution_plans_strategy_id'
+revision = 'add_cascade_delete_exec_plans'
 down_revision = 'merge_all_heads'
 branch_labels = None
 depends_on = None
