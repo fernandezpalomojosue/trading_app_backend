@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List
 
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, ForeignKey
 from sqlmodel import Field, SQLModel
 
 from app.domain.entities.execution_plan import ExecutionPlan
@@ -27,7 +27,12 @@ class ExecutionPlanModel(SQLModel, table=True):
     
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="users.id", nullable=False)
-    strategy_id: uuid.UUID = Field(foreign_key="strategies.id", nullable=False)
+    strategy_id: uuid.UUID = Field(
+        sa_column=Column(
+            ForeignKey("strategies.id", ondelete="CASCADE"), 
+            nullable=False
+        )
+    )
     stocks: List[str] = Field(sa_column=Column(JSON), default_factory=list)
     timeframe: str = Field(default="day", max_length=20)
     is_active: bool = Field(default=True)
