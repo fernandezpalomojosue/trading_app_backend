@@ -101,7 +101,7 @@ async def get_strategy(
 ):
     """Get a specific strategy by ID"""
     try:
-        return await use_cases.get_strategy(
+        return use_cases.get_strategy(
             strategy_id=strategy_id
         )
     except ValueError as e:
