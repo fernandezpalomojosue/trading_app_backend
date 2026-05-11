@@ -11,6 +11,8 @@ from app.core.config import get_settings
 from app.db.base import SessionLocal, engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session
+from app.infrastructure.database.strategy_repository import SQLStrategyRepository
+
 
 from app.core.logging_config import get_logger
 
@@ -43,6 +45,7 @@ async def run_signal_job():
         with SessionLocal() as session:
             signal_repository = SQLSignalRepository(session)
             execution_plan_repository = SQLExecutionPlanRepository(session)
+            strategy_repository = SQLStrategyRepository(session)
             strategy_use_cases = StrategyUseCases(strategy_repository)
             
             # Create services
