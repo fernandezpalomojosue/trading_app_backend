@@ -88,26 +88,5 @@ async def get_signal(
                 symbol=symbol
             )
         return result
-    
-    orchestrator = SignalOrchestrator(
-                market_client=get_market_client(),
-                indicator_service=get_indicators_service(),
-                signal_engine_service=get_signal_engine_service(),
-                cache_client=get_cache_repository(),
-                signal_repository=signal_repo
-            )
-            
-    # Generate signal
-    signals = await orchestrator.generate_signals_for_user(current_user.id, symbol, "day", "2025-01-01", "2025-12-31")
-            
-    if signals:
-        cache_success = await cache.set(f"signal:{symbol}", signals)
-        if not cache_success:
-            logger.warning(
-                "Failed to cache generated signal",
-                component="signals",
-                symbol=symbol
-            )
-        return signals
     else:
         return {"symbol": symbol, "status": "no_signal"}
