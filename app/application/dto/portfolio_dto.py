@@ -55,6 +55,8 @@ class BuyStockRequest(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=10, description="Stock symbol (e.g., AAPL)")
     quantity: float = Field(..., gt=0, description="Number of shares to buy")
     price: float = Field(..., gt=0, description="Price per share")
+    stop_loss: Optional[float] = Field(None, gt=0, description="Stop loss price")
+    take_profit: Optional[float] = Field(None, gt=0, description="Take profit price")
 
 
 class SellStockRequest(BaseModel):
