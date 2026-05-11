@@ -9,9 +9,7 @@ Phase 2: Returns targets from execution plans with fallback to favorites.
 
 from typing import List
 from app.domain.entities.evaluation_target import EvaluationTarget
-from app.application.repositories.favorite_repository import FavoriteRepository
 from app.application.repositories.execution_plan_repository import ExecutionPlanRepository
-from app.core.config import AppBaseSettings
 from app.core.logging_config import get_logger
 
 
@@ -78,55 +76,11 @@ class EvaluationTargetService:
                 for plan in plans
             ]
         
-        # Fallback to favorites for backward compatibility
+        # No execution plans found - return empty list
         self._logger.info(
-            "No execution plans found, falling back to favorites",
+            "No execution plans found, returning empty evaluation targets",
             component="evaluation_target_service"
         )
-        return await self._fallback_to_favorites()
-
-    async def _fallback_to_favorites(self) -> List[EvaluationTarget]:
-        """Fallback method using existing favorites logic"""
-        stocks = await self._get_stock_universe()
-        
-        if not stocks:
-            return []
-        
-        # Use default strategy for fallback
-        from app.infrastructure.database.default_strategy_seed import get_default_strategy_entity
-        default_strategy = get_default_strategy_entity()
-        
-        return [EvaluationTarget(
-            strategy_id=default_strategy.id,
-            stocks=stocks,
-            timeframe="day"
-        )]
+        return []
     
-    async def _get_stock_universe(self) -> List[str]:
-        """
-        Determine which stocks to evaluate.
-        
-        Priority:
-        1. User's favorite stocks from DB
-        2. DEFAULT_SIGNAL_STOCKS from environment
-        """
-        # Try favorites first
-        favorites = await self._favorite_repo.get_all_favorites()
     
-        if favorites and favorites.symbols:
-            return [s.strip().upper() for s in favorites.symbols]
-            
-        # Fallback to environment defaults
-        default_stocks = getattr(
-            self._settings, 
-            'DEFAULT_SIGNAL_STOCKS', 
-            'AAPL,GOOGL,MSFT,TSLA,NVDA'
-        )
-        
-        if isinstance(default_stocks, str):
-            return [s.strip().upper() for s in default_stocks.split(',')]
-            
-        if default_stocks is None:
-            return []
-        
-        return [s.strip().upper() for s in default_stocks]

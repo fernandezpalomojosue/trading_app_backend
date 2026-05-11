@@ -157,9 +157,8 @@ class PolygonMarketClient(MarketRepository):
             
             return last_trading_day.strftime("%Y-%m-%d")
         except Exception as e:
-            # Fallback to yesterday if there's an error
-            from datetime import datetime, timedelta
-            return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            # Re-raise the exception for proper handling
+            raise
 
     async def fetch_ticker_details(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Fetch complete ticker details from reference endpoint - INFRASTRUCTURE ONLY"""

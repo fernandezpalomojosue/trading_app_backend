@@ -15,7 +15,9 @@ from app.domain.use_cases.indicators_use_cases import IndicatorsUseCases
 from app.application.services.indicators_service import IndicatorsService
 from app.application.services.signal_engine_service import SignalEngineService
 from app.domain.use_cases.signal_orchestrator import SignalOrchestrator
-from app.workers.signal_worker import run_signal_job, run_signal_job_phase4
+from app.workers.signal_worker import run_signal_job
+from app.domain.entities.user import UserEntity
+from app.core.security import get_current_user
 
 logger = get_logger(__name__)
 
@@ -62,14 +64,15 @@ async def run_signals(
         logger.error("API key mismatch", component="signals", received_key=x_api_key)
         raise HTTPException(status_code=401, detail="Invalid API key")
     
-    await run_signal_job_phase4()
+    await run_signal_job()
     return {"status": "triggered"}
 
 @router.get("/{symbol}")
 async def get_signal(
     symbol: str,
     cache: CacheRepository = Depends(get_cache_repository),
-    signal_repo: SQLSignalRepository = Depends(get_signal_repository)
+    signal_repo: SQLSignalRepository = Depends(get_signal_repository),
+    current_user: UserEntity = Depends(get_current_user)
 ):
     result = await cache.get(f"signal:{symbol}")
     if result:
@@ -95,16 +98,16 @@ async def get_signal(
             )
             
     # Generate signal
-    signal = await orchestrator.generate_signal(symbol, "day", "2025-01-01", "2025-12-31")
+    signals = await orchestrator.generate_signals_for_user(current_user.id, symbol, "day", "2025-01-01", "2025-12-31")
             
-    if signal:
-        cache_success = await cache.set(f"signal:{symbol}", signal)
+    if signals:
+        cache_success = await cache.set(f"signal:{symbol}", signals)
         if not cache_success:
             logger.warning(
                 "Failed to cache generated signal",
                 component="signals",
                 symbol=symbol
             )
-        return signal
+        return signals
     else:
         return {"symbol": symbol, "status": "no_signal"}

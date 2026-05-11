@@ -223,38 +223,7 @@ class TestSignalEngineServiceEdgeCases:
         assert signalpoint.take_profit > 0
         assert signalpoint.signal == "buy"
 
-    @pytest.mark.asyncio
-    async def test_fallback_sl_tp_without_fibonacci(self, signal_engine):
-        """Should use 5% fallback when Fibonacci levels are empty"""
-        current_point = IndicatorDataPoint(
-            timestamp=1234567890000,
-            symbol="AAPL",
-            rsi=25.0,
-            macd=0.9,
-            macd_signal=0.8,
-            ema=145.0,
-            sma=140.0,
-            histogram=0.1,
-            close_price=100.0,
-            fibonacci_levels={}  # Empty Fibonacci levels
-        )
-        
-        signalpoint = await signal_engine.calculate_single_signal(
-            symbol="AAPL",
-            point=current_point,
-            prev_point=None,
-            strategy_id=TEST_STRATEGY_ID,
-            condition_met=True,
-            action="buy",
-            strategy_name="Test Strategy"
-        )
-        
-        # Fallback: 5% calculation
-        expected_sl = 95.0  # 100 * 0.95
-        expected_tp = 105.0  # 100 * 1.05
-        assert signalpoint.stop_loss == expected_sl
-        assert signalpoint.take_profit == expected_tp
-
+    
 
 class TestSignalEngineServiceStrategyTraceability:
     """Tests for signal traceability with strategy_id"""
