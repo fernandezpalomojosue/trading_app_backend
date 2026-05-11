@@ -19,34 +19,30 @@ SessionLocal = sessionmaker(class_=Session, autocommit=False, autoflush=False, b
 
 async def run_signal_job():
     """
-    Phase 4: Run signal generation job using precompute->evaluate pipeline.
-    
     This function implements the optimized pipeline that:
     1. Precomputes market snapshots once per (symbol, timeframe)
     2. Evaluates all execution plans using precomputed snapshots
     3. Eliminates redundant API calls and indicator computations
     """
-    logger.info("Phase 4 signal generation job started", component="signal_worker")
+    logger.info("Signal generation job started", component="signal_worker")
     
     try:
         settings = get_settings()
         cache_repository = RedisCache(redis_url=settings.REDIS_URL)
         
-        lock_key = "signal_job_lock_phase4"
+        lock_key = "signal_job_lock"
         lock_value = await cache_repository.acquire_lock(lock_key, ttl=180)
 
         if not lock_value:
-            logger.warning("Phase 4 signal job already running, skipping...", lock_key=lock_key)
+            logger.warning("Signal job already running, skipping...", lock_key=lock_key)
             return
 
-        logger.info("Phase 4 signal job lock acquired", lock_key=lock_key, lock_value=lock_value)
+        logger.info("Signal job lock acquired", lock_key=lock_key, lock_value=lock_value)
 
         # Use session context manager for proper cleanup
         with SessionLocal() as session:
             signal_repository = SQLSignalRepository(session)
-            strategy_repository = SQLStrategyRepository(session)
             execution_plan_repository = SQLExecutionPlanRepository(session)
-            favorite_repository = SQLFavoriteStockRepository(session)
             strategy_use_cases = StrategyUseCases(strategy_repository)
             
             # Create services
@@ -54,7 +50,7 @@ async def run_signal_job():
             indicator_service = IndicatorsUseCases(cache_repository)
             signal_engine = SignalEngineUseCases()
             
-            # Create Phase 4 services
+            # Create services
             snapshot_service = SnapshotPrecomputationService(
                 market_service=market_client,
                 indicator_service=indicator_service,
