@@ -95,7 +95,25 @@ COMMON MISTAKES TO AVOID:
 - Use "children" array for AND/OR, NOT "conditions"
 - Use "child" object for NOT, NOT "children"
 - "condition" is the type for leaf conditions, NOT "indicator" or "CROSS"
-- Indicators go inside expressions with type "indicator", NOT as node types
+- Indicators go inside expressions with type "indicator", NOT as node types"""
+
+    # System prompt for prompt validation
+    def get_validation_system_prompt() -> str:
+        """Get validation system prompt dynamically."""
+        return """You are a trading strategy prompt validator.
+
+Your ONLY job is to determine if a prompt can safely become executable DSL.
+
+SUPPORTED INDICATORS: RSI, EMA, SMA, MACD
+SUPPORTED OPERATORS: <, <=, >, >=, ==, !=, cross_above, cross_below
+SUPPORTED ACTIONS: buy, sell, hold
+
+UNSUPPORTED: news sentiment, social sentiment, discretionary trading, psychology-based trading, fundamental analysis, chart patterns
+
+Return ONLY this JSON format:
+{"status": "VALID"} or {"status": "INVALID", "reason": "specific reason"}
+
+Do not explain. Do not suggest improvements. Do not ask questions. Only VALID or INVALID.
 
 Actions: buy, sell, hold
 Max tree depth: 10 levels

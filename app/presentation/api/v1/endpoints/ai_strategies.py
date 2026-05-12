@@ -17,10 +17,15 @@ from app.application.dto.ai_strategy_dto import (
     StrategyGenerateResponse,
     StrategyGenerationError
 )
+from app.application.dto.prompt_validation_dto import (
+    PromptValidationRequest,
+    PromptValidationResponse
+)
 from app.application.repositories.strategy_repository import StrategyRepository
 from app.core.config import settings
 from app.db.base import get_session
 from app.domain.services.strategy_ai_service import StrategyAIService
+from app.domain.services.prompt_validator import PromptValidator
 from app.domain.use_cases.strategy_use_cases import StrategyUseCases
 from app.infrastructure.external.ai_provider_factory import AIProviderFactory
 from app.infrastructure.rate_limiter.ai_rate_limiter import AIRateLimiter
@@ -43,6 +48,11 @@ def get_ai_rate_limiter() -> AIRateLimiter:
         max_requests=settings.AI_RATE_LIMIT_PER_MINUTE,
         window_seconds=60
     )
+
+
+def get_prompt_validator() -> PromptValidator:
+    """Dependency to get prompt validator instance."""
+    return PromptValidator()
 
 
 def get_strategy_use_cases(
@@ -140,7 +150,8 @@ async def generate_strategy(
     request: StrategyGenerateRequest,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases),
-    rate_limiter: AIRateLimiter = Depends(get_ai_rate_limiter)
+    rate_limiter: AIRateLimiter = Depends(get_ai_rate_limiter),
+    prompt_validator: PromptValidator = Depends(get_prompt_validator)
 ):
     """
     Generate a trading strategy from natural language using AI.
@@ -201,6 +212,43 @@ async def generate_strategy(
                 "error_type": "rate_limit",
                 "message": f"Rate limit exceeded: {settings.AI_RATE_LIMIT_PER_MINUTE} requests per minute allowed",
                 "retry_after_seconds": retry_after
+            }
+        )
+    
+    # Validate prompt before DSL generation
+    request_logger.info(
+        "Starting prompt validation",
+        component="ai_strategies",
+        user_id=current_user.id,
+        prompt_length=len(request.prompt)
+    )
+    
+    validation_result = await prompt_validator.validate(request.prompt)
+    
+    request_logger.info(
+        "Prompt validation completed",
+        component="ai_strategies",
+        user_id=current_user.id,
+        validation_status=validation_result.status,
+        validation_reason=validation_result.reason
+    )
+    
+    if validation_result.status == "INVALID":
+        request_logger.warning(
+            "Prompt validation failed",
+            component="ai_strategies",
+            user_id=current_user.id,
+            validation_reason=validation_result.reason
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error_type": "prompt_validation_failed",
+                "message": "Strategy prompt is invalid",
+                "validation_result": {
+                    "status": validation_result.status,
+                    "reason": validation_result.reason
+                }
             }
         )
     
