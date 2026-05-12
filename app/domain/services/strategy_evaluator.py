@@ -101,8 +101,12 @@ class StrategyEvaluator:
         - Comparison: <, <=, >, >=, ==, !=
         - Crossover: cross_above, cross_below
         """
+        logger.debug(f"Evaluating condition: {condition.operator}")
+        
         left_val = cls._evaluate_expression(condition.left, context)
         right_val = cls._evaluate_expression(condition.right, context)
+        
+        logger.debug(f"Condition values: left={left_val}, right={right_val}")
         
         # Handle None values
         if left_val is None or right_val is None:
@@ -111,14 +115,22 @@ class StrategyEvaluator:
         
         operator = condition.operator
         
+        logger.debug(f"Applying operator: {operator}")
+        
         # Handle crossover operators
         if operator == "cross_above":
-            return cls._evaluate_cross_above(left_val, right_val, condition.left, condition.right, prev_context)
+            result = cls._evaluate_cross_above(left_val, right_val, condition.left, condition.right, prev_context)
+            logger.debug(f"Cross_above result: {result}")
+            return result
         elif operator == "cross_below":
-            return cls._evaluate_cross_below(left_val, right_val, condition.left, condition.right, prev_context)
+            result = cls._evaluate_cross_below(left_val, right_val, condition.left, condition.right, prev_context)
+            logger.debug(f"Cross_below result: {result}")
+            return result
         
         # Handle comparison operators
-        return cls._evaluate_comparison(left_val, right_val, operator)
+        result = cls._evaluate_comparison(left_val, right_val, operator)
+        logger.debug(f"Comparison result: {result}")
+        return result
     
     @classmethod
     def _evaluate_cross_above(cls, left_val: float, right_val: float, 
@@ -196,20 +208,29 @@ class StrategyEvaluator:
         Note: offset handling for historical data requires MarketContext with historical access.
         Currently only offset=0 (current candle) is fully supported in execution.
         """
+        logger.debug(f"Evaluating expression: {expression}")
+        
         if isinstance(expression, Constant):
-            return float(expression.value)
+            value = float(expression.value)
+            logger.debug(f"Constant expression value: {value}")
+            return value
         elif isinstance(expression, Price):
             # Implement offset handling for historical price access
             offset = getattr(expression, 'offset', 0) or 0
+            logger.debug(f"Price expression: field={expression.field}, offset={offset}")
             
             if offset == 0:
                 # Current candle - use context directly
-                return context.get_value(expression.field)
+                value = context.get_value(expression.field)
+                logger.debug(f"Current price value: field={expression.field}, value={value}")
+                return value
             else:
                 # Historical candle - access from MarketSnapshot if available
                 if hasattr(context, '_market_snapshot') and context._market_snapshot:
                     snapshot = context._market_snapshot
                     indicators = snapshot.indicators
+                    
+                    logger.debug(f"Market snapshot available with {len(indicators)} indicators")
                     
                     # Calculate index for historical data
                     # offset=1 means previous candle, offset=2 means 2 candles back, etc.
@@ -229,10 +250,14 @@ class StrategyEvaluator:
                         return historical_value
                     else:
                         logger.warning(f"Price offset={offset} exceeds available historical data ({len(indicators)} candles), using current candle")
-                        return context.get_value(expression.field)
+                        value = context.get_value(expression.field)
+                        logger.debug(f"Fallback to current price: field={expression.field}, value={value}")
+                        return value
                 else:
                     logger.warning(f"Price offset={offset} not available (no MarketSnapshot), using current candle")
-                    return context.get_value(expression.field)
+                    value = context.get_value(expression.field)
+                    logger.debug(f"Fallback to current price: field={expression.field}, value={value}")
+                    return value
         elif isinstance(expression, Indicator):
             return cls._evaluate_indicator(expression, context)
         else:
