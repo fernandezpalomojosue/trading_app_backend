@@ -348,7 +348,7 @@ class StrategyUseCases:
             )
         
         # Delegate to AI service - NO orchestration logic here
-        result = self._strategy_ai_service.generate_strategy(
+        result = await self._strategy_ai_service.generate_strategy(
             user_prompt=prompt,
             user_id=user_id
         )
