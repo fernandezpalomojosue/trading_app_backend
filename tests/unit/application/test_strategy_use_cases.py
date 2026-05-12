@@ -82,7 +82,7 @@ class TestCreateStrategy:
             version=1
         )
         
-        result = await strategy_use_cases.create_strategy(sample_user_id, request)
+        result = strategy_use_cases.create_strategy(sample_user_id, request)
         
         assert result.name == "Test Strategy"
         assert result.description == "A test strategy"
@@ -129,7 +129,7 @@ class TestCreateStrategy:
             version=1
         )
         
-        result = await strategy_use_cases.create_strategy(sample_user_id, request)
+        result = strategy_use_cases.create_strategy(sample_user_id, request)
         
         assert result.name == "Test Strategy"
         assert result.description is None
@@ -169,7 +169,7 @@ class TestUpdateStrategy:
             dsl_definition=new_dsl
         )
         
-        result = await strategy_use_cases.update_strategy(
+        result = strategy_use_cases.update_strategy(
             sample_user_id, sample_strategy_id, request
         )
         
@@ -184,7 +184,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(name="New Name")
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            await strategy_use_cases.update_strategy(
+            strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
     
@@ -206,7 +206,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(name="New Name")
         
         with pytest.raises(PermissionError, match="Cannot update strategy owned by another user"):
-            await strategy_use_cases.update_strategy(
+            strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
     
@@ -237,7 +237,7 @@ class TestUpdateStrategy:
         request = StrategyUpdateRequest(dsl_definition=invalid_dsl)
         
         with pytest.raises(ValueError, match="DSL validation failed"):
-            await strategy_use_cases.update_strategy(
+            strategy_use_cases.update_strategy(
                 sample_user_id, sample_strategy_id, request
             )
 
