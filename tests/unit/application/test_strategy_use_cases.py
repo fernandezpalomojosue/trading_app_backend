@@ -356,7 +356,7 @@ class TestGetStrategy:
 class TestListStrategies:
     """Test strategy listing use case"""
     
-    async def test_list_strategies(
+    def test_list_strategies(
         self, strategy_use_cases, mock_repository, 
         sample_user_id, valid_dsl_json
     ):
@@ -374,12 +374,12 @@ class TestListStrategies:
         ]
         mock_repository.get_by_user.return_value = strategies
         
-        result = await strategy_use_cases.list_strategies(sample_user_id)
+        result = strategy_use_cases.list_strategies(sample_user_id)
         
         assert len(result.items) == 3
         assert result.total == 3
     
-    async def test_list_strategies_active_only(
+    def test_list_strategies_active_only(
         self, strategy_use_cases, mock_repository, 
         sample_user_id, valid_dsl_json
     ):
@@ -404,7 +404,7 @@ class TestListStrategies:
         ]
         mock_repository.get_by_user.return_value = strategies
         
-        result = await strategy_use_cases.list_strategies(
+        result = strategy_use_cases.list_strategies(
             sample_user_id, active_only=True
         )
         
@@ -417,7 +417,7 @@ class TestListStrategies:
         """Should return empty list when no strategies"""
         mock_repository.get_by_user.return_value = []
         
-        result = await strategy_use_cases.list_strategies(sample_user_id)
+        result = strategy_use_cases.list_strategies(sample_user_id)
         
         assert len(result.items) == 0
         assert result.total == 0
@@ -472,16 +472,16 @@ class TestActivateDeactivateStrategy:
 class TestValidateDSL:
     """Test DSL validation use case"""
     
-    async def test_validate_dsl_valid(
+    def test_validate_dsl_valid(
         self, strategy_use_cases, valid_dsl_json
     ):
         """Should return success for valid DSL"""
-        result = await strategy_use_cases.validate_dsl(valid_dsl_json)
+        result = strategy_use_cases.validate_dsl(valid_dsl_json)
         
         assert result.is_valid is True
         assert len(result.errors) == 0
     
-    async def test_validate_dsl_invalid(
+    def test_validate_dsl_invalid(
         self, strategy_use_cases
     ):
         """Should return failure for invalid DSL"""
@@ -495,18 +495,18 @@ class TestValidateDSL:
             }
         }
         
-        result = await strategy_use_cases.validate_dsl(invalid_dsl)
+        result = strategy_use_cases.validate_dsl(invalid_dsl)
         
         assert result.is_valid is False
         assert len(result.errors) > 0
     
-    async def test_validate_dsl_missing_version(
+    def test_validate_dsl_missing_version(
         self, strategy_use_cases, valid_dsl_json
     ):
         """Should fail validation for missing version"""
         dsl_without_version = valid_dsl_json.copy()
         del dsl_without_version["version"]
         
-        result = await strategy_use_cases.validate_dsl(dsl_without_version)
+        result = strategy_use_cases.validate_dsl(dsl_without_version)
         
         assert result.is_valid is False
