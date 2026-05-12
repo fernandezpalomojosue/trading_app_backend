@@ -69,7 +69,7 @@ async def create_strategy(
 
 
 @router.get("/user_list", response_model=StrategyListResponse)
-async def list_strategies(
+def list_strategies(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
     active_only: bool = Query(False, description="Filter to active strategies only"),
@@ -85,7 +85,7 @@ async def list_strategies(
         active_only=active_only
     )
     """List all strategies for the current user"""
-    return await use_cases.list_strategies(
+    return use_cases.list_strategies(
         user_id=current_user.id,
         skip=skip,
         limit=limit,
@@ -94,7 +94,7 @@ async def list_strategies(
 
 
 @router.get("/{strategy_id}", response_model=StrategyResponse)
-async def get_strategy(
+def get_strategy(
     strategy_id: uuid.UUID,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
@@ -117,7 +117,7 @@ async def get_strategy(
 
 
 @router.put("/{strategy_id}", response_model=StrategyResponse)
-async def update_strategy(
+def update_strategy(
     strategy_id: uuid.UUID,
     request: StrategyUpdateRequest,
     current_user = Depends(get_current_user_dependency),
@@ -130,7 +130,7 @@ async def update_strategy(
     DSL is re-validated if dsl_definition is provided.
     """
     try:
-        return await use_cases.update_strategy(
+        return use_cases.update_strategy(
             user_id=current_user.id,
             strategy_id=strategy_id,
             request=request
@@ -148,14 +148,14 @@ async def update_strategy(
 
 
 @router.delete("/{strategy_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_strategy(
+def delete_strategy(
     strategy_id: uuid.UUID,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
 ):
     """Delete a strategy"""
     try:
-        deleted = await use_cases.delete_strategy(
+        deleted = use_cases.delete_strategy(
             user_id=current_user.id,
             strategy_id=strategy_id
         )
@@ -177,14 +177,14 @@ async def delete_strategy(
 
 
 @router.post("/{strategy_id}/activate", response_model=StrategyResponse)
-async def activate_strategy(
+def activate_strategy(
     strategy_id: uuid.UUID,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
 ):
     """Activate a strategy"""
     try:
-        return await use_cases.activate_strategy(
+        return use_cases.activate_strategy(
             user_id=current_user.id,
             strategy_id=strategy_id
         )
@@ -201,14 +201,14 @@ async def activate_strategy(
 
 
 @router.post("/{strategy_id}/deactivate", response_model=StrategyResponse)
-async def deactivate_strategy(
+def deactivate_strategy(
     strategy_id: uuid.UUID,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
 ):
     """Deactivate a strategy"""
     try:
-        return await use_cases.deactivate_strategy(
+        return use_cases.deactivate_strategy(
             user_id=current_user.id,
             strategy_id=strategy_id
         )
@@ -225,7 +225,7 @@ async def deactivate_strategy(
 
 
 @router.post("/validate", response_model=StrategyValidationResponse)
-async def validate_dsl(
+def validate_dsl(
     dsl_definition: dict,
     current_user = Depends(get_current_user_dependency),
     use_cases: StrategyUseCases = Depends(get_strategy_use_cases)
@@ -238,4 +238,4 @@ async def validate_dsl(
     - Debugging strategies
     - Validating before creation
     """
-    return await use_cases.validate_dsl(dsl_definition)
+    return use_cases.validate_dsl(dsl_definition)
