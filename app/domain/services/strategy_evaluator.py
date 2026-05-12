@@ -217,10 +217,16 @@ class StrategyEvaluator:
                         historical_index = -(offset)  # Negative index from end
                         historical_point = indicators[historical_index]
                         
-                        # Create temporary context from historical point
+                        logger.debug(f"Evaluating price expression with offset={offset}, historical_index={historical_index}")
+                        
+                        # Create temporary context from historical point using new method
                         from app.domain.entities.market_context import MarketContext
-                        historical_context = MarketContext.from_indicator_point(historical_point)
-                        return historical_context.get_value(expression.field)
+                        historical_context = MarketContext.from_snapshot(snapshot, historical_index)
+                        historical_value = historical_context.get_value(expression.field)
+                        
+                        logger.debug(f"Price expression evaluation: field={expression.field}, offset={offset}, historical_value={historical_value}")
+                        
+                        return historical_value
                     else:
                         logger.warning(f"Price offset={offset} exceeds available historical data ({len(indicators)} candles), using current candle")
                         return context.get_value(expression.field)

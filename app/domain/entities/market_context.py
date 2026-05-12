@@ -75,33 +75,71 @@ class MarketContext(BaseModel):
             fibonacci_levels=indicator_point.fibonacci_levels or {}
         )
     
-    def get_value(self, field: str) -> Optional[float]:
+    def get_price(self, field: str) -> Optional[float]:
         """
-        Get a value by field name.
-        
-        Supports:
-        - price fields: open, high, low, close, volume
-        - indicator fields: ema, sma, rsi, macd, macd_signal, macd_histogram
+        Get price field value.
         
         Args:
-            field: Field name to retrieve
+            field: Field name ('open', 'high', 'low', 'close', 'volume')
             
         Returns:
-            Float value or None if field not found
+            Field value or None if not available
         """
-        field_map = {
-            # Price fields
-            "open": self.open_price,
-            "high": self.high_price,
-            "low": self.low_price,
-            "close": self.close_price,
-            "volume": self.volume,
-            # Indicator fields
-            "ema": self.ema,
-            "sma": self.sma,
-            "rsi": self.rsi,
-            "macd": self.macd,
-            "signal": self.macd_signal,
-            "histogram": self.macd_histogram,
-        }
+        if field == "open":
+            return self.open_price
+        elif field == "high":
+            return self.high_price
+        elif field == "low":
+            return self.low_price
+        elif field == "close":
+            return self.close_price
+        elif field == "volume":
+            return self.volume
+        else:
+            logger.warning(f"Unknown price field: {field}")
+            return None
+    
+    @classmethod
+    def from_snapshot(cls, market_snapshot: 'MarketSnapshot', index: int = -1) -> "MarketContext":
+        """
+        Create MarketContext from MarketSnapshot at specific index.
+        
+        Args:
+            market_snapshot: MarketSnapshot with historical indicators
+            index: Index in indicators list (-1 for latest, 0 for first)
+            
+        Returns:
+            MarketContext populated with indicator data at specified index
+        """
+        if not market_snapshot.indicators:
+            raise ValueError("MarketSnapshot has no indicators")
+        
+        if index == -1:
+            # Latest indicator
+            indicator_point = market_snapshot.indicators[-1]
+        else:
+            # Specific index
+            if index < 0 or index >= len(market_snapshot.indicators):
+                raise ValueError(f"Index {index} out of range for indicators")
+            indicator_point = market_snapshot.indicators[index]
+        
+        return cls.from_indicator_point(indicator_point)
+    
+    def with_snapshot(self, market_snapshot: 'MarketSnapshot') -> "MarketContext":
+        """
+        Create a new MarketContext with MarketSnapshot attached for offset support.
+        
+        Args:
+            market_snapshot: MarketSnapshot with historical indicators
+            
+        Returns:
+            MarketContext with _market_snapshot attribute for historical access
+        """
+        # Create context from latest indicator point
+        context = self.from_indicator_point(market_snapshot.indicators[-1])
+        
+        # Attach snapshot for historical access
+        context._market_snapshot = market_snapshot
+        
+        return context
         return field_map.get(field)
