@@ -109,7 +109,7 @@ class TestCreateStrategy:
         )
         
         with pytest.raises(ValueError, match="DSL validation failed"):
-            await strategy_use_cases.create_strategy(sample_user_id, request)
+            strategy_use_cases.create_strategy(sample_user_id, request)
         
         mock_repository.create.assert_not_called()
     
@@ -260,7 +260,7 @@ class TestDeleteStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         mock_repository.delete.return_value = True
         
-        result = await strategy_use_cases.delete_strategy(
+        result = strategy_use_cases.delete_strategy(
             sample_user_id, sample_strategy_id
         )
         
@@ -274,7 +274,7 @@ class TestDeleteStrategy:
         mock_repository.get_by_id.return_value = None
         
         with pytest.raises(ValueError, match="Strategy not found"):
-            await strategy_use_cases.delete_strategy(
+            strategy_use_cases.delete_strategy(
                 sample_user_id, sample_strategy_id
             )
     
@@ -294,7 +294,7 @@ class TestDeleteStrategy:
         mock_repository.get_by_id.return_value = existing_strategy
         
         with pytest.raises(PermissionError, match="Cannot delete strategy"):
-            await strategy_use_cases.delete_strategy(
+            strategy_use_cases.delete_strategy(
                 sample_user_id, sample_strategy_id
             )
 

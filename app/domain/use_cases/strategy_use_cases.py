@@ -151,7 +151,7 @@ class StrategyUseCases:
         
         return self._to_response(updated)
     
-    async def delete_strategy(
+    def delete_strategy(
         self,
         user_id: uuid.UUID,
         strategy_id: uuid.UUID
@@ -202,7 +202,7 @@ class StrategyUseCases:
             raise ValueError(f"Strategy not found: {strategy_id}")
         return self._to_response(strategy)
     
-    async def list_strategies(
+    def list_strategies(
         self,
         user_id: uuid.UUID,
         skip: int = 0,
@@ -238,7 +238,7 @@ class StrategyUseCases:
             page_size=limit
         )
     
-    async def validate_dsl(
+    def validate_dsl(
         self,
         dsl_definition: Dict[str, Any]
     ) -> StrategyValidationResponse:
@@ -288,7 +288,7 @@ class StrategyUseCases:
         updated = self._repository.update(entity)
         return self._to_response(updated)
     
-    async def get_user_active_strategies(self, user_id: uuid.UUID) -> List[Strategy]:
+    def get_user_active_strategies(self, user_id: uuid.UUID) -> List[Strategy]:
         """
         Get all active strategies for a user.
         
@@ -307,7 +307,7 @@ class StrategyUseCases:
         )
         return strategies
     
-    async def get_default_strategy(self) -> Strategy:
+    def get_default_strategy(self) -> Strategy:
         """
         Get the system default strategy.
         
