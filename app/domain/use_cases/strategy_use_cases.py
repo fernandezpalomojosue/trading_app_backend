@@ -63,12 +63,21 @@ class StrategyUseCases:
                 f"DSL validation failed: {'; '.join(validation_result.errors)}"
             )
         
+        # Extract DSL definition from request
+        # Handle both direct DSL or nested dsl_definition
+        if isinstance(request.dsl_definition, dict) and "dsl_definition" in request.dsl_definition:
+            # AI service response format: {name, description, action, dsl_definition: {version, root}}
+            dsl_data = request.dsl_definition["dsl_definition"]
+        else:
+            # Direct DSL format: {version, root}
+            dsl_data = request.dsl_definition
+        
         # Create entity
         strategy = Strategy(
             user_id=user_id,
             name=request.name,
             description=request.description,
-            dsl_definition=request.dsl_definition,
+            dsl_definition=dsl_data,
             version=request.version,
             is_active=request.is_active
         )
@@ -381,6 +390,8 @@ class StrategyUseCases:
                 )
             except Exception as e:
                 print(f"[AI_GENERATION] WARNING: Strategy generated but failed to save: {e}")
+                print(f"[AI_GENERATION] Error type: {type(e).__name__}")
+                print(f"[AI_GENERATION] Strategy data: name={result.name}, action={result.action}")
                 # Return generated strategy even if save failed
                 return StrategyGenerateResponse(
                     name=result.name,
