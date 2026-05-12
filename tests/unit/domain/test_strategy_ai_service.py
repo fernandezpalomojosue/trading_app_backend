@@ -85,7 +85,7 @@ class TestStrategyAIService:
         service = StrategyAIService(provider=provider, max_retries=2)
         
         result = await service.generate_strategy(
-            user_prompt="Buy when RSI is over 70",
+            user_prompt="Buy when RSI is below 30",
             user_id=user_id
         )
         
