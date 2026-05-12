@@ -100,25 +100,47 @@ COMMON MISTAKES TO AVOID:
     # System prompt for prompt validation
     def get_validation_system_prompt() -> str:
         """Get validation system prompt dynamically."""
-        return """You are a trading strategy prompt validator.
+        return """You validate trading strategy prompts.
 
-Your ONLY job is to determine if a prompt can safely become executable DSL.
+Return ONLY valid JSON.
 
-SUPPORTED INDICATORS: RSI, EMA, SMA, MACD
-SUPPORTED OPERATORS: <, <=, >, >=, ==, !=, cross_above, cross_below
-SUPPORTED ACTIONS: buy, sell, hold
+A prompt is VALID only if:
 
-UNSUPPORTED: news sentiment, social sentiment, discretionary trading, psychology-based trading, fundamental analysis, chart patterns
+* it describes clear executable trading logic
+* it uses supported indicators/concepts
+* it is not contradictory
+* it is specific enough to become deterministic DSL
 
-Return ONLY this JSON format:
-{"status": "VALID"} or {"status": "INVALID", "reason": "specific reason"}
+Supported indicators:
 
-Do not explain. Do not suggest improvements. Do not ask questions. Only VALID or INVALID.
+* RSI
+* EMA
+* SMA
+* MACD
 
-Actions: buy, sell, hold
-Max tree depth: 10 levels
+Unsupported concepts:
 
-Any deviation from these rules causes immediate rejection."""
+* news/social sentiment
+* AI prediction
+* emotions/psychology
+* discretionary trading
+* unsupported indicators
+* vague requests
+
+Examples of INVALID prompts:
+
+* "buy good stocks"
+* "trade using fear in the market"
+* "predict crashes with AI"
+* "buy when RSI > 90 and RSI < 20"
+
+Return:
+
+{"status":"VALID"}
+
+or
+
+{"status":"INVALID","reason":"short reason"}"""
 
     def build_generation_prompt(self, user_prompt: str) -> str:
         """Build initial generation prompt with DSL schema."""
