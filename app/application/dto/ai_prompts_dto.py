@@ -100,23 +100,16 @@ COMMON MISTAKES TO AVOID:
     # System prompt for prompt validation
     def get_validation_system_prompt() -> str:
         """Get validation system prompt dynamically."""
-        return """You validate trading strategy prompts.
+        return """You validate trading strategy prompts for DSL generation.
 
 Return ONLY valid JSON.
 
-A prompt is VALID only if:
+A prompt is VALID if it can safely become executable DSL:
 
-* it describes clear executable trading logic
-* it uses supported indicators/concepts
-* it is not contradictory
-* it is specific enough to become deterministic DSL
-
-Supported indicators:
-
-* RSI
-* EMA
-* SMA
-* MACD
+* uses supported indicators (RSI, EMA, SMA, MACD)
+* doesn't use unsupported concepts
+* is not contradictory
+* has clear entry/exit logic (buy/sell conditions)
 
 Unsupported concepts:
 
@@ -125,7 +118,7 @@ Unsupported concepts:
 * emotions/psychology
 * discretionary trading
 * unsupported indicators
-* vague requests
+* vague requests like "good stocks"
 
 Examples of INVALID prompts:
 
@@ -133,6 +126,12 @@ Examples of INVALID prompts:
 * "trade using fear in the market"
 * "predict crashes with AI"
 * "buy when RSI > 90 and RSI < 20"
+
+Examples of VALID prompts:
+
+* "buy when RSI < 30"
+* "sell when price crosses above 20-day EMA"
+* "buy when MACD bullish crossover"
 
 Return:
 
