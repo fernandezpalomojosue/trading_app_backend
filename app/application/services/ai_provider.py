@@ -23,7 +23,7 @@ class AIProvider(ABC):
     """
     
     @abstractmethod
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str, system_prompt: str = None, temperature: float = 0.3) -> str:
         """
         Send prompt to AI and return raw response string.
         

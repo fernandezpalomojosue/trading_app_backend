@@ -152,7 +152,7 @@ class StrategyAIService:
                     user_id=str(user_id),
                     attempt=attempt
                 )
-                raw_response = await self.provider.generate(prompt)
+                raw_response = await self.provider.generate(prompt, system_prompt=self.prompts.system_prompt, temperature=0.3)
                 last_response = raw_response
                 self.logger.debug(
                     "AI response received",

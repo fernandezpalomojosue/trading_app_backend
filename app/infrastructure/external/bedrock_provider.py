@@ -37,7 +37,7 @@ class BedrockProvider(AIProvider):
         self.max_tokens = max_tokens
         self.prompts = AIPromptsDTO.default()
     
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str, system_prompt: str = None, temperature: float = 0.3) -> str:
         """
         Send prompt to OpenRouter and return response.
         
@@ -63,11 +63,11 @@ class BedrockProvider(AIProvider):
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.prompts.system_prompt},
+                    {"role": "system", "content": system_prompt or self.prompts.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
-                temperature=0.3  # Lower temperature for more deterministic JSON
+                temperature=temperature
             )
             
             content = response.choices[0].message.content
