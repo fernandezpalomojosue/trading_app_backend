@@ -16,6 +16,7 @@ from app.application.dto.prompt_validation_dto import (
 from app.domain.services.strategy_registry import StrategyRegistry
 from app.infrastructure.external.ai_provider_factory import AIProviderFactory
 from app.core.config import settings
+from app.core.logging_config import get_logger
 
 
 class PromptValidator:
@@ -95,10 +96,17 @@ class PromptValidator:
             return json.loads(response.strip())
             
         except Exception as e:
-            # Fallback to conservative rejection
+            # Fallback to conservative rejection with detailed error
+            logger = get_logger(__name__)
+            logger.error(
+                "Prompt validation LLM call failed",
+                component="prompt_validator",
+                error_type=type(e).__name__,
+                error_message=str(e)
+            )
             return {
                 "status": "INVALID",
-                "reason": "Validation service unavailable"
+                "reason": f"Validation service unavailable: {type(e).__name__}: {str(e)}"
             }
     
     def _build_system_prompt(self) -> str:

@@ -37,7 +37,7 @@ class BedrockProvider(AIProvider):
         self.max_tokens = max_tokens
         self.prompts = AIPromptsDTO.default()
     
-    async def generate(self, prompt: str, system_prompt: str = None, temperature: float = 0.3) -> str:
+    async def generate(self, prompt: str, system_prompt: str = None, temperature: float = 0.3, max_tokens: int = 1200) -> str:
         """
         Send prompt to OpenRouter and return response.
         

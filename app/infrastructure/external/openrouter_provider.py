@@ -37,12 +37,14 @@ class OpenRouterProvider(AIProvider):
         self.max_tokens = max_tokens
         self.prompts = AIPromptsDTO.default()
     
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str, system_prompt: str = None, temperature: float = 0.3, max_tokens: int = 1200) -> str:
         """
         Send prompt to OpenRouter and return response.
         
         Args:
             prompt: User prompt with strategy description
+            system_prompt: Optional system prompt for the AI
+            temperature: Temperature for response generation
             
         Returns:
             Raw AI response string
@@ -63,11 +65,11 @@ class OpenRouterProvider(AIProvider):
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": self.prompts.system_prompt},
+                    {"role": "system", "content": system_prompt or self.prompts.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
-                temperature=0.3  # Lower temperature for more deterministic JSON
+                temperature=temperature
             )
             
             content = response.choices[0].message.content
