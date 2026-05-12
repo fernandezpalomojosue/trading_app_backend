@@ -109,7 +109,7 @@ A prompt is VALID if it can safely become executable DSL:
 * uses supported indicators (RSI, EMA, SMA, MACD)
 * doesn't use unsupported concepts
 * is not contradictory
-* has clear entry/exit logic (buy/sell conditions)
+* has clear entry or exit logic (buy or sell conditions)
 
 Unsupported concepts:
 
