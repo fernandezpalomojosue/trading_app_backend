@@ -216,7 +216,7 @@ class StrategyEvaluator:
             return value
         elif isinstance(expression, Price):
             # Implement offset handling for historical price access
-            offset = getattr(expression, 'offset', 0) or 0
+            offset = getattr(expression, 'offset', 0)
             logger.debug(f"Price expression: field={expression.field}, offset={offset}")
             
             if offset == 0:
@@ -226,8 +226,8 @@ class StrategyEvaluator:
                 return value
             else:
                 # Historical candle - access from MarketSnapshot if available
-                if hasattr(context, '_market_snapshot') and context._market_snapshot:
-                    snapshot = context._market_snapshot
+                if hasattr(context, 'market_snapshot') and context.market_snapshot:
+                    snapshot = context.market_snapshot
                     indicators = snapshot.indicators
                     
                     logger.debug(f"Market snapshot available with {len(indicators)} indicators")

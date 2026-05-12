@@ -52,7 +52,7 @@ class MarketContext(BaseModel):
     )
     
     # Market snapshot for historical access (added dynamically)
-    _market_snapshot: Optional['MarketSnapshot'] = Field(
+    market_snapshot: Optional['MarketSnapshot'] = Field(
         default=None,
         description="Market snapshot with historical indicators for offset access"
     )
@@ -139,13 +139,13 @@ class MarketContext(BaseModel):
             market_snapshot: MarketSnapshot with historical indicators
             
         Returns:
-            MarketContext with _market_snapshot attribute for historical access
+            MarketContext with market_snapshot attribute for historical access
         """
         # Create context from latest indicator point
         context = self.from_indicator_point(market_snapshot.indicators[-1])
         
         # Attach snapshot for historical access
-        context._market_snapshot = market_snapshot
+        context.market_snapshot = market_snapshot
         
         return context
         return field_map.get(field)
