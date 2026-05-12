@@ -223,15 +223,36 @@ async def generate_strategy(
         prompt_length=len(request.prompt)
     )
     
-    validation_result = await prompt_validator.validate(request.prompt)
-    
-    request_logger.info(
-        "Prompt validation completed",
-        component="ai_strategies",
-        user_id=current_user.id,
-        validation_status=validation_result.status,
-        validation_reason=validation_result.reason
-    )
+    try:
+        validation_result = await prompt_validator.validate(request.prompt)
+        
+        request_logger.info(
+            "Prompt validation completed",
+            component="ai_strategies",
+            user_id=current_user.id,
+            validation_status=validation_result.status,
+            validation_reason=validation_result.reason
+        )
+    except Exception as e:
+        request_logger.error(
+            "Prompt validation exception",
+            component="ai_strategies",
+            user_id=current_user.id,
+            error_type=type(e).__name__,
+            error_message=str(e),
+            prompt_preview=request.prompt[:100]
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error_type": "prompt_validation_exception",
+                "message": "Prompt validation failed with exception",
+                "error_details": {
+                    "error_type": type(e).__name__,
+                    "error_message": str(e)
+                }
+            }
+        )
     
     if validation_result.status == "INVALID":
         request_logger.warning(
