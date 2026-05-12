@@ -24,6 +24,7 @@ from app.application.dto.strategy_dto import (
     StrategyListResponse,
     StrategyValidationResponse
 )
+from app.domain.services.strategy_ai_service import StrategyAIService
 
 
 class StrategyUseCases:
@@ -38,7 +39,7 @@ class StrategyUseCases:
         self._repository = repository
         self._strategy_ai_service = None  # Set via set_ai_service() for AI generation
     
-    async def create_strategy(
+    def create_strategy(
         self, 
         user_id: uuid.UUID, 
         request: StrategyCreateRequest
@@ -87,7 +88,7 @@ class StrategyUseCases:
         
         return self._to_response(created)
     
-    async def update_strategy(
+    def update_strategy(
         self,
         user_id: uuid.UUID,
         strategy_id: uuid.UUID,
@@ -347,7 +348,7 @@ class StrategyUseCases:
         Raises:
             RuntimeError: If StrategyAIService not configured
         """
-        from app.domain.services.strategy_ai_service import StrategyAIService
+        
         
         # Check if AI service is configured
         if self._strategy_ai_service is None:
