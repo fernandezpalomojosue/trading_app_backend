@@ -75,7 +75,7 @@ class MarketContext(BaseModel):
             fibonacci_levels=indicator_point.fibonacci_levels or {}
         )
     
-    def get_price(self, field: str) -> Optional[float]:
+    def get_value(self, field: str) -> Optional[float]:
         """
         Get price field value.
         
