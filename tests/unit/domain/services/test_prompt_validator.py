@@ -26,7 +26,7 @@ class TestPromptValidator:
     async def test_valid_prompt_with_rsi(self, validator):
         """Test validation of valid RSI-based prompt."""
         # Mock successful LLM response
-        validator.ai_provider.generate_completion = AsyncMock(
+        validator.ai_provider.generate = AsyncMock(
             return_value='{"status": "VALID"}'
         )
         
@@ -74,7 +74,7 @@ class TestPromptValidator:
     @pytest.mark.asyncio
     async def test_valid_prompt_with_multiple_indicators(self, validator):
         """Test validation of valid multi-indicator prompt."""
-        validator.ai_provider.generate_completion = AsyncMock(
+        validator.ai_provider.generate = AsyncMock(
             return_value='{"status": "VALID"}'
         )
         
@@ -89,7 +89,7 @@ class TestPromptValidator:
     async def test_llm_fallback_to_invalid(self, validator):
         """Test fallback behavior when LLM fails."""
         # Mock LLM failure
-        validator.ai_provider.generate_completion = AsyncMock(
+        validator.ai_provider.generate = AsyncMock(
             side_effect=Exception("AI service unavailable")
         )
         
