@@ -5,7 +5,7 @@ Market Context for Strategy Evaluation
 Contains OHLCV data and calculated indicators for a specific point in time.
 Used by StrategyEngine as evaluation context for DSL conditions.
 """
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
 from pydantic import BaseModel, Field
 
 
@@ -49,6 +49,12 @@ class MarketContext(BaseModel):
     historical_indicators: List = Field(
         default_factory=list,
         description="List of historical indicator data points for offset calculations"
+    )
+    
+    # Market snapshot for historical access (added dynamically)
+    _market_snapshot: Optional['MarketSnapshot'] = Field(
+        default=None,
+        description="Market snapshot with historical indicators for offset access"
     )
     
     @classmethod
