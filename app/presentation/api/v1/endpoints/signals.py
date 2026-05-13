@@ -97,7 +97,7 @@ async def get_signal(
     
     result = await signal_repo.get_by_symbol(symbol)
     if result:
-        cache_success = await cache.set(f"signal:{symbol}", result.model_dump())
+        cache_success = await cache.set(f"signal:{symbol}", result.model_dump(), ttl=120)
         if not cache_success:
             logger.warning(
                 "Failed to cache signal",
