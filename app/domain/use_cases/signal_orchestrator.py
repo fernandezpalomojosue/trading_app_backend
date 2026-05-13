@@ -129,18 +129,19 @@ class SignalOrchestrator:
                 )
                 return None
             
-            # Build MarketSnapshot objects from snapshot
-            context, prev_context = snapshot.get_evaluation_context()
-            
-            # Evaluate strategy condition
+            # Evaluate strategy condition using full snapshot
             condition_met = self.strategy_engine.evaluate(
-                strategy, context, prev_context
+                strategy, snapshot
             )
             
             # Determine action based on condition
             action = strategy.dsl_definition.get("action", "hold")
             if condition_met:
                 action = strategy.dsl_definition.get("action", "buy") if action == "hold" else action
+            
+            # Get current and previous points for signal calculation
+            context = snapshot.current_point
+            prev_context = snapshot.previous_point if len(snapshot.indicators) >= 2 else None
             
             # Generate signal
             signal = await self.signal_engine_service.calculate_single_signal(

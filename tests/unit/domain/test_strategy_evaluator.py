@@ -55,7 +55,7 @@ class TestStrategyEvaluatorConditions:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
         
         assert result is True
     
@@ -69,12 +69,41 @@ class TestStrategyEvaluatorConditions:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
         
         assert result is True
     
     def test_cross_above_true(self):
-        """Should detect crossover"""
+        """Should detect crossover when historical data is available"""
+        from app.application.dto.indicators_dto import IndicatorDataPoint
+        
+        # Create snapshot with historical data
+        prev_point = IndicatorDataPoint(
+            timestamp=1000,
+            symbol="TEST",
+            close_price=15.0  # Previous: left (15) <= right (20)
+        )
+        curr_point = IndicatorDataPoint(
+            timestamp=2000,
+            symbol="TEST",
+            close_price=25.0  # Current: left (25) > right (20)
+        )
+        
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[prev_point, curr_point])
+        
+        cond = Condition(
+            type="condition",
+            operator="cross_above",
+            left=Price(type="price", field="close"),
+            right=Constant(type="constant", value=20.0)
+        )
+        
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
+        # Crossover: previously 15 <= 20, now 25 > 20
+        assert result is True
+    
+    def test_cross_above_insufficient_data(self):
+        """Should return False when insufficient historical data for crossover"""
         cond = Condition(
             type="condition",
             operator="cross_above",
@@ -82,12 +111,10 @@ class TestStrategyEvaluatorConditions:
             right=Constant(type="constant", value=20.0)
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
-        prev_ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        # Need to set values in prev_ctx - using a workaround
-        result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
-        # Without prev_context, just checks if left > right
-        assert result is True
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
+        # Without sufficient historical data, returns False
+        assert result is False
 
 
 class TestStrategyEvaluatorLogicalNodes:
@@ -104,7 +131,7 @@ class TestStrategyEvaluatorLogicalNodes:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator.evaluate_node(node, ctx, None)
+        result = StrategyEvaluator.evaluate_node(node, ctx)
         
         assert result is True
     
@@ -119,7 +146,7 @@ class TestStrategyEvaluatorLogicalNodes:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator.evaluate_node(node, ctx, None)
+        result = StrategyEvaluator.evaluate_node(node, ctx)
         
         assert result is False
     
@@ -134,7 +161,7 @@ class TestStrategyEvaluatorLogicalNodes:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator.evaluate_node(node, ctx, None)
+        result = StrategyEvaluator.evaluate_node(node, ctx)
         
         assert result is True
     
@@ -146,7 +173,7 @@ class TestStrategyEvaluatorLogicalNodes:
         )
         ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
-        result = StrategyEvaluator.evaluate_node(node, ctx, None)
+        result = StrategyEvaluator.evaluate_node(node, ctx)
         
         assert result is False  # NOT True = False
 
@@ -164,7 +191,7 @@ class TestStrategyEvaluatorRSIStrategy:
         )
         ctx = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=25.0)
         
-        result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
         
         assert result is True
     
@@ -178,6 +205,6 @@ class TestStrategyEvaluatorRSIStrategy:
         )
         ctx = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=75.0)
         
-        result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
+        result = StrategyEvaluator._evaluate_condition(cond, ctx)
         
         assert result is True
