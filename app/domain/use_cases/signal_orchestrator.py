@@ -12,7 +12,6 @@ from app.application.services.indicators_service import IndicatorsService
 from app.application.services.signal_engine_service import SignalEngineService
 from app.application.repositories.signal_repository import SignalRepository
 from app.application.repositories.cache_repository import CacheRepository
-from app.domain.entities.market_context import MarketContext
 from app.domain.entities.market_snapshot import MarketSnapshot
 from app.domain.services.strategy_engine import StrategyEngine
 from app.domain.entities.strategy import Strategy
@@ -130,13 +129,8 @@ class SignalOrchestrator:
                 )
                 return None
             
-            # Build MarketContext objects from snapshot
+            # Build MarketSnapshot objects from snapshot
             context, prev_context = snapshot.get_evaluation_context()
-            
-            # Add MarketSnapshot reference to context for offset support
-            context._market_snapshot = snapshot
-            if prev_context:
-                prev_context._market_snapshot = snapshot
             
             # Evaluate strategy condition
             condition_met = self.strategy_engine.evaluate(

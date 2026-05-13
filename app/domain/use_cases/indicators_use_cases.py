@@ -43,7 +43,11 @@ class IndicatorsUseCases(IndicatorsService):
                 IndicatorDataPoint(
                     timestamp=item.get('timestamp'),
                     symbol=item.get('symbol'),
+                    open_price=item.get('open_price'),
+                    high_price=item.get('high_price'),
+                    low_price=item.get('low_price'),
                     close_price=item.get('close_price'),
+                    volume=item.get('volume'),
                     ema=item.get('ema'),
                     sma=item.get('sma'),
                     rsi=item.get('rsi'),
@@ -68,6 +72,10 @@ class IndicatorsUseCases(IndicatorsService):
         
         
         df["close"] = df["c"]
+        df["open"] = df["o"]
+        df["high"] = df["h"]
+        df["low"] = df["l"]
+        df["volume"] = df["v"]
         df["timestamp"] = df["t"]
 
         # Validación mínima
@@ -105,13 +113,17 @@ class IndicatorsUseCases(IndicatorsService):
             point = IndicatorDataPoint(
                 timestamp=int(row["t"]),
                 symbol=symbol,
+                open_price=safe_float(row["o"]),
+                high_price=safe_float(row["h"]),
+                low_price=safe_float(row["l"]),
+                close_price=safe_float(row["c"]),
+                volume=safe_float(row["v"]),
                 ema=safe_float(row["ema"]),
                 sma=safe_float(row["sma"]),
                 rsi=safe_float(row["rsi"]),
                 macd=safe_float(row["macd"]),
                 macd_signal=safe_float(row["macd_signal"]),
                 histogram=safe_float(row["histogram"]),
-                close_price=safe_float(row["c"]), 
                 fibonacci_levels=fibonacci_levels
             )
             results.append(point)

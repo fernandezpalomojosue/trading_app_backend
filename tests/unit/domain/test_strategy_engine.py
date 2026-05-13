@@ -7,7 +7,7 @@ from uuid import UUID
 from app.domain.services.strategy_engine import StrategyEngine
 from app.domain.entities.strategy import Strategy
 from app.domain.entities.strategy_dsl import StrategyDSL
-from app.domain.entities.market_context import MarketContext
+from app.domain.entities.market_snapshot import MarketSnapshot
 
 
 class TestStrategyEngineEvaluate:
@@ -38,7 +38,7 @@ class TestStrategyEngineEvaluate:
         )
         
         # Context with RSI = 25 (oversold)
-        context = MarketContext(symbol="AAPL", timestamp=0, rsi=25.0)
+        context = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=25.0)
         
         result = self.engine.evaluate(strategy, context)
         
@@ -64,7 +64,7 @@ class TestStrategyEngineEvaluate:
         )
         
         # Context with RSI = 50 (neutral)
-        context = MarketContext(symbol="AAPL", timestamp=0, rsi=50.0)
+        context = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=50.0)
         
         result = self.engine.evaluate(strategy, context)
         
@@ -101,9 +101,10 @@ class TestStrategyEngineEvaluate:
         )
         
         # Context meeting both conditions
-        context = MarketContext(
+        context = MarketSnapshot(
             symbol="AAPL", 
-            timestamp=0, 
+            timeframe="day", 
+            indicators=[],
             rsi=25.0,  # < 30
             close_price=150.0,
             sma=140.0  # Price > SMA
@@ -126,7 +127,7 @@ class TestStrategyEngineEvaluate:
             }
         )
         
-        context = MarketContext(symbol="AAPL", timestamp=0, rsi=75.0)
+        context = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=75.0)
         
         result = self.engine.evaluate_dsl(dsl, context)
         
@@ -146,7 +147,7 @@ class TestStrategyEngineEvaluate:
             version=1
         )
         
-        context = MarketContext(symbol="AAPL", timestamp=0)
+        context = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[])
         
         with pytest.raises(ValueError, match="Invalid DSL definition"):
             self.engine.evaluate(strategy, context)

@@ -8,7 +8,7 @@ from app.domain.entities.strategy_dsl import (
     Constant, Price, Indicator,
     Condition, AndNode, OrNode, NotNode
 )
-from app.domain.entities.market_context import MarketContext
+from app.domain.entities.market_snapshot import MarketSnapshot
 
 
 class TestStrategyEvaluatorExpressions:
@@ -17,7 +17,7 @@ class TestStrategyEvaluatorExpressions:
     def test_evaluate_constant(self):
         """Should return constant value"""
         const = Constant(type="constant", value=42.0)
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator._evaluate_expression(const, ctx)
         
@@ -26,7 +26,7 @@ class TestStrategyEvaluatorExpressions:
     def test_evaluate_price(self):
         """Should return price from context"""
         price = Price(type="price", field="close")
-        ctx = MarketContext(symbol="TEST", timestamp=0, close_price=150.0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[], close_price=150.0)
         
         result = StrategyEvaluator._evaluate_expression(price, ctx)
         
@@ -35,7 +35,7 @@ class TestStrategyEvaluatorExpressions:
     def test_evaluate_indicator(self):
         """Should return indicator from context"""
         ind = Indicator(type="indicator", name="RSI", params={"period": 14})
-        ctx = MarketContext(symbol="TEST", timestamp=0, rsi=30.0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[], rsi=30.0)
         
         result = StrategyEvaluator._evaluate_expression(ind, ctx)
         
@@ -53,7 +53,7 @@ class TestStrategyEvaluatorConditions:
             left=Constant(type="constant", value=10.0),
             right=Constant(type="constant", value=20.0)
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
         
@@ -67,7 +67,7 @@ class TestStrategyEvaluatorConditions:
             left=Constant(type="constant", value=30.0),
             right=Constant(type="constant", value=20.0)
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
         
@@ -81,8 +81,8 @@ class TestStrategyEvaluatorConditions:
             left=Constant(type="constant", value=25.0),
             right=Constant(type="constant", value=20.0)
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
-        prev_ctx = MarketContext(symbol="TEST", timestamp=0)  # prev: 15 < 20
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
+        prev_ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         # Need to set values in prev_ctx - using a workaround
         result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
@@ -102,7 +102,7 @@ class TestStrategyEvaluatorLogicalNodes:
                 Condition(type="condition", operator="<", left=Constant(type="constant", value=3), right=Constant(type="constant", value=4)),
             ]
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator.evaluate_node(node, ctx, None)
         
@@ -117,7 +117,7 @@ class TestStrategyEvaluatorLogicalNodes:
                 Condition(type="condition", operator=">", left=Constant(type="constant", value=3), right=Constant(type="constant", value=4)),  # False
             ]
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator.evaluate_node(node, ctx, None)
         
@@ -132,7 +132,7 @@ class TestStrategyEvaluatorLogicalNodes:
                 Condition(type="condition", operator=">", left=Constant(type="constant", value=3), right=Constant(type="constant", value=4)),  # False
             ]
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator.evaluate_node(node, ctx, None)
         
@@ -144,7 +144,7 @@ class TestStrategyEvaluatorLogicalNodes:
             type="NOT",
             child=Condition(type="condition", operator="<", left=Constant(type="constant", value=1), right=Constant(type="constant", value=2))
         )
-        ctx = MarketContext(symbol="TEST", timestamp=0)
+        ctx = MarketSnapshot(symbol="TEST", timeframe="day", indicators=[])
         
         result = StrategyEvaluator.evaluate_node(node, ctx, None)
         
@@ -162,7 +162,7 @@ class TestStrategyEvaluatorRSIStrategy:
             left=Indicator(type="indicator", name="RSI", params={"period": 14}),
             right=Constant(type="constant", value=30.0)
         )
-        ctx = MarketContext(symbol="AAPL", timestamp=0, rsi=25.0)
+        ctx = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=25.0)
         
         result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
         
@@ -176,7 +176,7 @@ class TestStrategyEvaluatorRSIStrategy:
             left=Indicator(type="indicator", name="RSI", params={"period": 14}),
             right=Constant(type="constant", value=70.0)
         )
-        ctx = MarketContext(symbol="AAPL", timestamp=0, rsi=75.0)
+        ctx = MarketSnapshot(symbol="AAPL", timeframe="day", indicators=[], rsi=75.0)
         
         result = StrategyEvaluator._evaluate_condition(cond, ctx, None)
         
