@@ -47,7 +47,7 @@ class RedisCache(CacheRepository):
             self._misses += 1
             return None
     
-    async def set(self, key: str, value: Any, ttl: int = 300) -> bool:
+    async def set(self, key: str, value: Any, ttl: int = 200) -> bool:
         """Set value in Redis cache with TTL. Returns True if successful, False on error."""
         try:
             redis_client = await self._get_redis()
@@ -117,7 +117,7 @@ class RedisCache(CacheRepository):
         """Get Redis client"""
         return self._redis
     
-    async def acquire_lock(self, key: str, ttl: int = 120) -> Optional[str]:
+    async def acquire_lock(self, key: str, ttl: int = 60) -> Optional[str]:
         """
         Try to acquire a distributed lock.
         Returns lock value if acquired, None otherwise.
