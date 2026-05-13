@@ -32,68 +32,69 @@ class StrategyEvaluator:
     """
     
     @classmethod
-    def evaluate_dsl(cls, dsl_root: Node, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
+    def evaluate_dsl(cls, dsl_root: Node, context: MarketSnapshot) -> bool:
         """
         Evaluate DSL AST root node against market context.
         
         Args:
             dsl_root: Root node of DSL AST (AndNode, OrNode, NotNode, or Condition)
-            context: Current market snapshot with indicators
-            prev_context: Previous market snapshot for crossover detection (optional)
+            context: Full market snapshot with historical indicators
             
         Returns:
             True if conditions are met, False otherwise
+            
+        Raises:
+            InsufficientDataError: When historical data is required but not available
         """
-        return cls.evaluate_node(dsl_root, context, prev_context)
+        return cls.evaluate_node(dsl_root, context)
     
     @classmethod
-    def evaluate_node(cls, node: Node, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
+    def evaluate_node(cls, node: Node, context: MarketSnapshot) -> bool:
         """
         Recursively evaluate AST node.
         
         Args:
             node: AST node to evaluate
-            context: Current market snapshot
-            prev_context: Previous snapshot for crossover detection
+            context: Full market snapshot with historical indicators
             
         Returns:
             Boolean evaluation result
         """
         if isinstance(node, AndNode):
-            return cls._evaluate_and(node, context, prev_context)
+            return cls._evaluate_and(node, context)
         elif isinstance(node, OrNode):
-            return cls._evaluate_or(node, context, prev_context)
+            return cls._evaluate_or(node, context)
         elif isinstance(node, NotNode):
-            return cls._evaluate_not(node, context, prev_context)
+            return cls._evaluate_not(node, context)
         elif isinstance(node, Condition):
-            return cls._evaluate_condition(node, context, prev_context)
+            return cls._evaluate_condition(node, context)
         else:
             logger.warning(f"Unknown node type: {type(node)}")
             return False
     
     @classmethod
-    def _evaluate_and(cls, node: AndNode, context: MarketSnapshot, prev_context: Optional[MarketSnapshot]) -> bool:
+    def _evaluate_and(cls, node: AndNode, context: MarketSnapshot) -> bool:
         """Evaluate AND node - all children must be true"""
         if not node.children:
             return False
-        return all(cls.evaluate_node(child, context, prev_context) for child in node.children)
+        return all(cls.evaluate_node(child, context) for child in node.children)
     
     @classmethod
-    def _evaluate_or(cls, node: OrNode, context: MarketSnapshot, prev_context: Optional[MarketSnapshot]) -> bool:
+    def _evaluate_or(cls, node: OrNode, context: MarketSnapshot) -> bool:
         """Evaluate OR node - at least one child must be true"""
         if not node.children:
             return False
-        return any(cls.evaluate_node(child, context, prev_context) for child in node.children)
+        return any(cls.evaluate_node(child, context) for child in node.children)
     
     @classmethod
-    def _evaluate_not(cls, node: NotNode, context: MarketSnapshot, prev_context: Optional[MarketSnapshot]) -> bool:
+    def _evaluate_not(cls, node: NotNode, context: MarketSnapshot) -> bool:
         """Evaluate NOT node - negate child result"""
         if node.child is None:
             return False
-        return not cls.evaluate_node(node.child, context, prev_context)
+        return not cls.evaluate_node(node.child, context)
     
     @classmethod
-    def _evaluate_condition(cls, condition: Condition, context: MarketSnapshot, prev_context: Optional[MarketSnapshot]) -> bool:
+    def _evaluate_condition(cls, condition: Condition, context: MarketSnapshot) -> bool:
         """
         Evaluate condition node.
         
@@ -119,11 +120,11 @@ class StrategyEvaluator:
         
         # Handle crossover operators
         if operator == "cross_above":
-            result = cls._evaluate_cross_above(left_val, right_val, condition.left, condition.right, prev_context)
+            result = cls._evaluate_cross_above(left_val, right_val, condition.left, condition.right, context)
             logger.debug(f"Cross_above result: {result}")
             return result
         elif operator == "cross_below":
-            result = cls._evaluate_cross_below(left_val, right_val, condition.left, condition.right, prev_context)
+            result = cls._evaluate_cross_below(left_val, right_val, condition.left, condition.right, context)
             logger.debug(f"Cross_below result: {result}")
             return result
         
@@ -135,21 +136,31 @@ class StrategyEvaluator:
     @classmethod
     def _evaluate_cross_above(cls, left_val: float, right_val: float, 
                                left_expr: Expression, right_expr: Expression,
-                               prev_context: Optional[MarketSnapshot]) -> bool:
+                               context: MarketSnapshot) -> bool:
         """
         Evaluate cross_above - left crosses from below to above right.
         
-        Requires prev_context to detect the crossover.
+        Requires historical data (offset=1) to detect the crossover.
+        Returns False if insufficient historical data is available.
         """
-        if prev_context is None:
-            # Without previous context, just check if left > right
-            return left_val > right_val
+        if len(context.indicators) < 2:
+            logger.warning(
+                f"Cross_above requires at least 2 candles for crossover detection, "
+                f"but MarketSnapshot only has {len(context.indicators)} candles. "
+                f"Returning False - cannot detect crossover without historical data."
+            )
+            return False
         
+        prev_context = context.get_point(1)
         prev_left = cls._evaluate_expression(left_expr, prev_context)
         prev_right = cls._evaluate_expression(right_expr, prev_context)
         
         if prev_left is None or prev_right is None:
-            return left_val > right_val
+            logger.warning(
+                f"Cross_above evaluation failed - missing historical values: "
+                f"prev_left={prev_left}, prev_right={prev_right}. Returning False."
+            )
+            return False
         
         # Crossover: previously left <= right, now left > right
         return prev_left <= prev_right and left_val > right_val
@@ -157,28 +168,39 @@ class StrategyEvaluator:
     @classmethod
     def _evaluate_cross_below(cls, left_val: float, right_val: float,
                                left_expr: Expression, right_expr: Expression,
-                               prev_context: Optional[MarketSnapshot]) -> bool:
+                               context: MarketSnapshot) -> bool:
         """
         Evaluate cross_below - left crosses from above to below right.
         
-        Requires prev_context to detect the crossover.
+        Requires historical data (offset=1) to detect the crossover.
+        Returns False if insufficient historical data is available.
         """
-        if prev_context is None:
-            # Without previous context, just check if left < right
-            return left_val < right_val
+        if len(context.indicators) < 2:
+            logger.warning(
+                f"Cross_below requires at least 2 candles for crossover detection, "
+                f"but MarketSnapshot only has {len(context.indicators)} candles. "
+                f"Returning False - cannot detect crossover without historical data."
+            )
+            return False
         
+        prev_context = context.get_point(1)
         prev_left = cls._evaluate_expression(left_expr, prev_context)
         prev_right = cls._evaluate_expression(right_expr, prev_context)
         
         if prev_left is None or prev_right is None:
-            return left_val < right_val
+            logger.warning(
+                f"Cross_below evaluation failed - missing historical values: "
+                f"prev_left={prev_left}, prev_right={prev_right}. Returning False."
+            )
+            return False
         
         # Crossover: previously left >= right, now left < right
         return prev_left >= prev_right and left_val < right_val
     
     @classmethod
     def _evaluate_comparison(cls, left: float, right: float, operator: str) -> bool:
-        """Evaluate comparison operators"""
+        """Evaluate comparison operators with epsilon tolerance for equality"""
+        epsilon = 1e-9
         if operator == "<":
             return left < right
         elif operator == "<=":
@@ -188,9 +210,9 @@ class StrategyEvaluator:
         elif operator == ">=":
             return left >= right
         elif operator == "==":
-            return left == right
+            return abs(left - right) < epsilon
         elif operator == "!=":
-            return left != right
+            return abs(left - right) >= epsilon
         else:
             logger.warning(f"Unknown operator: {operator}")
             return False
@@ -226,6 +248,7 @@ class StrategyEvaluator:
                 return value
             else:
                 # Historical candle - access from MarketSnapshot
+                # Need at least offset + 1 indicators (current + offset historical candles)
                 if len(context.indicators) > offset:
                     logger.debug(f"Evaluating price expression with offset={offset}")
                     
@@ -237,10 +260,12 @@ class StrategyEvaluator:
                     
                     return historical_value
                 else:
-                    logger.warning(f"Price offset={offset} exceeds available historical data ({len(context.indicators)} candles), using current candle")
-                    value = context.get_value(expression.field)
-                    logger.debug(f"Fallback to current price: field={expression.field}, value={value}")
-                    return value
+                    logger.error(
+                        f"Price offset={offset} requires at least {offset + 1} candles, "
+                        f"but MarketSnapshot only has {len(context.indicators)} candles. "
+                        f"Cannot evaluate expression without sufficient historical data. Returning None."
+                    )
+                    return None
         elif isinstance(expression, Indicator):
             return cls._evaluate_indicator(expression, context)
         else:
@@ -255,18 +280,50 @@ class StrategyEvaluator:
         Maps indicator name to snapshot value.
         Supports: RSI, SMA, EMA, MACD
         
-        Note: offset handling for historical indicator values requires MarketSnapshot with historical access.
-        Currently only offset=0 (current candle) is fully supported in execution.
+        Supports offset for historical indicator access using the same pattern as Price.
         """
         name = indicator.name
         params = indicator.params or {}
         
         # Offset handling for historical indicator access
-        # For now, only current candle (offset=0 or None) is supported
         offset = getattr(indicator, 'offset', 0) or 0
-        if offset != 0:
-            logger.warning(f"Indicator offset={offset} not yet implemented in execution, using current candle")
         
+        if offset == 0:
+            # Current candle - use context directly
+            return cls._get_indicator_value(name, params, context)
+        else:
+            # Historical candle - access from MarketSnapshot
+            if len(context.indicators) > offset:
+                logger.debug(f"Evaluating indicator expression with offset={offset}")
+                
+                # Get historical snapshot
+                historical_snapshot = context.get_point(offset)
+                historical_value = cls._get_indicator_value(name, params, historical_snapshot)
+                    
+                logger.debug(f"Indicator expression evaluation: name={name}, offset={offset}, historical_value={historical_value}")
+                
+                return historical_value
+            else:
+                logger.error(
+                    f"Indicator offset={offset} requires at least {offset + 1} candles, "
+                    f"but MarketSnapshot only has {len(context.indicators)} candles. "
+                    f"Cannot evaluate expression without sufficient historical data. Returning None."
+                )
+                return None
+    
+    @classmethod
+    def _get_indicator_value(cls, name: str, params: Dict, context: MarketSnapshot) -> Optional[float]:
+        """
+        Get indicator value from context snapshot.
+        
+        Args:
+            name: Indicator name (RSI, SMA, EMA, MACD)
+            params: Indicator parameters (e.g., field for MACD)
+            context: MarketSnapshot to get value from
+            
+        Returns:
+            Indicator value or None if not found
+        """
         # Map indicator names to context fields
         indicator_map = {
             "RSI": context.rsi,

@@ -33,14 +33,13 @@ class StrategyEngine:
         """Initialize StrategyEngine with evaluator."""
         self._evaluator = StrategyEvaluator()
     
-    def evaluate(self, strategy: Strategy, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
+    def evaluate(self, strategy: Strategy, context: MarketSnapshot) -> bool:
         """
         Evaluate a strategy against market context.
         
         Args:
             strategy: Strategy entity with DSL definition
-            context: MarketSnapshot with OHLCV data, indicators, etc.
-            prev_context: Previous MarketSnapshot for crossover detection (optional)
+            context: Full MarketSnapshot with historical indicators
             
         Returns:
             True if strategy conditions are met, False otherwise
@@ -61,30 +60,28 @@ class StrategyEngine:
             raise ValueError(f"Invalid DSL definition: {e}")
         
         # Evaluate DSL against context
-        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
+        return self._evaluator.evaluate_dsl(dsl.root, context)
     
-    def evaluate_dsl(self, dsl: StrategyDSL, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
+    def evaluate_dsl(self, dsl: StrategyDSL, context: MarketSnapshot) -> bool:
         """
         Evaluate a DSL definition directly.
         
         Args:
             dsl: StrategyDSL object
-            context: MarketSnapshot with OHLCV data, indicators, etc.
-            prev_context: Previous MarketSnapshot for crossover detection (optional)
+            context: Full MarketSnapshot with historical indicators
             
         Returns:
             True if DSL conditions are met, False otherwise
         """
-        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
+        return self._evaluator.evaluate_dsl(dsl.root, context)
     
-    def evaluate_json(self, dsl_json: Dict[str, Any], context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
+    def evaluate_json(self, dsl_json: Dict[str, Any], context: MarketSnapshot) -> bool:
         """
         Evaluate DSL from JSON dict.
         
         Args:
             dsl_json: DSL definition as JSON dict
-            context: MarketSnapshot with OHLCV data, indicators, etc.
-            prev_context: Previous MarketSnapshot for crossover detection (optional)
+            context: Full MarketSnapshot with historical indicators
             
         Returns:
             True if DSL conditions are met, False otherwise
@@ -94,7 +91,7 @@ class StrategyEngine:
         except Exception as e:
             raise ValueError(f"Invalid DSL definition: {e}")
         
-        return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
+        return self._evaluator.evaluate_dsl(dsl.root, context)
 
 
 class StrategyResult:
