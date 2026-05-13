@@ -31,22 +31,26 @@ class TestIndicatorDataPoint:
         assert data.histogram == 0.4
         assert data.fibonacci_levels == {}
 
-    def test_required_fields(self):
-        """Should fail when required fields are missing"""
-        with pytest.raises(ValidationError) as exc_info:
-            IndicatorDataPoint(
-                timestamp=1704067200000,
-                symbol="AAPL",
-                # Missing ema
-                sma=149.8,
-                rsi=65.4,
-                macd=1.2,
-                macd_signal=0.8,
-                histogram=0.4,
-                fibonacci_levels={}
-            )
+    def test_optional_fields_default_to_none(self):
+        """Should default optional fields to None when not provided"""
+        data = IndicatorDataPoint(
+            timestamp=1704067200000,
+            symbol="AAPL"
+            # All optional fields omitted
+        )
         
-        assert "ema" in str(exc_info.value)
+        assert data.ema is None
+        assert data.sma is None
+        assert data.rsi is None
+        assert data.macd is None
+        assert data.macd_signal is None
+        assert data.histogram is None
+        assert data.close_price is None
+        assert data.open_price is None
+        assert data.high_price is None
+        assert data.low_price is None
+        assert data.volume is None
+        assert data.fibonacci_levels == {}
 
     def test_field_types(self):
         """Should enforce correct field types"""

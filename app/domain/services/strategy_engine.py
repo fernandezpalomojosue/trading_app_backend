@@ -9,7 +9,7 @@ Uses StrategyEvaluator for recursive AST evaluation.
 from typing import Any, Dict, Optional
 from app.domain.entities.strategy import Strategy
 from app.domain.entities.strategy_dsl import StrategyDSL
-from app.domain.entities.market_context import MarketContext
+from app.domain.entities.market_snapshot import MarketSnapshot
 from app.domain.services.strategy_evaluator import StrategyEvaluator
 
 
@@ -33,14 +33,14 @@ class StrategyEngine:
         """Initialize StrategyEngine with evaluator."""
         self._evaluator = StrategyEvaluator()
     
-    def evaluate(self, strategy: Strategy, context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
+    def evaluate(self, strategy: Strategy, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
         """
         Evaluate a strategy against market context.
         
         Args:
             strategy: Strategy entity with DSL definition
-            context: MarketContext with OHLCV data, indicators, etc.
-            prev_context: Previous MarketContext for crossover detection (optional)
+            context: MarketSnapshot with OHLCV data, indicators, etc.
+            prev_context: Previous MarketSnapshot for crossover detection (optional)
             
         Returns:
             True if strategy conditions are met, False otherwise
@@ -63,28 +63,28 @@ class StrategyEngine:
         # Evaluate DSL against context
         return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
     
-    def evaluate_dsl(self, dsl: StrategyDSL, context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
+    def evaluate_dsl(self, dsl: StrategyDSL, context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
         """
         Evaluate a DSL definition directly.
         
         Args:
             dsl: StrategyDSL object
-            context: MarketContext with OHLCV data, indicators, etc.
-            prev_context: Previous MarketContext for crossover detection (optional)
+            context: MarketSnapshot with OHLCV data, indicators, etc.
+            prev_context: Previous MarketSnapshot for crossover detection (optional)
             
         Returns:
             True if DSL conditions are met, False otherwise
         """
         return self._evaluator.evaluate_dsl(dsl.root, context, prev_context)
     
-    def evaluate_json(self, dsl_json: Dict[str, Any], context: MarketContext, prev_context: Optional[MarketContext] = None) -> bool:
+    def evaluate_json(self, dsl_json: Dict[str, Any], context: MarketSnapshot, prev_context: Optional[MarketSnapshot] = None) -> bool:
         """
         Evaluate DSL from JSON dict.
         
         Args:
             dsl_json: DSL definition as JSON dict
-            context: MarketContext with OHLCV data, indicators, etc.
-            prev_context: Previous MarketContext for crossover detection (optional)
+            context: MarketSnapshot with OHLCV data, indicators, etc.
+            prev_context: Previous MarketSnapshot for crossover detection (optional)
             
         Returns:
             True if DSL conditions are met, False otherwise
