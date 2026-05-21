@@ -1,17 +1,30 @@
 # Trading App Backend
 
-Backend for a trading application, built with **FastAPI** + **SQLModel** (PostgreSQL) and CI testing with Docker. Includes JWT authentication, market endpoints (stocks), and caching.
+The Trading App Backend is a high-performance, asynchronous API designed to manage trading strategies, monitor market data, and generate real-time trading signals. Built with a focus on modularity and scalability, it leverages a clean architecture to separate business logic from infrastructure concerns.
+
+The system allows users to define complex trading rules using a custom Domain Specific Language (DSL), perform technical analysis through integrated indicators, and manage investment portfolios. It also features an AI-driven strategy generation engine that translates natural language into executable DSL code.
 
 ## 🖼️ Project Overview
 
 ![Architecture Flowchart](assets/images/ArchitectureChart.jpeg)
 
+## 🎯 Core Objectives
+
+- **Strategy Management**: Provide a robust framework for defining, validating, and executing multi-condition trading strategies
+- **Market Intelligence**: Deliver real-time and historical market data (candles, search, and overview) with optimized caching
+- **Signal Orchestration**: Automate the detection of trading opportunities based on live market conditions and user-defined logic
+- **Scalability & Reliability**: Ensure high availability through Docker containerization and a multi-layer caching strategy
+
 ## � Features
 
-- ✅ **Clean Architecture**: Clear separation between domain, application, and infrastructure
+- ✅ **Clean Architecture**: Clear separation between domain, application, and infrastructure layers
+- ✅ **Strategy DSL**: Custom Domain Specific Language for defining complex trading logic with AND/OR/NOT conditions
+- ✅ **AI-Driven Strategy Generation**: Natural language to DSL conversion using OpenRouter/Bedrock integration
+- ✅ **Technical Analysis**: Built-in indicators (RSI, EMA, MACD) computed on-the-fly with intelligent caching
+- ✅ **Signal Orchestration**: Automated trading signal generation based on live market conditions and user-defined strategies
 - ✅ **JWT Authentication**: Secure user login and registration system
-- ✅ **Trading API**: Endpoints for market data (stocks, candles)
-- ✅ **Smart Caching**: Caching system to optimize responses
+- ✅ **Market Data API**: Real-time and historical market data (candles, search, overview) with optimized caching
+- ✅ **Smart Caching**: Dual-mode caching (Memory/Redis) for performance optimization
 - ✅ **Complete Testing**: Test suite with pytest and CI/CD
 - ✅ **Migrations**: Schema management with Alembic
 - ✅ **Docker Ready**: Containerization for development and production
@@ -19,46 +32,86 @@ Backend for a trading application, built with **FastAPI** + **SQLModel** (Postgr
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **API Framework** | FastAPI 0.109.0 |
-| **Database** | PostgreSQL + SQLModel |
-| **Migrations** | Alembic |
-| **Authentication** | JWT (python-jose) + passlib + bcrypt |
-| **HTTP Clients** | httpx 0.27.0 + aiohttp 3.9.1 |
-| **Market Data** | Massive API |
-| **Testing** | pytest 8.0.2 + pytest-asyncio |
-| **CI/CD** | GitHub Actions + Docker |
-| **Deploy** | Render (Postgres managed) |
-| **Cache** | Memory Cache (local implementation) |
+| Component | Technology | Role |
+|-----------|------------|------|
+| **Framework** | FastAPI | Asynchronous API handling and OpenAPI documentation |
+| **ORM** | SQLModel | Combines SQLAlchemy and Pydantic for database interactions |
+| **Database** | PostgreSQL | Primary relational storage for users, strategies, and signals |
+| **Caching** | Redis / Memory | Performance optimization for market data and indicators |
+| **AI Integration** | OpenRouter / Bedrock | Natural language processing for strategy generation |
+| **Migrations** | Alembic | Database schema versioning and management |
+| **Authentication** | JWT (python-jose) + passlib + bcrypt | Secure user authentication |
+| **HTTP Clients** | httpx + aiohttp | Async HTTP requests for external APIs |
+| **Market Data** | Massive API | Real-time and historical market data provider |
+| **Testing** | pytest + pytest-asyncio | Test framework with async support |
+| **CI/CD** | GitHub Actions + Docker | Continuous integration and deployment |
+| **Deploy** | Render | Cloud deployment platform |
 
-## 📁 Project Structure
+## � Key Components
+
+### 1. Strategy DSL & AI Generation
+
+The heart of the application is the Strategy DSL. Users can create complex logical trees (AND/OR/NOT) to evaluate market conditions. The system allows users to describe these strategies in plain English, which is then parsed into valid JSON DSL by an LLM provider configured in `AI_PROVIDER`.
+
+**Key Features:**
+- Domain Specific Language for trading logic
+- Natural language to DSL conversion via AI
+- Complex condition trees (AND/OR/NOT operators)
+- Strategy validation and execution engine
+
+### 2. Market Data & Indicators
+
+The backend integrates with external providers to fetch real-time stock data. It computes technical indicators (RSI, EMA, MACD) on-the-fly or retrieves them from the indicators_cache table to minimize latency.
+
+**Key Features:**
+- Real-time and historical market data
+- Technical indicator calculation (RSI, EMA, MACD)
+- Intelligent caching for computed indicators
+- Support for multiple timeframes and symbols
+
+### 3. Caching Strategy
+
+The system supports a dual-mode cache configured via `CACHE_TYPE`. It can operate using local system memory for development or a distributed Redis instance for production environments.
+
+**Key Features:**
+- Memory cache for local development
+- Redis support for production scalability
+- Configurable cache strategies
+- Automatic cache invalidation
+
+## �📁 Project Structure
 
 ```
 trading-app-backend/
 ├── app/                          # API source code
 │   ├── application/              # Application layer
 │   │   ├── dto/                  # Data Transfer Objects
+│   │   ├── repositories/         # Application repositories
 │   │   └── services/             # Application services
 │   ├── core/                     # Core configuration and utilities
 │   │   ├── config.py             # Project configuration
-│   │   ├── database/             # Database configuration and models
-│   │   ├── security.py           # Security utilities
-│   │   └── utils/                # Various utilities
+│   │   └── security.py           # Security utilities
+│   ├── db/                       # Database configuration
+│   │   └── base.py               # Database base models
 │   ├── domain/                   # Domain entities and business logic
 │   │   ├── entities/             # Domain entities
+│   │   ├── services/             # Domain services
 │   │   └── use_cases/            # Domain use cases
 │   ├── infrastructure/           # Infrastructure layer
 │   │   ├── cache/                # Caching system
-│   │   ├── dependencies.py       # Application dependencies
+│   │   ├── database/             # Database configuration
+│   │   │   └── db_models/        # Database models
 │   │   ├── external/              # External HTTP clients
-│   │   ├── repositories.py       # Database repositories
+│   │   ├── rate_limiter/         # Rate limiting
 │   │   └── security/             # Security utilities
 │   ├── presentation/             # Presentation layer (API endpoints)
 │   │   ├── api/                  # API routes
 │   │   │   └── v1/               # API version 1
 │   │   │       └── endpoints/    # Implemented endpoints
 │   │   └── schemas/              # Pydantic schemas
+│   ├── scripts/                  # Utility scripts
+│   ├── utils/                    # Various utilities
+│   ├── workers/                  # Background workers
 │   └── main.py                   # FastAPI entry point
 ├── tests/                        # Test suite
 │   ├── fixtures/                 # Test fixtures
@@ -449,6 +502,25 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 - [📖 Migration Guide](MIGRATIONS.md)
 - [🔧 API Documentation](http://localhost:8000/docs) (when running)
 - [🐳 Docker Configuration](docker-compose.yml)
+
+## 🗺️ Navigation & Child Pages
+
+To dive deeper into specific areas of the codebase, refer to the following sections:
+
+### Getting Started
+Step-by-step instructions on setting up the environment using docker-compose, installing dependencies, and running the initial database migrations.
+
+### Application Configuration
+A comprehensive guide to the AppBaseSettings class in `app/core/config.py`. Learn how to configure environment variables for database connections, AI providers (OpenRouter/Bedrock), and security keys.
+
+### Architecture & Layered Design
+Detailed breakdown of the directory structure including the separation of domain, application, infrastructure, and presentation layers.
+
+### REST API Reference
+Documentation of the available API v1 routes including authentication flows, market data access, and strategy management.
+
+### Trading Signal Pipeline
+Technical details on how a strategy moves from a DSL definition to a triggered signal, including the orchestration logic and the background worker processes.
 
 ## 🤝 Contributing
 
